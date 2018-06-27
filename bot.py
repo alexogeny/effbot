@@ -6,17 +6,21 @@ from discord.ext import commands
 from os import listdir
 from os.path import isfile, join
 
-bot = commands.Bot(command_prefix=get_prefix, description="Effrille's custom bot.")
-
 with Path('./config.json').open('r') as fh:
     CONFIG = json.load(fh)
-    setattr(bot, 'config', CONFIG)
+
 
 def get_prefix(bot, message):
-    prefixes = bot.config['PREFIXES']
+    prefixes = CONFIG['PREFIXES']
     if not message.guild:
         return '.'
     return commands.when_mentioned_or(*prefixes)(bot, message)
+
+
+bot = commands.Bot(command_prefix=get_prefix, description="Effrille's custom bot.")
+setattr(bot, 'config', CONFIG)
+
+
 
 @bot.event
 async def on_ready():
