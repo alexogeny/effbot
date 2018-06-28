@@ -1,6 +1,7 @@
 import sys, traceback
 import discord
 import json
+import time
 from pathlib import Path
 from discord.ext import commands
 from os import listdir
@@ -19,7 +20,7 @@ def get_prefix(bot, message):
 
 bot = commands.Bot(command_prefix=get_prefix, description="Effrille's custom bot.")
 setattr(bot, 'config', CONFIG)
-
+setattr(bot, 'start_time', time.time())
 
 
 @bot.event

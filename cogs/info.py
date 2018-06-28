@@ -1,4 +1,6 @@
 import discord
+import random
+import time
 from discord.ext import commands
 from random import choice
 
@@ -12,6 +14,37 @@ class InfoStuff():
     @commands.group(pass_context=True, invoke_withut_command=True)
     async def info(self, ctx):
         await ctx.send('placeholder')
+
+    @info.command()
+    async def uptime(self, ctx):
+        """Gives the bot's uptime."""
+        seconds = time.time() - self.bot.start_time
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        d, h = divmod(h, 24)
+        w, d = divmod(d, 7)
+        await ctx.send(f"I've been online for `{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s`")
+
+    @commands.command()
+    async def ping(self, ctx):
+        """Pings the bot."""
+        joke = random.choice(["not actually pinging server...", "hey bb", "what am I doing with my life",
+                              "Some Dragon is a dank music bot tbh", "I'd like to thank the academy for this award",
+                              "The NSA is watching 👀", "`<Insert clever joke here>`", "¯\_(ツ)_/¯", "(づ｡◕‿‿◕｡)づ",
+                              "I want to believe...", "Hypesquad is a joke", "EJH2#0330 is my daddy", "Robino pls",
+                              "Seth got arrested again...", "Maxie y u do dis", "aaaaaaaaaaaAAAAAAAAAA", "owo",
+                              "uwu", "meme team best team", "made with dicksword dot pee why", "I'm running out of "
+                                                                                               "ideas here",
+                              "am I *dank* enough for u?", "this is why we can't have nice things. come on",
+                              "You'll understand when you're older...", "\"why\", you might ask? I do not know...",
+                              "I'm a little tea pot, short and stout", "I'm not crying, my eyeballs "
+                                                                       "are sweating!",
+                              "When will the pain end?", "Partnership when?", "Hey Robino, rewrite when?"])
+        before = time.monotonic()
+        ping_msg = await ctx.send(joke)
+        after = time.monotonic()
+        ping = (after - before) * 1000
+        await ping_msg.edit(content=f"***{ping:.0f}ms***")
 
     @info.command(name='bot', pass_context=True, no_pm=True)
     async def _bot(self, ctx):
