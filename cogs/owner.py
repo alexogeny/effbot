@@ -263,32 +263,6 @@ class Owner:
     #         await ctx.send("Token set. Restart me.")
     #         log.debug("Token changed.")
 
-    @commands.command()
-    @is_owner()
-    async def shutdown(self, silently : bool=False):
-        """Shuts down Red"""
-        wave = "\N{WAVING HAND SIGN}"
-        skin = "\N{EMOJI MODIFIER FITZPATRICK TYPE-3}"
-        try: # We don't want missing perms to stop our shutdown
-            if not silently:
-                await ctx.send("Shutting down... " + wave + skin)
-        except:
-            pass
-        await self.bot.shutdown()
-
-    @commands.command()
-    @is_owner()
-    async def restart(self, silently : bool=False):
-        """Attempts to restart Red
-        Makes Red quit with exit code 26
-        The restart is not guaranteed: it must be dealt
-        with by the process manager in use"""
-        try:
-            if not silently:
-                await ctx.send("Restarting...")
-        except:
-            pass
-        await self.bot.shutdown(restart=True)
 
 
     @commands.command(pass_context=True)
@@ -303,7 +277,7 @@ class Owner:
 
         if self.bot._last_exception:
             for page in pagify(self.bot._last_exception):
-                await self.bot.send_message(destination, box(page, lang="py"))
+                await destination.send(box("python", page))
         else:
             await ctx.send("No exception has occurred yet.")
 
