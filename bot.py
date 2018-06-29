@@ -21,14 +21,33 @@ def get_prefix(bot, message):
 bot = commands.Bot(command_prefix=get_prefix, description="Effrille's custom bot.")
 setattr(bot, 'config', CONFIG)
 setattr(bot, 'start_time', time.time())
-
+setattr(bot, '_last_exception', None)
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
     print('--------')
 
+@bot.event
+async def on_command_error(error, ctx):
+    channel = ctx.message.channel
+    if isinstance(error, commands.CommandInvokeError):
+        no_dms = "Cannot send messages to this user"
+        is_help_cmd = ctx.command.qualified_name == "help"
+        is_forbidden = isinstance(error.original, discord.Forbidden)
+        if is_help_cmd and is_forbidden and error.original.text == no_dms:
+            msg = ("I can't send messages to you. Either you blocked me or you disabled server DMs.")
+            await bot.send_message(channel, msg)
 
+        message = (f"Error in command '{ctx.command.qualified_name}'. Check your console.")
+
+        log = ("Exception in command '{}'\n"
+               "".format(ctx.command.qualified_name))
+        log += "".join(traceback.format_exception(type(error), error,
+                                                  error.__traceback__))
+        bot._last_exception = log
+        await ctx.bot.send_message(channel, inline(message))
+    return bot
 bot.remove_command('help')
 if __name__ == '__main__':
     for extension in [

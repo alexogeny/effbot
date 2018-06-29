@@ -11,7 +11,7 @@ class InfoStuff():
         self.bot = bot
         
 
-    @commands.group(pass_context=True, invoke_withut_command=True)
+    @commands.group(pass_context=True, invoke_without_command=True)
     async def info(self, ctx):
         await ctx.send('placeholder')
 
@@ -30,7 +30,7 @@ class InfoStuff():
         """Pings the bot."""
         joke = random.choice(["not actually pinging server...", "hey bb", "what am I doing with my life",
                               "Some Dragon is a dank music bot tbh", "I'd like to thank the academy for this award",
-                              "The NSA is watching 👀", "`<Insert clever joke here>`", "¯\_(ツ)_/¯", "(づ｡◕‿‿◕｡)づ",
+                              "The NSA is watching 👀", "`<Insert clever joke here>`", "¯\\_(ツ)_/¯", "(づ｡◕‿‿◕｡)づ",
                               "I want to believe...", "Hypesquad is a joke", "EJH2#0330 is my daddy", "Robino pls",
                               "Seth got arrested again...", "Maxie y u do dis", "aaaaaaaaaaaAAAAAAAAAA", "owo",
                               "uwu", "meme team best team", "made with dicksword dot pee why", "I'm running out of "
@@ -126,6 +126,35 @@ class InfoStuff():
             await ctx.send(embed=data)
         except discord.HTTPException:
             await ctx.send("I need the `Embed links` permission to send this")
+
+    @commands.command(pass_context=True, no_pm=True)
+    async def avatar(self, ctx, *, user: str=None):
+        author = ctx.message.author
+        server = ctx.message.guild
+
+        if not user:
+            user = author
+        elif not hasattr(user, 'roles'):
+            try:
+                user = server.get_member(int(user[2:-1]))
+            except:
+                user = [n for n in server.members
+                    if user.lower() in str(n.name).lower()
+                    or user.lower() in str(n.nick).lower()]
+            if isinstance(user, list) and len(user) >= 1:
+                user = user[0]
+                print(user)
+            elif isinstance(user, list) and len(user) == 0:
+                await ctx.send('I could not find that user. Try a different name or variation?')
+                return
+
+        avatar = discord.Embed(description=f"{user.name}'s avatar", colour=user.colour,
+                               url=user.avatar_url)
+
+        try:
+            await ctx.send(embed=avatar)
+        except discord.HTTPException:
+            await ctx.send("I need the `Embed links` permission to post avatars here.")
 
     @info.command(name='server', pass_context=True, no_pm=True)
     async def _server(self, ctx):
