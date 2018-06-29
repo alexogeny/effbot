@@ -23,13 +23,17 @@ setattr(bot, 'config', CONFIG)
 setattr(bot, 'start_time', time.time())
 setattr(bot, '_last_exception', None)
 
+def inline(text):
+    return "```\n{}\n```".format(text)
+
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
     print('--------')
 
 @bot.event
-async def on_command_error(error, ctx):
+async def on_command_error(ctx, error):
     channel = ctx.message.channel
     if isinstance(error, commands.CommandInvokeError):
         no_dms = "Cannot send messages to this user"
@@ -37,16 +41,14 @@ async def on_command_error(error, ctx):
         is_forbidden = isinstance(error.original, discord.Forbidden)
         if is_help_cmd and is_forbidden and error.original.text == no_dms:
             msg = ("I can't send messages to you. Either you blocked me or you disabled server DMs.")
-            await bot.send_message(channel, msg)
+            await ctx.bot.get_channel(462204160524288021).send(msg)
 
-        message = (f"Error in command '{ctx.command.qualified_name}'. Check your console.")
+        message = (f"Error in command '{ctx.command.qualified_name}'. Traceback:\n")
 
-        log = ("Exception in command '{}'\n"
-               "".format(ctx.command.qualified_name))
-        log += "".join(traceback.format_exception(type(error), error,
+        message += "".join(traceback.format_exception(type(error), error,
                                                   error.__traceback__))
-        bot._last_exception = log
-        await ctx.bot.send_message(channel, inline(message))
+        bot._last_exception = message
+        await ctx.bot.get_channel(462204160524288021).send(inline(message))
     return bot
 bot.remove_command('help')
 if __name__ == '__main__':

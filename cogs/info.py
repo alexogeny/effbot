@@ -150,6 +150,7 @@ class InfoStuff():
 
         avatar = discord.Embed(description=f"{user.name}'s avatar", colour=user.colour,
                                url=user.avatar_url)
+        avatar.set_image(url=str(user.avatar_url))
 
         try:
             await ctx.send(embed=avatar)
