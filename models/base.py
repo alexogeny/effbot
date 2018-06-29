@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 import peewee as pw
 
-db = pw.Sqlitedatabase('../data/db.db')
+db = pw.SqliteDatabase('../data/db.db')
 
 class BaseModel(pw.Model):
     # uuid = pw.UUIDField(primary_key=True)

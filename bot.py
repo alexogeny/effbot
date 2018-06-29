@@ -6,8 +6,7 @@ from pathlib import Path
 from discord.ext import commands
 from os import listdir
 from os.path import isfile, join
-import models
-from models import DB
+from models import ServerTT2, Titanlord, UserTT2, db
 
 with Path('./config.json').open('r') as fh:
     CONFIG = json.load(fh)
@@ -23,12 +22,14 @@ class Effribot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = CONFIG
-        self.database = DB
+        self.database = db
+        self.models = object()
         self.start_time = time.time()
         self._last_exception = None
         self.description = "effrill3's custom bot"
         self.load_extensions()
         self.create_tables()
+        self.add_models([ServerTT2, Titanlord, UserTT2])
 
     def load_extensions(self):
         for extension in [
@@ -42,7 +43,12 @@ class Effribot(commands.Bot):
 
     def create_tables(self):
         with self.database:
-            self.database.create_tables([models.ServerTT2, models.Titanlord, models.UserTT2])
+            self.database.create_tables([ServerTT2, Titanlord, UserTT2])
+        return
+
+    def add_models(self, models):
+        for model in models:
+            setattr(self.models, str(model)[8:-1], model)
         return
 
     async def on_ready(self):

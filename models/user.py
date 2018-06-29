@@ -1,6 +1,6 @@
 from datetime import datetime
 import peewee as pw 
-from base import BaseModel
+from .base import BaseModel
 
 class UserTT2(BaseModel):
     support_code = pw.CharField(max_length=10, index=True)

@@ -1,4 +1,5 @@
 import discord
+import datetime
 from discord.ext import commands
 import os
 import asyncio
@@ -15,8 +16,8 @@ class TitanLord():
         self.units = {"minute": 60, "hour": 3600}
         self.dead = 3600*6
 
-    @commands.group(pass_context=True, invoke_without_command=True)
-    async def tl(self, ctx):
+    @commands.group(pass_context=True, invoke_without_command=True, alias=["tl"])
+    async def tt(self, ctx):
         await ctx.send('TT2 TL timers')
 
     # @tl.command(pass_context=True, alias=["in"])
@@ -40,7 +41,7 @@ class TitanLord():
     #     finally:
     #         return
 
-    @tl.command(pass_context=True)
+    @tt.command(pass_context=True)
     async def now(self, ctx, *, clan: str=0):
         await ctx.send('placeholder')
 
@@ -48,11 +49,36 @@ class TitanLord():
     # async def at(self, ctx, * clan: str=0):
     #     await ctx.send('placeholder')
 
-    # @tl.command(pass_context=True)
-    # async def set(self, ctx, *, setting: str=None, value: str=None):
-    #     if setting not in ''
-    #     await ctx.send('placeholder')
-
+    @tt.command(pass_context=True)
+    async def set(self, ctx, *, setting: str=None, value: str=None):
+        if setting not in 'code name pass quest'.split():
+            await ctx.send('Check out `.help tt set`')
+            return
+        guild_id = ctx.message.guild.id
+        key = setting.lower().strip()
+        with self.db.connection_context():
+            if not self.models.ServerTT2.get_by_id(guild_id):
+                self.models.ServerTT2.create(
+                    id=guild_id,
+                    clan_name=ctx.message.guild.name,
+                    timer_inxtext="Cq {} in {} minutes, @everyone! Get ready!",
+                    timer_nowtext="Cq {} is UP! Kill it now!! @everyone"
+                )
+            await ctx.send('New guild added. Congrats!')
+            old_value = getattr(self.models.ServerTT2.get_by_id(guild_id), key)        
+        
+        if key == 'cq' and value.isdigit():
+            with self.db.connection_context():
+                self.models.ServerTT2
+                    .update(clan_quest=cq, update=datetime.utcnow())
+                    .where(self.models.ServerTT2.id == guild_id)
+        
+        embed = discord.Embed(description=ctx.message.guild.name)
+        embed.add_field(name="Setting", value=setting, inline=False)
+        embed.add_field(name="Old", value=str(old_value))
+        embed.add_field(name="New", value=str(value))
+        await ctx.send(embed=embed)
+        
     #set export {cq} {data}
     #set ttk {cq} {data}
     #set reminders
