@@ -6,6 +6,8 @@ from pathlib import Path
 from discord.ext import commands
 from os import listdir
 from os.path import isfile, join
+import models
+from models import DB
 
 with Path('./config.json').open('r') as fh:
     CONFIG = json.load(fh)
@@ -21,20 +23,27 @@ class Effribot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = CONFIG
+        self.database = DB
         self.start_time = time.time()
         self._last_exception = None
         self.description = "effrill3's custom bot"
+        self.load_extensions()
+        self.create_tables()
+
+    def load_extensions(self):
         for extension in [
             f.replace('.py', '') for f in listdir(self.config['COGS_DIR'])
-            if isfile(join(self.config['COGS_DIR'], f))
-        ]:
+            if isfile(join(self.config['COGS_DIR'], f))]:
             try:
                 self.load_extension(f"{self.config['COGS_DIR']}.{extension}")
             except (discord.ClientException, ModuleNotFoundError) as e:
                 print(f'Failed to load extension {extension}.', file=sys.stderr)
                 traceback.print_exc()
 
-    
+    def create_tables(self):
+        with self.database:
+            self.database.create_tables([models.ServerTT2, models.Titanlord, models.UserTT2])
+        return
 
     async def on_ready(self):
         print(f'Logged in as {bot.user.name}')

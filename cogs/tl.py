@@ -53,6 +53,10 @@ class TitanLord():
     #     if setting not in ''
     #     await ctx.send('placeholder')
 
+    #set export {cq} {data}
+    #set ttk {cq} {data}
+    #set reminders
+    #
 
 def setup(bot):
     cog = TitanLord(bot)
