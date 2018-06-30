@@ -1,5 +1,5 @@
 import discord
-import datetime
+from datetime import datetime
 from discord.ext import commands
 import os
 import asyncio
@@ -43,6 +43,12 @@ class TitanLord():
 
     @tt.command(pass_context=True)
     async def now(self, ctx, *, clan: str=0):
+
+        # (Titanlord
+        #  .select()
+        #  .where(Titanlord.id = ctx.guild.id)
+        #  .order_by(Titanlord.create.desc())
+        #  .get())
         await ctx.send('placeholder')
 
     # @tl.command(pass_context=True, alias=["in"])
@@ -50,31 +56,73 @@ class TitanLord():
     #     await ctx.send('placeholder')
 
     @tt.command(pass_context=True)
-    async def set(self, ctx, *, setting: str=None, value: str=None):
-        if setting not in 'code name pass quest'.split():
-            await ctx.send('Check out `.help tt set`')
-            return
+    async def set(self, ctx, setting: str=None, value: str=None):
+
         guild_id = ctx.message.guild.id
         key = setting.lower().strip()
-        with self.db.connection_context():
-            if not self.models.ServerTT2.get_by_id(guild_id):
-                self.models.ServerTT2.create(
+        with ctx.bot.database.connection_context():
+            if not ctx.bot.models.ServerTT2.get_or_none(ctx.bot.models.ServerTT2.id==guild_id):
+
+                res = ctx.bot.models.ServerTT2.create(
                     id=guild_id,
-                    clan_name=ctx.message.guild.name,
-                    timer_inxtext="Cq {} in {} minutes, @everyone! Get ready!",
-                    timer_nowtext="Cq {} is UP! Kill it now!! @everyone"
+                    code="0",
+                    name=ctx.message.guild.name,
+                    inxtext="Cq {} in {} minutes, @everyone! Get ready!",
+                    nowtext="Cq {} is UP! Kill it now!! @everyone"
                 )
-            await ctx.send('New guild added. Congrats!')
-            old_value = getattr(self.models.ServerTT2.get_by_id(guild_id), key)        
+
+                await ctx.send('New guild added. Congrats!')
+            old_value = getattr(ctx.bot.models.ServerTT2.get_by_id(guild_id), key)
+
+            if not old_value:
+                old_value = "n/a"        
         
-        if key == 'cq' and value.isdigit():
-            with self.db.connection_context():
-                self.models.ServerTT2
-                    .update(clan_quest=cq, update=datetime.utcnow())
-                    .where(self.models.ServerTT2.id == guild_id)
+        if key == 'cq' and not value.isdigit():
+            await ctx.send('You have to choose a number for `cq` setting')
+            return
+        elif key == 'code' and not len(value)<10:
+            await ctx.send('Clan code cannot be longer than 10 characters')
+            return
+        elif key in 'ms prestiges tcq' and not value.isdigit() and not len(value) < 10:
+            await ctx.send(f'{key} requirement should be a whole number e.g. 1234')
+            return
+        elif key in 'timerchannel,whenchannel,hofchannel,loachannel':
+            if value[2:-1].isdigit() and value.startswith('<#'):
+                value = value[2:-1]
+            if not value.isdigit():
+                await ctx.send('You need to mention a valid channel or ID')
+                return
+            channel = self.bot.get_channel(int(value))
+            if not channel:
+                await ctx.send('Sorry, you supplied a channel that does not exist')
+                return
+        elif key in 'gm,master,captain,knight,recruit,alumni,guest,applicant':
+            if not value.isdigit() and value.startswith('<@&'):
+                value = value[3:-1]
+            if not value.isdigit():
+                roles = [r for r in ctx.guild.roles if value.lower() in r.name.lower()]
+                if len(roles) > 0:
+                    value = str(roles[0].id)
+            if not value.isdigit():
+                await ctx.send('You need to mention a valid role or ID')
+                return
+            role = discord.utils.get(ctx.guild.roles, id=int(value))
+            if not role:
+                await ctx.send('Sorry, you supplied a role that does not exist')
+                return
+
+        if not value == old_value:
+            output = dict(update=datetime.utcnow())
+            output[key] = value
+            with ctx.bot.database.connection_context():
+                qry=ctx.bot.models.ServerTT2.update(**output).where(
+                    ctx.bot.models.ServerTT2.id == guild_id
+                )
+                qry.execute()
         
-        embed = discord.Embed(description=ctx.message.guild.name)
-        embed.add_field(name="Setting", value=setting, inline=False)
+        embed = await self.bot.cogs['Helpers'].build_embed(ctx.message.guild.name,
+                                            0xffffff)
+        embed.add_field(name="Setting", value=key, inline=False)
         embed.add_field(name="Old", value=str(old_value))
         embed.add_field(name="New", value=str(value))
         await ctx.send(embed=embed)

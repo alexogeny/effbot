@@ -228,7 +228,17 @@ class Owner:
         for page in pagify(msg, [" "], shorten_by=16):
             await ctx.send(box(page.lstrip(" "), lang="diff"))
 
-   
+    @commands.command(name="shutdown")
+    @is_owner()
+    async def _shutdown(self, ctx):
+        await self.bot.logout()
+
+    @commands.command(name="restart")
+    @is_owner()
+    async def _restart(self, ctx):
+        await self.bot.logout()
+        await self.bot.login()
+
     @commands.group(name="set", pass_context=True)
     async def _set(self, ctx):
         """Changes Red's core settings"""

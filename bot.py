@@ -8,6 +8,10 @@ from os import listdir
 from os.path import isfile, join
 from models import ServerTT2, Titanlord, UserTT2, db
 
+class Struct(object):
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+
 with Path('./config.json').open('r') as fh:
     CONFIG = json.load(fh)
 
@@ -23,7 +27,6 @@ class Effribot(commands.Bot):
         super().__init__(*args, **kwargs)
         self.config = CONFIG
         self.database = db
-        self.models = object()
         self.start_time = time.time()
         self._last_exception = None
         self.description = "effrill3's custom bot"
@@ -42,13 +45,18 @@ class Effribot(commands.Bot):
                 traceback.print_exc()
 
     def create_tables(self):
+        if not Path('data').exists():
+            Path('data').mkdir()
+            import sqlite3
+            with sqlite3.connect('data\\db.db') as conn:
+                pass
         with self.database:
             self.database.create_tables([ServerTT2, Titanlord, UserTT2])
         return
 
     def add_models(self, models):
-        for model in models:
-            setattr(self.models, str(model)[8:-1], model)
+        # print(self.database.__dir__())
+        self.models = Struct(**{str(model)[8:-1]: model for model in models})
         return
 
     async def on_ready(self):
@@ -70,7 +78,7 @@ class Effribot(commands.Bot):
             message += "".join(traceback.format_exception(type(error), error,
                                                       error.__traceback__))
             bot._last_exception = message
-            await ctx.bot.get_channel(462204160524288021).send(inline(message))
+            await ctx.bot.get_channel(462204160524288021).send(inline(message[0:1950]))
         return self
 
     def run(self):
