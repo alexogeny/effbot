@@ -21,8 +21,11 @@ class RandomStatus():
         self.statuses = ['playing in {} guilds',
                          'watching over {} users',
                          'listening the sounds of nature',
-                         'listening intently',
-                         'playing in the fields of yonder']
+                         'listening the wind',
+                         'listening the deep hum of mystical forces',
+                         'playing in the fields of yonder',
+                         'playing the one single source of truth CD',
+                         'playing with time']
 
     @commands.group(pass_context=True, invoke_without_command=True)
     @is_owner()

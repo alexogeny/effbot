@@ -98,5 +98,7 @@ def inline(text):
 
 bot = Effribot(command_prefix=get_prefix)
 # bot.remove_command('help')
+# def run_bot(bot):
+#     bot.run(bot.config['TOKEN'], bot=True, reconnect=True)
 if __name__ == '__main__':
     bot.run()
