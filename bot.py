@@ -86,6 +86,11 @@ class Effribot(commands.Bot):
         await self.get_channel(462253601360969758).send(
             f'Joined guild **{guild.name}** ({guild.id})'
         )
+        if not [x for x in self._servers if x['id']==guild.id]:
+            g = {'id': guild.id}
+            conf = await self.cog['Helpers'].spawn_config('server')
+            g['config'] = conf
+            self._servers.append(g)
 
     async def on_guild_remove(self, guild):
         await self.get_channel(462253601360969758).send(

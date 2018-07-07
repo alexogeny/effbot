@@ -148,9 +148,10 @@ class InfoStuff():
                 await ctx.send('I could not find that user. Try a different name or variation?')
                 return
 
-        avatar = discord.Embed(description=f"{user.name}'s avatar", colour=user.colour,
-                               url=user.avatar_url)
-        avatar.set_image(url=str(user.avatar_url))
+        avatar = await self.bot.cogs['Helpers'].build_embed(f"{user.name}'s avatar", user.colour)
+        #avatar = discord.Embed(description=f"{user.name}'s avatar", colour=user.colour,
+        #                       url=user.avatar_url)
+        avatar.set_image(url=str(user.avatar_url_as(format='jpeg')))
 
         try:
             await ctx.send(embed=avatar)

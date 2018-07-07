@@ -95,29 +95,8 @@ class TitanLord():
 
         guild_id = ctx.message.guild.id
         key = setting.lower().strip()
-        # with ctx.bot.database.connection_context():
-        #     if not ctx.bot.models.ServerTT2.get_or_none(ctx.bot.models.ServerTT2.id==guild_id):
 
-        #         res = ctx.bot.models.ServerTT2.create(
-        #             id=guild_id,
-        #             code="0",
-        #             name=ctx.message.guild.name,
-        #             inxtext="Cq {} in {} minutes, @everyone! Get ready!",
-        #             nowtext="Cq {} is UP! Kill it now!! @everyone"
-        #         )
-
-        #         await ctx.send('New guild added. Congrats!')
-        #     old_value = getattr(ctx.bot.models.ServerTT2.get_by_id(guild_id), key)
-
-        #     if not old_value:
-        #         old_value = "n/a"
-        if not [x for x in self.bot._servers if x['id']==guild_id]:
-            g = {'id': guild_id}
-            conf = await self.bot.cogs['Helpers'].spawn_config('server')
-            g['config'] = conf
-            self.bot._servers.append(g)
-        else:
-            g = [x for x in self.bot._servers if x['id']==guild_id][0]
+        g = [x for x in self.bot._servers if x['id']==guild_id][0]
         print(g)
         if key == 'cq' and not value.isdigit():
             await ctx.send('You have to choose a number for `cq` setting')
