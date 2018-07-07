@@ -66,6 +66,11 @@ class SettingsCog():
                 c = [ch for ch in c if ch!=c]
                 await ctx.send(f'Removed <#{result}> from curated channels')
 
+        if key == 'quoteschannel':
+            result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
+            if result:
+                setattr(g['config'], 'chan_quotes', result)
+                await ctx.send(f'Set the {key} setting to <#{result}>')
 
 def setup(bot):
     cog = SettingsCog(bot)
