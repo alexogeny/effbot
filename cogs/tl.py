@@ -129,15 +129,19 @@ class TitanLord():
             await ctx.send(f'{key} requirement should be a whole number e.g. 1234')
             return
         elif key in 'timer,when':
+            channel = None
             if value[2:-1].isdigit() and value.startswith('<#'):
                 value = value[2:-1]
-            if not value.isdigit():
-                await ctx.send('You need to mention a valid channel or ID')
-                return
-            channel = self.bot.get_channel(int(value))
+            if value.isdigit():
+                channel = self.bot.get_channel(int(value))
+            if not channel:
+                channel = await self.bot.cogs['Helpers'].get_obj(
+                    ctx.guild, 'channel', 'name', value
+                )
             if not channel:
                 await ctx.send('Sorry, you supplied a channel that does not exist')
                 return
+            value = channel
         elif key in 'gm,master,captain,knight,recruit,alumni,guest,applicant':
             if not value.isdigit() and value.startswith('<@&'):
                 value = value[3:-1]

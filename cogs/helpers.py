@@ -62,6 +62,21 @@ class Helpers():
             setattr(self.bot, f'_{k}s', result)
         #print(getattr(self.bot, '_servers'))
 
+    async def get_record(self, model, id):
+        result = [x for x in getattr(self.bot,f'_{model}s') if x['id']==id]
+        if result:
+            return result[0]
+
+    async def get_obj(self, server, kind, key, value):
+        result = [x for x in getattr(server, f'{kind}s')
+                  if getattr(x, key)==value
+                  or value.lower() in getattr(x, key).lower()]
+        if result:
+            print(result[0].id)
+            return result[0].id
+        else:
+            return None
+
     async def struct(self, data):
         return Struct(data)
 
