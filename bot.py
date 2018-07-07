@@ -6,7 +6,7 @@ from pathlib import Path
 from discord.ext import commands
 from os import listdir
 from os.path import isfile, join
-from models import ServerTT2, Titanlord, UserTT2, db
+from models import Server, Titanlord, User, db
 
 class Struct(object):
     def __init__(self, **entries):
@@ -32,7 +32,31 @@ class Effribot(commands.Bot):
         self.description = "effrill3's custom bot"
         self.load_extensions()
         self.create_tables()
-        self.add_models([ServerTT2, Titanlord, UserTT2])
+        #self.add_models([Server, Titanlord, User])
+        self.load_records()
+        self._servers, self._users, self._titanlords = [], [], []
+
+    async def save_records(self):
+        for k,m in [('_servers',Server),('_titanlords',Titanlord),('_users',User)]:
+            data = [x.values() for x in self.getattr(k)]
+            with self.database.atomic():
+                for item in range(0, len(data), 100):
+                    m.insert_many(
+                        data[item:item+100], fields=fields
+                    ).on_conflict(
+                        conflict_target=[m.id],
+                        preserve=[m.id, m.create],
+                        update={m.config: item['config'].as_gzip()}
+                    ).execute()
+
+    def load_records(self):
+        for k,m in [('_servers',Server),('_titanlords',Titanlord),('_users',User)]:
+            result = [{
+                'id': i.id,
+                'config': self.helpers.struct(i.config) 
+            } for i in m.select()]
+            print(result)
+            setattr(self, k, result)
 
     def load_extensions(self):
         for extension in [
@@ -51,13 +75,13 @@ class Effribot(commands.Bot):
             with sqlite3.connect('data\\db.db') as conn:
                 pass
         with self.database:
-            self.database.create_tables([ServerTT2, Titanlord, UserTT2])
+            self.database.create_tables([Server, Titanlord, User])
         return
 
-    def add_models(self, models):
-        # print(self.database.__dir__())
-        self.models = Struct(**{str(model)[8:-1]: model for model in models})
-        return
+    # def add_models(self, models):
+    #     # print(self.database.__dir__())
+    #     self.models = Struct(**{str(model)[8:-1]: model for model in models})
+    #     return
 
     async def on_ready(self):
         print(f'Logged in as {bot.user.name}')
@@ -80,6 +104,16 @@ class Effribot(commands.Bot):
             bot._last_exception = message
             await ctx.bot.get_channel(462204160524288021).send(inline(message[0:1950]))
         return self
+
+    async def on_guild_join(self, guild):
+        await self.get_channel(462253601360969758).send(
+            f'Joined guild **{guild.name}** ({guild.id})'
+        )
+
+    async def on_guild_remove(self, guild):
+        await self.get_channel(462253601360969758).send(
+            f'Left guild **{guild.name}** ({guild.id})'
+        )
 
     def run(self):
         token = self.config['TOKEN']

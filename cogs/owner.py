@@ -231,6 +231,7 @@ class Owner:
     @commands.command(name="shutdown")
     @is_owner()
     async def _shutdown(self, ctx):
+        await self.bot.save_records()
         await self.bot.logout()
 
     @commands.command(name="restart")
