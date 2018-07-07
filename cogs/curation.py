@@ -74,7 +74,7 @@ class CurationCog():
 
     async def quote_react(self, reaction, user):
         m = reaction.message
-        if hasattr(m, 'guild'):
+        if hasattr(m, 'guild') and reaction.emoji == "⭐":
             g = await self.helpers.get_record('server', m.guild.id)
             u = user
             q = g['config'].chan_quotes
@@ -83,13 +83,12 @@ class CurationCog():
             is_mod = g['config'].role_moderator in u_roles
             is_cur = g['config'].role_curator in u_roles
             if is_admin or is_mod or is_curator:
-                if reaction.emoji == "⭐":
-                    a = m.author
-                    c = m.channel
-                    e = await self.helpers.build_embed(m.content, a.color)
-                    e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-                    e.add_field(name="In", value=f'<#{c.id}>')
-                    e.add_field(name="Author", value=f'<@{a.id}>')
+                a = m.author
+                c = m.channel
+                e = await self.helpers.build_embed(m.content, a.color)
+                e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+                e.add_field(name="In", value=f'<#{c.id}>')
+                e.add_field(name="Author", value=f'<@{a.id}>')
                 await self.bot.get_channel(q).send(embed=e)
 
 def setup(bot):
