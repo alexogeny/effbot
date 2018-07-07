@@ -71,7 +71,29 @@ class CurationCog():
                           ' meaning you can only send links or pictures.')
                     )
 
+
+    async def quote_react(self, reaction, user):
+        m = reaction.message
+        if hasattr(m, 'guild'):
+            g = await self.helpers.get_record('server', m.guild.id)
+            u = user
+            q = g['config'].chan_quotes
+            u_roles = [a.id for a in u.roles]
+            is_admin = g['config'].role_admin in u_roles
+            is_mod = g['config'].role_moderator in u_roles
+            is_cur = g['config'].role_curator in u_roles
+            if is_admin or is_mod or is_curator:
+                if reaction.emoji == "⭐":
+                    a = m.author
+                    c = m.channel
+                    e = await self.helpers.build_embed(m.content, a.color)
+                    e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+                    e.add_field(name="In", value=f'<#{c.id}>')
+                    e.add_field(name="Author", value=f'<@{a.id}>')
+                await self.bot.get_channel(q).send(embed=e)
+
 def setup(bot):
     cog = CurationCog(bot)
     bot.add_listener(cog.curate_channels, "on_message")
+    bot.add_listener(cog.quote_react, "on_reaction_add")
     bot.add_cog(cog)
