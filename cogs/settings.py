@@ -50,6 +50,12 @@ class SettingsCog():
                 await ctx.send('Sorry, I could not find a role with that name.')
             return
 
+        if key == 'modrole':
+            result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
+            if result:
+                setattr(g['config'], 'role_moderator', result)
+                await ctx.send(f'Set the {key}!')
+
         if key.startswith('log') and key[3:-1] in 'leave,join,message,moderation':
             result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
             if result:
