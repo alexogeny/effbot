@@ -39,6 +39,29 @@ class Helpers():
         )
         return embed
 
+    def save_records(self):
+        for k in self._models:
+            m = self._models[k]
+            data = [x for x in getattr(self.bot, f'_{k}s') if x['changed'] == True]
+            #print(data)
+            with self.bot.database.atomic():
+                for item in data:
+                    del item['changed']
+                    item['config'] = item['config'].as_gzip()
+                    item['update_'] = datetime.utcnow()
+                    #print(item)
+                    m.insert(**item).on_conflict_replace().execute()
+
+    def load_records(self, models):
+        setattr(self, '_models', models)
+        for k in models:
+            result = [{**i, **{
+                'changed': False, 'config': Struct(i['config']),
+                'id': int(i['id'])}
+            } for i in list(models[k].select().dicts())]
+            setattr(self.bot, f'_{k}s', result)
+        #print(getattr(self.bot, '_servers'))
+
     async def struct(self, data):
         return Struct(data)
 

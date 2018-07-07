@@ -157,6 +157,7 @@ class TitanLord():
         old_value = getattr(g['config'], key)
         if not value == old_value:
             setattr(g['config'], key, value)
+            g['changed']=True
             # output = dict(update=datetime.utcnow())
             # output[key] = value
             # with ctx.bot.database.connection_context():
@@ -165,6 +166,7 @@ class TitanLord():
             #     )
             #     qry.execute()
         # await ctx.send(g['config'].as_pretty())
+        print(g)
         embed = await self.bot.cogs['Helpers'].build_embed(ctx.message.guild.name,
                                             0xffffff)
         embed.add_field(name="Setting", value=key, inline=False)

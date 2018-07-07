@@ -231,8 +231,18 @@ class Owner:
     @commands.command(name="shutdown")
     @is_owner()
     async def _shutdown(self, ctx):
-        await self.bot.save_records()
+        self.bot.cogs['Helpers'].save_records()
         await self.bot.logout()
+
+    @commands.command(name="serverconfig")
+    @is_owner()
+    async def _serverconfig(self, ctx):
+        await ctx.send(ctx.guild.id)
+        #print(self.bot._servers)
+        #await ctx.send(ctx.bot._servers)
+        server = [s for s in ctx.bot._servers if s['id']==ctx.guild.id]
+        if server:
+            await ctx.send(server[0]['config'].as_pretty())
 
     @commands.command(name="restart")
     @is_owner()

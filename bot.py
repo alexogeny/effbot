@@ -32,31 +32,8 @@ class Effribot(commands.Bot):
         self.description = "effrill3's custom bot"
         self.load_extensions()
         self.create_tables()
-        #self.add_models([Server, Titanlord, User])
-        self.load_records()
-        self._servers, self._users, self._titanlords = [], [], []
-
-    async def save_records(self):
-        for k,m in [('_servers',Server),('_titanlords',Titanlord),('_users',User)]:
-            data = [x.values() for x in self.getattr(k)]
-            with self.database.atomic():
-                for item in range(0, len(data), 100):
-                    m.insert_many(
-                        data[item:item+100], fields=fields
-                    ).on_conflict(
-                        conflict_target=[m.id],
-                        preserve=[m.id, m.create],
-                        update={m.config: item['config'].as_gzip()}
-                    ).execute()
-
-    def load_records(self):
-        for k,m in [('_servers',Server),('_titanlords',Titanlord),('_users',User)]:
-            result = [{
-                'id': i.id,
-                'config': self.helpers.struct(i.config) 
-            } for i in m.select()]
-            print(result)
-            setattr(self, k, result)
+        self.cogs['Helpers'].load_records(dict(
+            server=Server, titanlord=Titanlord, user=User))
 
     def load_extensions(self):
         for extension in [
