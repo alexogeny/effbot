@@ -174,6 +174,11 @@ class Owner:
             await ctx.send("All cogs are now unloaded.")
 
     @is_owner()
+    @commands.command(name="save", hidden=True)
+    async def _save(self, ctx):
+        self.bot.cogs['Helpers'].save_records()
+
+    @is_owner()
     @commands.command(name="reload")
     async def _reload(self, ctx, *, cog_name: str):
         """Reloads a cog

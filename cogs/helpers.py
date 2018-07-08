@@ -40,10 +40,9 @@ class Helpers():
         return embed
 
     def save_records(self):
-        print(self.bot.cogs['Helpers'])
         for k in self.bot._models:
             m = self.bot._models[k]
-            data = [x for x in getattr(self.bot, f'_{k}s') if x.get('changed',True) == True]
+            data = [x for x in getattr(self.bot, f'_{k}s')]
             #print(data)
             with self.bot.database.atomic():
                 for item in data:
@@ -58,10 +57,12 @@ class Helpers():
     def load_records(self, models):
         setattr(self.bot, '_models', models)
         for k in models:
-            result = [{**i, **{
+            result = [i for i in list(models[k].select().dicts())]
+            result = [{
                 'changed': False, 'config': Struct(i['config']),
-                'id': int(i['id'])}
-            } for i in list(models[k].select().dicts())]
+                'id': int(i['id']), 'create_': i['create_'],
+                'update_': i['update_']} for i in result]
+            print(result)
             setattr(self.bot, f'_{k}s', result)
         #print(getattr(self.bot, '_servers'))
 
