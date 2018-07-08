@@ -42,11 +42,12 @@ class Helpers():
     def save_records(self):
         for k in self.bot._models:
             m = self.bot._models[k]
-            data = [x for x in getattr(self.bot, f'_{k}s') if x['changed'] == True]
+            data = [x for x in getattr(self.bot, f'_{k}s') if x.get('changed',True) == True]
             #print(data)
             with self.bot.database.atomic():
                 for item in data:
-                    del item['changed']
+                    if item.get('changed',False):
+                        del item['changed']
                     item['config'] = item['config'].as_gzip()
                     item['update_'] = datetime.utcnow()
                     #print(item)
@@ -64,20 +65,20 @@ class Helpers():
 
     async def get_record(self, model, id):
         result = [x for x in getattr(self.bot,f'_{model}s') if x['id']==id]
-        print(result)
+        #print(result)
         if len(result) > 0:
             return result[0]
         else:
             if model == 'user':
                 
-                print(f'add user {id}')
+                #print(f'add user {id}')
                 u = {'id': id}
-                print(u)
+                #print(u)
                 conf = await self.spawn_config('user')
-                print(conf.as_string())
+                #print(conf.as_string())
                 u['config'] = conf
                 self.bot._users.append(u)
-                print(u)
+                #print(u)
                 return u
             elif model == 'server':
                 g = {'id': id}
