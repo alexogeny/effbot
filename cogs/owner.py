@@ -98,7 +98,7 @@ class Owner:
 
     def __init__(self, bot):
         self.bot = bot
-
+        self.helpers = self.bot.get_cog('Helpers')
 
     @commands.command()
     @is_owner()
@@ -176,7 +176,7 @@ class Owner:
     @is_owner()
     @commands.command(name="save", hidden=True)
     async def _save(self, ctx):
-        self.bot.cogs['Helpers'].save_records()
+        self.helpers.save_records()
 
     @is_owner()
     @commands.command(name="reload")
@@ -236,7 +236,7 @@ class Owner:
     @commands.command(name="shutdown")
     @is_owner()
     async def _shutdown(self, ctx):
-        self.bot.cogs['Helpers'].save_records()
+        self.helpers.save_records()
         await self.bot.logout()
 
     @commands.command(name="serverconfig")
@@ -245,7 +245,7 @@ class Owner:
         # await ctx.send(ctx.guild.id)
         #print(self.bot._servers)
         #await ctx.send(ctx.bot._servers)
-        server = await self.bot.cogs['Helpers'].get_record('server', ctx.guild.id)
+        server = await self.helpers.get_record('server', ctx.guild.id)
         # server = [s for s in ctx.bot._servers if s['id']==ctx.guild.id]
         if server:
             for page in pagify(server['config'].as_pretty(), [" "], shorten_by=16):
@@ -254,11 +254,11 @@ class Owner:
     @commands.command(name='userconfig', visible=False, no_pm=True)
     @is_owner()
     async def _userconfig(self, ctx, user: str):
-        user = await self.bot.cogs['Helpers'].get_obj(
+        user = await self.helpers.get_obj(
             ctx.message.guild, 'member', 'name', user
         )
         if not user or type(user) == int:
-            user = await self.bot.cogs['Helpers'].get_record('user', user)
+            user = await self.helpers.get_record('user', user)
         if user:
             #print(user['config'])
             await ctx.send(user['config'].as_pretty())

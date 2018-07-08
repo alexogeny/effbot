@@ -3,7 +3,10 @@ from discord.ext import commands
 from datetime import datetime
 import gzip
 from json import dumps, loads
-
+from copy import deepcopy
+import asyncio
+import time
+import os
 
 class Struct:
     def __init__(self, data):
@@ -27,6 +30,7 @@ class Struct:
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
+        self.last_save = int(time.time())
 
     async def build_embed(self, description, colour):
         embed = discord.Embed(
@@ -39,16 +43,20 @@ class Helpers():
         )
         return embed
 
+    async def timer_save(self):
+        while self is self.bot.get_cog('Helpers'):
+            if int(time.time()) - self.last_save >= 299:
+                self.save_records()
+            await asyncio.sleep(300)
+
     def save_records(self):
         for k in self.bot._models:
             m = self.bot._models[k]
-            data = [x for x in getattr(self.bot, f'_{k}s')]
+            data = [deepcopy(x) for x in getattr(self.bot, f'_{k}s')]
             #print(data)
             with self.bot.database.atomic():
                 for item in data:
-                    if item.get('changed',False):
-                        del item['changed']
-                    print(item['config'])
+                    print(item)
                     item['config'] = item['config'].as_gzip()
                     item['update_'] = datetime.utcnow()
                     #print(item)
@@ -167,4 +175,6 @@ class Helpers():
 
 def setup(bot):
     cog = Helpers(bot)
+    loop = asyncio.get_event_loop()
+    loop.create_task(cog.timer_save())
     bot.add_cog(cog)
