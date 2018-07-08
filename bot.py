@@ -36,6 +36,7 @@ class Effribot(commands.Bot):
             server=Server, titanlord=Titanlord, user=User))
 
     def load_extensions(self):
+        self.load_extension('cogs.helpers')
         for extension in [
             f.replace('.py', '') for f in listdir(self.config['COGS_DIR'])
             if isfile(join(self.config['COGS_DIR'], f))]:

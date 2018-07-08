@@ -10,6 +10,7 @@ class LevelsCog():
     def __init__(self, bot):
         
         self.bot = bot
+        self.helpers = self.bot.get_cog('Helpers')
         self.xp_unit = 11
 
     @commands.group(name="leaderboard", aliases=['lb'], no_pm=True,
@@ -23,14 +24,14 @@ class LevelsCog():
         elif location == 'here':
             
             m = ctx.message
-            g = await self.bot.cogs['Helpers'].get_record('server', m.guild.id)
+            g = await self.helpers.get_record('server', m.guild.id)
             location = m.guild.name
             top10 = sorted(g['config'].xp, key=lambda u: u['xp'])[::-1][0:10]
             ids = [(u['id'], u['xp']) for u in top10]
         top10n = [ctx.guild.get_member(n['id']) for n in top10]
         top10 = '\n'.join([f'{i+1}. {top10n[i].name}#{top10n[i].discriminator}: **{u[1]}xp**'
                            for i,u in enumerate(ids)])
-        e = await self.bot.cogs['Helpers'].build_embed(top10, 0xffffff)
+        e = await self.helpers.build_embed(top10, 0xffffff)
         if location == 'Global':
             e.set_author(name=f'Leaderboard: {location}',
                          icon_url='https://i.imgur.com/q2I08K7.png')
@@ -43,12 +44,12 @@ class LevelsCog():
         m = message
         a = m.author
         if hasattr(m, 'guild') and len(message.content) >= 10 and not a.bot:
-            u = await self.bot.cogs['Helpers'].get_record('user', m.author.id)
+            u = await self.helpers.get_record('user', m.author.id)
             c = u['config']
             now = datetime.utcnow().timestamp()
             if not c.last_xp or now - c.last_xp >= 25:
                 xp = self.xp_unit + rndchoice([1,2,2,2,2,2,3,3,4,3,2,2,4,15])
-                g = await self.bot.cogs['Helpers'].get_record('server', m.guild.id)
+                g = await self.helpers.get_record('server', m.guild.id)
                 g = g['config']
                 c.last_xp = now
                 c.xp += xp
@@ -71,6 +72,6 @@ def setup(bot):
 #     bot.add_listener(cog.curate_channels, "on_message")
 #     bot.add_listener(cog.quote_react, "on_reaction_add")
 #     bot.add_cog(cog)
-# await self.bot.cogs['Helpers'].get_obj(
+# await self.helpers.get_obj(
 #                     ctx.guild, 'channel', 'name', value
 #                 )

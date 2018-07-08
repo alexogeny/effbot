@@ -226,7 +226,7 @@ class Owner:
                          ", ".join(sorted(unloaded)))
                )
         for page in pagify(msg, [" "], shorten_by=16):
-            await ctx.send(box(page.lstrip(" "), lang="diff"))
+            await ctx.send(box("diff", page.lstrip(" ")))
 
     @commands.command(name="shutdown")
     @is_owner()
@@ -243,7 +243,8 @@ class Owner:
         server = await self.bot.cogs['Helpers'].get_record('server', ctx.guild.id)
         # server = [s for s in ctx.bot._servers if s['id']==ctx.guild.id]
         if server:
-            await ctx.send(server['config'].as_pretty())
+            for page in pagify(server['config'].as_pretty(), [" "], shorten_by=16):
+                await ctx.send(box("json", page.lstrip(" ")))
 
     @commands.command(name='userconfig', visible=False, no_pm=True)
     @is_owner()

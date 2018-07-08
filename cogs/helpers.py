@@ -19,7 +19,7 @@ class Struct:
     def as_string(self):
         return dumps(self.__json__(), separators=(',', ':'))
     def as_pretty(self):
-        return '```json\n{}\n```'.format(dumps(self.__json__(), indent=4))
+        return '{}'.format(dumps(self.__json__(), indent=4))
     def as_gzip(self):
         return gzip.compress(self.as_string().encode('utf-8'))
 
@@ -40,6 +40,7 @@ class Helpers():
         return embed
 
     def save_records(self):
+        print(self.bot.cogs['Helpers'])
         for k in self.bot._models:
             m = self.bot._models[k]
             data = [x for x in getattr(self.bot, f'_{k}s') if x.get('changed',True) == True]
@@ -48,6 +49,7 @@ class Helpers():
                 for item in data:
                     if item.get('changed',False):
                         del item['changed']
+                    print(item['config'])
                     item['config'] = item['config'].as_gzip()
                     item['update_'] = datetime.utcnow()
                     #print(item)

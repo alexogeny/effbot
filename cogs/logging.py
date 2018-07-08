@@ -96,11 +96,8 @@ class LogCog():
         if log and log['config'].log_messages:
             embed = await self.helpers.build_embed(None, 0x36ce31)
             embed.set_thumbnail(url='https://discordapp.com/assets/b1868d829b37f0a81533ededb9ffe5f4.svg')
-            #embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Pin/unpin', inline=False)
             embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
-            #embed.add_field(name="Author", value=f'<@{a.id}> ({a.id})', inline=False)
-            #embed.add_field(name="Content", value=f'```\n{m.content}\n```')
             
             await self.bot.get_channel(log['config'].log_messages).send(embed=embed)
 
