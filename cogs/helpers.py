@@ -66,6 +66,19 @@ class Helpers():
         result = [x for x in getattr(self.bot,f'_{model}s') if x['id']==id]
         if result:
             return result[0]
+        else:
+            if 'model' == 'user':
+                u = {'id': id}
+                conf = await self.spawn_config('user')
+                u['config'] = conf
+                self.bot._users.append(u)
+                return u
+            elif 'model' == 'server':
+                g = {'id': id}
+                conf = await self.spawn_config('server')
+                g['config'] = conf
+                self.bot._servers.append(g)
+                return g
 
     async def get_obj(self, server, kind, key, value):
         result = [x for x in getattr(server, f'{kind}s')
@@ -130,6 +143,7 @@ class Helpers():
                 tt_taps=0,
                 tt_playtime='',
                 xp=0,
+                last_xp=0,
                 level=0,
                 weekly=0,
                 last_reset='',

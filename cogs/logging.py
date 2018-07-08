@@ -87,6 +87,7 @@ class LogCog():
             embed.add_field(name="Content before",
                             value=f'```\n{m1.content[0:800]}\n```', inline=False)
             embed.add_field(name="Content after", value=f'```\n{m2.content[0:800]}\n```')
+            embed.add_field(name='Jumplink', value=f'[Click here to go there]({m2.jump_url})', inline=False)
             await self.bot.get_channel(log['config'].log_messages).send(embed=embed)
 
     async def log_pin(self, channel, last_pin):

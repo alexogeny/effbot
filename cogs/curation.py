@@ -26,7 +26,7 @@ class CurationCog():
     def __init__(self, bot):
         
         self.bot = bot
-        self.helpers = self.bot.cogs['Helpers']
+        #self.helpers = self.bot.cogs['Helpers']
 
     @commands.group(pass_context=True, name="curation")
     async def curation(self, ctx):
@@ -36,18 +36,18 @@ class CurationCog():
     @is_curator_or_higher()
     async def quote(self, ctx, channel: str, message_id: str):
         m = ctx.message
-        g = await self.helpers.get_record('server', m.guild.id)
+        g = await self.bot.cogs['Helpers'].get_record('server', m.guild.id)
         q = g['config'].chan_quotes
         if not q:
             await ctx.send('Oops, ask an admin to set up a quotes channel')
             return
-        result = await self.helpers.get_obj(m.guild, 'channel', 'name', channel)
+        result = await self.bot.cogs['Helpers'].get_obj(m.guild, 'channel', 'name', channel)
         if result and message_id.isdigit():
             c = self.bot.get_channel(result)
             message = await c.get_message(message_id)
             if message:
                 a = message.author
-                embed = await self.helpers.build_embed(message.content, a.color)
+                embed = await self.bot.cogs['Helpers'].build_embed(message.content, a.color)
                 embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
                 embed.add_field(name="In", value=f'<#{c.id}>')
                 embed.add_field(name="Author", value=f'<@{a.id}>')
@@ -62,7 +62,7 @@ class CurationCog():
         if hasattr(message, 'guild'):
             m = message
             c, guild, a = m.channel, m.guild, m.author
-            g = await self.helpers.get_record('server', guild.id)
+            g = await self.bot.cogs['Helpers'].get_record('server', guild.id)
             if g and c.id in g['config'].chan_curated:
                 if not m.embeds and not m.attachments:
                     await m.delete()
@@ -75,7 +75,7 @@ class CurationCog():
     async def quote_react(self, reaction, user):
         m = reaction.message
         if hasattr(m, 'guild') and reaction.emoji == "⭐":
-            g = await self.helpers.get_record('server', m.guild.id)
+            g = await self.bot.cogs['Helpers'].get_record('server', m.guild.id)
             u = user
             q = g['config'].chan_quotes
             u_roles = [a.id for a in u.roles]
@@ -85,7 +85,7 @@ class CurationCog():
             if is_admin or is_mod or is_curator:
                 a = m.author
                 c = m.channel
-                e = await self.helpers.build_embed(m.content, a.color)
+                e = await self.bot.cogs['Helpers'].build_embed(m.content, a.color)
                 e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
                 e.add_field(name="In", value=f'<#{c.id}>')
                 e.add_field(name="Author", value=f'<@{a.id}>')
