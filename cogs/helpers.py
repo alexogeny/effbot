@@ -40,8 +40,8 @@ class Helpers():
         return embed
 
     def save_records(self):
-        for k in self._models:
-            m = self._models[k]
+        for k in self.bot._models:
+            m = self.bot._models[k]
             data = [x for x in getattr(self.bot, f'_{k}s') if x['changed'] == True]
             #print(data)
             with self.bot.database.atomic():
@@ -53,7 +53,7 @@ class Helpers():
                     m.insert(**item).on_conflict_replace().execute()
 
     def load_records(self, models):
-        setattr(self, '_models', models)
+        setattr(self.bot, '_models', models)
         for k in models:
             result = [{**i, **{
                 'changed': False, 'config': Struct(i['config']),
@@ -64,16 +64,22 @@ class Helpers():
 
     async def get_record(self, model, id):
         result = [x for x in getattr(self.bot,f'_{model}s') if x['id']==id]
-        if result:
+        print(result)
+        if len(result) > 0:
             return result[0]
         else:
-            if 'model' == 'user':
+            if model == 'user':
+                
+                print(f'add user {id}')
                 u = {'id': id}
+                print(u)
                 conf = await self.spawn_config('user')
+                print(conf.as_string())
                 u['config'] = conf
                 self.bot._users.append(u)
+                print(u)
                 return u
-            elif 'model' == 'server':
+            elif model == 'server':
                 g = {'id': id}
                 conf = await self.spawn_config('server')
                 g['config'] = conf

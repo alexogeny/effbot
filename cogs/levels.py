@@ -10,7 +10,7 @@ class LevelsCog():
     def __init__(self, bot):
         
         self.bot = bot
-        self.helpers = self.bot.cogs['Helpers']
+        #self.helpers = self.bot.cogs['Helpers']
 
     # @commands.group(pass_context=True, name="curation")
     # async def curation(self, ctx):
@@ -56,12 +56,18 @@ class LevelsCog():
     #                 )
 
     async def add_xp(self, message):
+        #print(self.bot.cogs)
         m = message
-        if hasattr(m, 'guild') and len(message.content) >= 10:
-            u = await self.helpers.get_record('user', m.author.id)
+        a = m.author
+        if hasattr(m, 'guild') and len(message.content) >= 10 and not a.bot:
+            
+            u = await self.bot.cogs['Helpers'].get_record('user', m.author.id)
+            
             c = u['config']
             now = datetime.utcnow().timestamp()
+            #print(now - c.last_xp)
             if not c.last_xp or now - c.last_xp >= 10:
+                #print('triggered xp')
                 c.last_xp = now
                 c.xp += 1
 

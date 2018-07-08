@@ -245,15 +245,16 @@ class Owner:
         if server:
             await ctx.send(server['config'].as_pretty())
 
-    @commands.command(name='userconfig', visible=False)
+    @commands.command(name='userconfig', visible=False, no_pm=True)
     @is_owner()
     async def _userconfig(self, ctx, user: str):
         user = await self.bot.cogs['Helpers'].get_obj(
-            ctx.guild, 'member', 'name', value
+            ctx.message.guild, 'member', 'name', user
         )
-        if not user:
+        if not user or type(user) == int:
             user = await self.bot.cogs['Helpers'].get_record('user', user)
         if user:
+            #print(user['config'])
             await ctx.send(user['config'].as_pretty())
 
     @commands.command(name="restart")
