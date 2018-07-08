@@ -56,10 +56,10 @@ class SettingsCog():
                 setattr(g['config'], 'role_moderator', result)
                 await ctx.send(f'Set the {key}!')
 
-        if key.startswith('log') and key[3:-1] in 'leave,join,message,moderation':
+        if key.startswith('log') and key[3:] in 'leaves,joins,messages,moderations':
             result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
             if result:
-                setattr(g['config'], f'log_{key[3:-1]}s', result)
+                setattr(g['config'], f'log_{key[3:-1]}', result)
                 await ctx.send(f'Set the {key} setting to <#{result}>')
 
         if key == 'curated':

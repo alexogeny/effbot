@@ -10,20 +10,33 @@ class LevelsCog():
     def __init__(self, bot):
         
         self.bot = bot
-        #self.helpers = self.bot.cogs['Helpers']
+        self.xp_unit = 11
 
-    @commands.group(name="leaderboard", aliases=['lb'], invoke_without_command=True)
-    async def _leaderboard(self, ctx):
-        print('triggered lb')
-        top10 = sorted(self.bot._users, key=lambda u: u['config'].xp)[::-1][0:10]
-        print(top10)
+    @commands.group(name="leaderboard", aliases=['lb'], no_pm=True,
+                    invoke_without_command=True)
+    async def _leaderboard(self, ctx, location: str='all'):
+        if location=='all':
+            location = 'Global'
+            top10 = sorted(self.bot._users,
+                           key=lambda u: u['config'].xp)[::-1][0:10]
+            ids = [(u['id'], u['config'].xp) for u in top10]
+        elif location == 'here':
+            
+            m = ctx.message
+            g = await self.bot.cogs['Helpers'].get_record('server', m.guild.id)
+            location = m.guild.name
+            top10 = sorted(g['config'].xp, key=lambda u: u['xp'])[::-1][0:10]
+            ids = [(u['id'], u['xp']) for u in top10]
         top10n = [ctx.guild.get_member(n['id']) for n in top10]
-        print(top10n)
-
-        top10 = '\n'.join([f'{i+1}. {top10n[i].name}#{top10n[i].discriminator}: **{u["config"].xp}xp**'
-                           for i,u in enumerate(top10)])
+        top10 = '\n'.join([f'{i+1}. {top10n[i].name}#{top10n[i].discriminator}: **{u[1]}xp**'
+                           for i,u in enumerate(ids)])
         e = await self.bot.cogs['Helpers'].build_embed(top10, 0xffffff)
-        e.set_author(name='Global all-time leaderboard')
+        if location == 'Global':
+            e.set_author(name=f'Leaderboard: {location}',
+                         icon_url='https://i.imgur.com/q2I08K7.png')
+        else:
+            e.set_author(name=f'Leaderboard: {location}',
+                         icon_url=m.guild.icon_url_as(format='jpeg'))
         await ctx.send(embed=e)
 
     async def add_xp(self, message):
@@ -33,9 +46,21 @@ class LevelsCog():
             u = await self.bot.cogs['Helpers'].get_record('user', m.author.id)
             c = u['config']
             now = datetime.utcnow().timestamp()
-            if not c.last_xp or now - c.last_xp >= 10:
+            if not c.last_xp or now - c.last_xp >= 25:
+                xp = self.xp_unit + rndchoice([1,2,2,2,2,2,3,3,4,3,2,2,4,15])
+                g = await self.bot.cogs['Helpers'].get_record('server', m.guild.id)
+                g = g['config']
                 c.last_xp = now
-                c.xp += 1
+                c.xp += xp
+                if not hasattr(g, 'xp'):
+                    setattr(g, 'xp', [])
+                if not [x for x in g.xp if x['id']==m.author.id]:
+                    g.xp.append({'id': m.author.id, 'xp': 0})
+                u = [x for x in g.xp if x['id']==m.author.id][0]
+                # print(u)
+                u['xp'] = u['xp'] + xp
+
+
 
 def setup(bot):
     cog = LevelsCog(bot)
