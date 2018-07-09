@@ -36,9 +36,10 @@ class LogCog():
     async def log_join(self, member):
         log = await self.helpers.get_record('server', member.guild.id)
         if log and log['config'].log_join:
+            await asyncio.sleep(2)
             a = member
             embed = await self.helpers.build_embed(None, 0x36ce31)
-            embed.set_thumbnail(url='https://discordapp.com/assets/b1868d829b37f0a81533ededb9ffe5f4.svg')
+            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Join', inline=False)
             embed.add_field(name="User", value=f'<@{a.id}> ({a.id})', inline=False)
@@ -50,7 +51,7 @@ class LogCog():
         if log and log['config'].log_leave:
             a = member
             embed = await self.helpers.build_embed(None, 0xff0000)
-            embed.set_thumbnail(url='https://discordapp.com/assets/b1868d829b37f0a81533ededb9ffe5f4.svg')
+            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Leave', inline=False)
             embed.add_field(name="User", value=f'<@{a.id}> ({a.id})', inline=False)

@@ -21,18 +21,20 @@ class LevelsCog():
         if location=='all':
             location = 'Global'
             top10 = sorted(self.bot._users,
-                           key=lambda u: u['config'].xp)[::-1][0:10]
-            ids = [(u['id'], u['config'].xp) for u in top10]
+                           key=lambda u: u['config'].xp, reverse=True)
+            myrank = [top10.index(x) for x in top10 if x['id']==ctx.author.id][0]
+            myxp = [u['config'].xp for u in top10 if u['id']==ctx.author.id][0]
+            ids = [(u['id'], u['config'].xp) for u in top10[0:10]]
+
         elif location == 'here':
             
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)
             location = m.guild.name
-            top10 = sorted(g['config'].xp, key=lambda u: u['xp'])[::-1][0:10]
-            ids = [(u['id'], u['xp']) for u in top10]
-        # print(len(ids))
-        # print(len([m for m in self.bot.get_all_members()]))
-        # print([i[1] for i in ids])
+            top10 = sorted(g['config'].xp, key=lambda u: u['xp'], reverse=True)
+            myrank = [top10.index(x) for x in top10 if x['id']==ctx.author.id][0]
+            myxp = [u['xp'] for u in top10 if u['id']==ctx.author.id][0]
+            ids = [(u['id'], u['xp']) for u in top10[0:10]]
         all_users = {m.id: m for m
                      in self.bot.get_all_members()
                      if m.id in [i[0] for i in ids]}
@@ -44,9 +46,11 @@ class LevelsCog():
         if location == 'Global':
             e.set_author(name=f'Leaderboard: {location}',
                          icon_url='https://i.imgur.com/q2I08K7.png')
+
         else:
             e.set_author(name=f'Leaderboard: {location}',
                          icon_url=m.guild.icon_url_as(format='jpeg'))
+        e.add_field(name="Me", value=f"{myrank+1}.  **{myxp}xp**.")
         await ctx.send(embed=e)
 
     async def add_xp(self, message):
