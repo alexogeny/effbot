@@ -30,8 +30,15 @@ class LevelsCog():
             location = m.guild.name
             top10 = sorted(g['config'].xp, key=lambda u: u['xp'])[::-1][0:10]
             ids = [(u['id'], u['xp']) for u in top10]
-        top10n = [ctx.guild.get_member(n['id']) for n in top10]
-        top10 = '\n'.join([f'{i+1}. {top10n[i].name}#{top10n[i].discriminator}: **{u[1]}xp**'
+        # print(len(ids))
+        # print(len([m for m in self.bot.get_all_members()]))
+        # print([i[1] for i in ids])
+        all_users = {m.id: m for m
+                     in self.bot.get_all_members()
+                     if m.id in [i[0] for i in ids]}
+        
+        top10n = all_users
+        top10 = '\n'.join([f'{i+1}. {top10n[u[0]].name}#{top10n[u[0]].discriminator}: **{ids[i][1]}xp**'
                            for i,u in enumerate(ids)])
         e = await self.helpers.build_embed(top10, 0xffffff)
         if location == 'Global':
