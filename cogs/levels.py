@@ -15,15 +15,20 @@ class LevelsCog():
         self.xp_unit = 11
         self.is_command = re.compile(r'^[A-z]{0,1}\W{1,2}\w+')
 
-    @commands.group(name="leaderboard", aliases=['lb'], no_pm=True,
-                    invoke_without_command=True)
+    async def _lb_get_rank(self, userid, idlist):
+        rank = [idlist.index(user)
+                for user in idlist
+                if user['id'] == userid][0]
+        return rank
+
+    @commands.command(name="leaderboard", aliases=['lb'], no_pm=True)
     async def _leaderboard(self, ctx, location: str='all'):
         if location=='all':
             location = 'Global'
             top10 = sorted(self.bot._users,
                            key=lambda u: u['config'].xp, reverse=True)
-            myrank = [top10.index(x) for x in top10 if x['id']==ctx.author.id][0]
-            myxp = [u['config'].xp for u in top10 if u['id']==ctx.author.id][0]
+            myrank = await self._lb_get_rank(ctx.author.id, top10)
+            myxp = top10[myrank]['config'].xp
             ids = [(u['id'], u['config'].xp) for u in top10[0:10]]
 
         elif location == 'here':
@@ -32,8 +37,8 @@ class LevelsCog():
             g = await self.helpers.get_record('server', m.guild.id)
             location = m.guild.name
             top10 = sorted(g['config'].xp, key=lambda u: u['xp'], reverse=True)
-            myrank = [top10.index(x) for x in top10 if x['id']==ctx.author.id][0]
-            myxp = [u['xp'] for u in top10 if u['id']==ctx.author.id][0]
+            myrank = await self._lb_get_rank(ctx.author.id, top10)
+            myxp = top10[myrank]['xp']
             ids = [(u['id'], u['xp']) for u in top10[0:10]]
         all_users = {m.id: m for m
                      in self.bot.get_all_members()
@@ -52,6 +57,33 @@ class LevelsCog():
                          icon_url=m.guild.icon_url_as(format='jpeg'))
         e.add_field(name="Me", value=f"{myrank+1}.  **{myxp}xp**.")
         await ctx.send(embed=e)
+
+    @commands.command(name="rank", no_pm=True)
+    async def _rank(self, ctx, member: str=None):
+        m = ctx.message
+        a = m.author
+        if not member:
+            u = a.id
+        elif member and not member.isnumeric():
+            u = await self.helpers.get_obj(m.guild, 'member', 'name', member)
+        u = self.bot.get_user(u)
+        print(u)
+        g = await self.helpers.get_record('server', m.guild.id)
+        u_global = sorted(self.bot._users,
+                           key=lambda u: u['config'].xp, reverse=True)
+        u_local = sorted(g['config'].xp, key=lambda u: u['xp'], reverse=True)
+        rank_global = await self._lb_get_rank(u.id, u_global)
+        xp_global = u_global[rank_global]['config'].xp
+        rank_local = await self._lb_get_rank(u.id, u_local)
+        xp_local = u_local[rank_local]['xp']
+        embed = await self.helpers.build_embed(None, 0x36ce31)
+        embed.set_thumbnail(url=u.avatar_url_as(format='jpeg'))
+        embed.set_author(name=f'Rank: {u.name}#{u.discriminator}', icon_url=u.avatar_url_as(format='jpeg'))
+        embed.add_field(name=m.guild.name, value=f'{rank_local+1}. **{xp_local}**xp')
+        embed.add_field(name="Global", value=f'{rank_global+1}. **{xp_global}**xp')
+        await ctx.send(embed=embed)
+
+
 
     async def add_xp(self, message):
         m = message
