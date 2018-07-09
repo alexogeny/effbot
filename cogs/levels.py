@@ -4,6 +4,7 @@ import asyncio
 from discord.ext import commands
 from random import choice as rndchoice
 from datetime import datetime
+import re
 
 class LevelsCog():
     """docstring for LevelsCog"""
@@ -12,6 +13,7 @@ class LevelsCog():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
         self.xp_unit = 11
+        self.is_command = re.compile(r'^[A-z]{0,1}\W{1,2}\w+')
 
     @commands.group(name="leaderboard", aliases=['lb'], no_pm=True,
                     invoke_without_command=True)
@@ -44,22 +46,23 @@ class LevelsCog():
         m = message
         a = m.author
         if hasattr(m, 'guild') and len(message.content) >= 10 and not a.bot:
-            u = await self.helpers.get_record('user', m.author.id)
-            c = u['config']
-            now = datetime.utcnow().timestamp()
-            if not c.last_xp or now - c.last_xp >= 25:
-                xp = self.xp_unit + rndchoice([1,2,2,2,2,2,3,3,4,3,2,2,4,15])
-                g = await self.helpers.get_record('server', m.guild.id)
-                g = g['config']
-                c.last_xp = now
-                c.xp += xp
-                if not hasattr(g, 'xp'):
-                    setattr(g, 'xp', [])
-                if not [x for x in g.xp if x['id']==m.author.id]:
-                    g.xp.append({'id': m.author.id, 'xp': 0})
-                u = [x for x in g.xp if x['id']==m.author.id][0]
-                # print(u)
-                u['xp'] = u['xp'] + xp
+            if not self.is_command.match(message.content):
+                u = await self.helpers.get_record('user', m.author.id)
+                c = u['config']
+                now = datetime.utcnow().timestamp()
+                if not c.last_xp or now - c.last_xp >= 25:
+                    xp = self.xp_unit + rndchoice([1,2,2,2,2,2,3,3,4,3,2,2,4,15])
+                    g = await self.helpers.get_record('server', m.guild.id)
+                    g = g['config']
+                    c.last_xp = now
+                    c.xp += xp
+                    if not hasattr(g, 'xp'):
+                        setattr(g, 'xp', [])
+                    if not [x for x in g.xp if x['id']==m.author.id]:
+                        g.xp.append({'id': m.author.id, 'xp': 0})
+                    u = [x for x in g.xp if x['id']==m.author.id][0]
+                    # print(u)
+                    u['xp'] = u['xp'] + xp
 
 
 
