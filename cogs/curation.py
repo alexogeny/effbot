@@ -10,6 +10,8 @@ class RestrictedBlackListError(Exception):
     pass
 class RestrictedDisabledError(Exception):
     pass
+class RestrictedRestrictError(Exception):
+    pass
 
 def is_curator_or_higher():
     async def predicate(ctx):
@@ -99,6 +101,46 @@ class CurationCog():
                                             if not r['command'] == command]
                 await ctx.send(f'Command `{command}` was enabled.')
 
+    @commands.command(name='restrict', no_pm=True)
+    @is_curator_or_higher()
+    async def restrict(self, ctx, command: str, role: str):
+        m = ctx.message
+        a = m.author
+        g = await self.helpers.get_record('server', m.guild.id)
+        if not hasattr(g['config'], 'restrictions'):
+            setattr(g['config'], 'restrictions', [])
+        if command.strip().lower() in self.bot.all_commands:
+            c = self.bot.all_commands[command.strip().lower()].name
+            roles = [r for r in m.guild.roles]
+            if not role.isnumeric():
+                role = await self.helpers.get_obj(m.guild, 'role', 'name', role)
+            if not role:
+                await ctx.send(f'Could not find role `{role}`')
+                return
+            elif int(role) not in [r.id for r in roles]:
+                await ctx.send(f'`{role}` is not a valid role id')
+                return
+            role = [r for r in roles if r.id == role][0]
+        
+            _r = [r for r in g['config'].restrictions if r['command'] == c]
+            if len(_r) == 0:
+                g['config'].restrictions.append({'kind': 'restrict', 'channels':[role.id],
+                                             'command': c})
+                await ctx.send(f'`{c}` was restricted to `{role.name}`')
+
+    @commands.command(name='unrestrict', no_pm=True)
+    @is_curator_or_higher()
+    async def unrestrict(self, ctx, command: str):
+        m = ctx.message
+        a = m.author
+        g = await self.helpers.get_record('server', m.guild.id)
+        if not hasattr(g['config'], 'restrictions'):
+            setattr(g['config'], 'restrictions', [])
+        if command.strip().lower() in self.bot.all_commands:
+            g['config'].restrictions = [r for r in g['config'].restrictions
+                                        if not r['command'] == command]
+            await ctx.send(f'`{command}` no longer restricted')
+
     @commands.command(pass_context=True, name="quote")
     @is_curator_or_higher()
     async def quote(self, ctx, channel: str, message_id: str):
@@ -165,6 +207,8 @@ class CurationCog():
             raise RestrictedBlackListError
         elif kind == 'disable':
             raise RestrictedDisabledError
+        elif kind == 'restrict' and not [c for c in channel if c.id in channels]:
+            raise RestrictedRestrictError
     
     async def check_restrictions(self, ctx):
         if hasattr(ctx.message, 'guild'):
@@ -177,11 +221,12 @@ class CurationCog():
                 restricted = [r for r in g['config'].restrictions
                               if r['command']==c.name]
                 if len(restricted) > 0:
-                    
+                    chan = chan.id
                     r = restricted[0]
-                    #print(r)
+                    if r['kind'] == 'restrict':
+                        chan = m.author.roles
                     try:
-                        self.check_restricted(r['kind'], chan.id, r['channels'])
+                        self.check_restricted(r['kind'], chan, r['channels'])
                     except RestrictedBlackListError:
                         await ctx.send('Sorry, that command is restricted and '
                                        'cannot be used here.')
@@ -195,9 +240,12 @@ class CurationCog():
                         setattr(ctx, 'was_limited', True)
                         return False
                     except RestrictedDisabledError:
-                        #print(r)
-                        
                         await ctx.send(f'Sorry, `{c.name}` is disabled here.')
+                        setattr(ctx, 'was_limited', True)
+                        return False
+                    except RestrictedRestrictError:
+                        role = [_r for _r in m.guild.roles if _r.id == r["channels"][0]][0]
+                        await ctx.send(f'`{c.name}` is restricted to `{role.name}`')
                         setattr(ctx, 'was_limited', True)
                         return False
             return True
