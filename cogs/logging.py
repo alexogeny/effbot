@@ -36,8 +36,8 @@ class LogCog():
     async def log_join(self, member):
         log = await self.helpers.get_record('server', member.guild.id)
         if log and log['config'].log_join:
-            await asyncio.sleep(2)
-            a = member
+            # await asyncio.sleep(2)
+            a = self.bot.get_user(member.id)
             embed = await self.helpers.build_embed(None, 0x36ce31)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))

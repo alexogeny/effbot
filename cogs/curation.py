@@ -8,12 +8,13 @@ class RestrictedWhiteListError(Exception):
     pass
 class RestrictedBlackListError(Exception):
     pass
+class RestrictedDisabledError(Exception):
+    pass
 
 def is_curator_or_higher():
     async def predicate(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        #print([a.id for a in msg.author.roles])
         u_roles = [a.id for a in msg.author.roles]
         is_admin = g['config'].role_admin in u_roles
         is_mod = g['config'].role_moderator in u_roles
@@ -79,6 +80,25 @@ class CurationCog():
             g['config'].restrictions.append({'kind': 'bl', 'command': command,
                                    'channels': [c for c in chans]})
 
+    @commands.command(pass_context=True, name="disable", aliases=["enable"], no_pm=True)
+    @is_curator_or_higher()
+    async def disable(self, ctx, command: str):
+        m = ctx.message
+        g = await self.helpers.get_record('server', m.guild.id)
+        if not hasattr(g['config'], 'restrictions'):
+            setattr(g['config'], 'restrictions', [])
+        if command.strip().lower() in self.bot.all_commands:
+            command = self.bot.all_commands[command.strip().lower()].name
+            if len([r for r in g['config'].restrictions
+                   if r['command'] == command]) == 0:
+                g['config'].restrictions.append({'kind': 'disable', 'channels':[],
+                                                 'command': command})
+                await ctx.send(f'Command `{command}` was disabled.')
+            else:
+                g['config'].restrictions = [r for r in g['config'].restrictions
+                                            if not r['command'] == command]
+                await ctx.send(f'Command `{command}` was enabled.')
+
     @commands.command(pass_context=True, name="quote")
     @is_curator_or_higher()
     async def quote(self, ctx, channel: str, message_id: str):
@@ -143,6 +163,8 @@ class CurationCog():
             raise RestrictedWhiteListError
         elif kind == 'bl' and channel in channels:
             raise RestrictedBlackListError
+        elif kind == 'disable':
+            raise RestrictedDisabledError
     
     async def check_restrictions(self, ctx):
         if hasattr(ctx.message, 'guild'):
@@ -157,6 +179,7 @@ class CurationCog():
                 if len(restricted) > 0:
                     
                     r = restricted[0]
+                    #print(r)
                     try:
                         self.check_restricted(r['kind'], chan.id, r['channels'])
                     except RestrictedBlackListError:
@@ -169,6 +192,12 @@ class CurationCog():
                                        'can only be used in: {}.'.format(
                                         ', '.join([f'<#{c}>' for c in r['channels']])
                                        ))
+                        setattr(ctx, 'was_limited', True)
+                        return False
+                    except RestrictedDisabledError:
+                        #print(r)
+                        
+                        await ctx.send(f'Sorry, `{c.name}` is disabled here.')
                         setattr(ctx, 'was_limited', True)
                         return False
             return True
