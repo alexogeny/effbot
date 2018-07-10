@@ -5,7 +5,7 @@ from discord.ext import commands
 from random import choice as rndchoice
 
 def is_moderator_or_higher():
-    async def predicate(ctx):
+    async def _is_moderator_or_higher(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
         #print([a.id for a in msg.author.roles])
@@ -17,7 +17,7 @@ def is_moderator_or_higher():
         else:
             await ctx.send('You need to be moderator+ to use this command.')
             return False
-    return commands.check(predicate)
+    return commands.check(_is_moderator_or_higher)
 
 
 class ModerationCog():
@@ -27,9 +27,9 @@ class ModerationCog():
         self.bot = bot
         self.helpers = self.bot.cogs['Helpers']
 
-    @commands.command(no_pm=True, pass_context=True)
     @is_moderator_or_higher()
-    async def kick(self, ctx, user: str, *, reason: str = None):
+    @commands.command(no_pm=True, pass_context=True)
+    async def _kick(self, ctx, user: str, *, reason: str = None):
         """Kicks user."""
         author = ctx.message.author
         server = ctx.message.guild

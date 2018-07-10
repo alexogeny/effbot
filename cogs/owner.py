@@ -89,9 +89,9 @@ def escape_mass_mentions(text):
     return escape(text, mass_mentions=True)
 
 def is_owner():
-    async def predicate(ctx):
+    async def _is_owner(ctx):
         return ctx.author.id == 305879281580638228
-    return commands.check(predicate)
+    return commands.check(_is_owner)
 
 class Owner:
     """All owner-only commands that relate to debug bot operations."""

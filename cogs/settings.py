@@ -5,7 +5,7 @@ from discord.ext import commands
 from random import choice as rndchoice
 
 def is_admin_or_owner():
-    async def predicate(ctx):
+    async def _is_admin_or_owner(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
         print([a.id for a in msg.author.roles])
@@ -16,8 +16,7 @@ def is_admin_or_owner():
         elif g['config'].role_admin not in [a.id for a in msg.author.roles]:
             await ctx.send('You need to be a server admin in order to do that.')
             return False
-    return commands.check(predicate)
-
+    return commands.check(_is_admin_or_owner)
 
 class SettingsCog():
     """docstring for SettingsCog"""

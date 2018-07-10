@@ -14,19 +14,21 @@ class RestrictedRestrictError(Exception):
     pass
 
 def is_curator_or_higher():
-    async def predicate(ctx):
+    async def _is_moderator_or_higher(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
         u_roles = [a.id for a in msg.author.roles]
-        is_admin = g['config'].role_admin in u_roles
-        is_mod = g['config'].role_moderator in u_roles
-        is_cur = g['config'].role_curator in u_roles
-        if is_admin or is_mod or is_curator:
+        a,b,c=g['config'].role_admin,g['config'].role_moderator,g['config'].role_curator
+        is_admin = a and a in u_roles
+        is_mod = b and b in u_roles
+        is_cur = c and c in u_roles
+        if any([is_admin, is_mod, is_cur]):
             return True
         else:
             await ctx.send('You need to be curator+ in order to use this command.')
             return False
-    return commands.check(predicate)
+
+    return commands.check(_is_moderator_or_higher)
 
 
 class CurationCog():
@@ -36,12 +38,12 @@ class CurationCog():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    @commands.group(pass_context=True, name="curation")
-    async def curation(self, ctx):
-        pass
+    # @commands.group(pass_context=True, name="curation")
+    # async def curation(self, ctx):
+    #     pass
 
-    @commands.command(pass_context=True, name="whitelist", aliases=["wl"])
     @is_curator_or_higher()
+    @commands.command(pass_context=True, name="whitelist", aliases=["wl"])
     async def whitelist(self, ctx, command: str, channels: str=''):
         chans = channels.split(',')
         m = ctx.message
@@ -61,8 +63,8 @@ class CurationCog():
             g['config'].restrictions.append({'kind': 'wl', 'command': command,
                                    'channels': [c for c in chans]})
 
-    @commands.command(pass_context=True, name="blacklist", aliases=["bl"])
     @is_curator_or_higher()
+    @commands.command(pass_context=True, name="blacklist", aliases=["bl"])
     async def blacklist(self, ctx, command: str, channels: str=''):
         chans = channels.split(',')
         m = ctx.message
@@ -82,8 +84,8 @@ class CurationCog():
             g['config'].restrictions.append({'kind': 'bl', 'command': command,
                                    'channels': [c for c in chans]})
 
-    @commands.command(pass_context=True, name="disable", aliases=["enable"], no_pm=True)
     @is_curator_or_higher()
+    @commands.command(pass_context=True, name="disable", aliases=["enable"], no_pm=True)
     async def disable(self, ctx, command: str):
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
@@ -101,8 +103,8 @@ class CurationCog():
                                             if not r['command'] == command]
                 await ctx.send(f'Command `{command}` was enabled.')
 
-    @commands.command(name='restrict', no_pm=True)
     @is_curator_or_higher()
+    @commands.command(name='restrict', no_pm=True)
     async def restrict(self, ctx, command: str, role: str):
         m = ctx.message
         a = m.author
@@ -128,8 +130,8 @@ class CurationCog():
                                              'command': c})
                 await ctx.send(f'`{c}` was restricted to `{role.name}`')
 
-    @commands.command(name='unrestrict', no_pm=True)
     @is_curator_or_higher()
+    @commands.command(name='unrestrict', no_pm=True)
     async def unrestrict(self, ctx, command: str):
         m = ctx.message
         a = m.author
@@ -141,8 +143,8 @@ class CurationCog():
                                         if not r['command'] == command]
             await ctx.send(f'`{command}` no longer restricted')
 
-    @commands.command(pass_context=True, name="quote")
     @is_curator_or_higher()
+    @commands.command(pass_context=True, name="quote")
     async def quote(self, ctx, channel: str, message_id: str):
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
@@ -252,6 +254,6 @@ class CurationCog():
 def setup(bot):
     cog = CurationCog(bot)
     bot.add_listener(cog.curate_channels, "on_message")
-    bot.add_check(cog.check_restrictions, call_once=False)
+    bot.add_check(cog.check_restrictions, call_once=True)
     bot.add_listener(cog.quote_react, "on_reaction_add")
     bot.add_cog(cog)

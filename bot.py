@@ -26,6 +26,7 @@ class Effribot(commands.Bot):
     """docstring for Effribot"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.remove_command('help')
         self.config = CONFIG
         self.database = db
         self.start_time = time.time()
@@ -57,10 +58,6 @@ class Effribot(commands.Bot):
             self.database.create_tables([Server, Titanlord, User])
         return
 
-    # def add_models(self, models):
-    #     # print(self.database.__dir__())
-    #     self.models = Struct(**{str(model)[8:-1]: model for model in models})
-    #     return
 
     async def on_ready(self):
         print(f'Logged in as {bot.user.name}')
@@ -70,12 +67,8 @@ class Effribot(commands.Bot):
         channel = ctx.message.channel
         if isinstance(error, commands.CommandInvokeError):
             no_dms = "Cannot send messages to this user"
-            is_help_cmd = ctx.command.qualified_name == "help"
-            is_forbidden = isinstance(error.original, discord.Forbidden)
-            if is_help_cmd and is_forbidden and error.original.text == no_dms:
-                # msg = ("I can't send messages to you. Either you blocked me or you disabled server DMs.")
-                # await ctx.bot.get_channel(462204160524288021).send(msg)
-                pass
+            # is_help_cmd = ctx.command.qualified_name == "help"
+            # is_forbidden = isinstance(error.original, discord.Forbidden)
             message = (f"Error in command '{ctx.command.qualified_name}'.")
             self._last_exception = message
             a = ctx.message.author
@@ -98,10 +91,8 @@ class Effribot(commands.Bot):
             ) for t in tb if t.strip()])
             
             e.add_field(name=f'Stack:', value=f'```python\n{tb}\n```')
-            # e.add_field(name='Traceback', value=traceback.format_exc())
             
             await self.get_channel(466192124115681281).send(embed=e)
-            # await ctx.bot.get_channel(462204160524288021).send(inline(message[0:1950]))
         return self
 
     async def on_guild_join(self, guild):
@@ -126,17 +117,10 @@ class Effribot(commands.Bot):
         except discord.errors.LoginFailure:
             print("failed to login to discord")
 
-# bot = commands.Bot(command_prefix=get_prefix, description="Effrille's custom bot.")
-# setattr(bot, 'config', CONFIG)
-# setattr(bot, 'start_time', time.time())
-# setattr(bot, '_last_exception', None)
 
 def inline(text):
     return "```\n{}\n```".format(text)
 
 bot = Effribot(command_prefix=get_prefix)
-# bot.remove_command('help')
-# def run_bot(bot):
-#     bot.run(bot.config['TOKEN'], bot=True, reconnect=True)
 if __name__ == '__main__':
     bot.run()

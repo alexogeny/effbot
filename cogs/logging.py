@@ -11,27 +11,27 @@ class LogCog():
         self.bot = bot
         self.helpers = self.bot.cogs['Helpers']
 
-    @commands.group(pass_context=True, name="log")
-    async def log(self, ctx):
-        pass
+    # @commands.group(pass_context=True, name="log")
+    # async def log(self, ctx):
+    #     pass
 
-    @log.command(pass_context=True)
-    async def set(self, ctx, setting: str=None, value: str=None):
+    # @log.command(pass_context=True)
+    # async def set(self, ctx, setting: str=None, value: str=None):
 
-        guild_id = ctx.message.guild.id
-        key = setting.lower().strip()
+    #     guild_id = ctx.message.guild.id
+    #     key = setting.lower().strip()
 
-        if not [x for x in self.bot._servers if x['id']==guild_id]:
-            g = {'id': guild_id}
-            conf = await self.helpers.spawn_config('server')
-            g['config'] = conf
-            self.bot._servers.append(g)
-        else:
-            g = [x for x in self.bot._servers if x['id']==guild_id][0]
-        # print(g)
-        if not g['config'].role_admin:
-            await ctx.send('The server owner needs to set an admin role using `e.set adminrole <role>')
-            return
+    #     if not [x for x in self.bot._servers if x['id']==guild_id]:
+    #         g = {'id': guild_id}
+    #         conf = await self.helpers.spawn_config('server')
+    #         g['config'] = conf
+    #         self.bot._servers.append(g)
+    #     else:
+    #         g = [x for x in self.bot._servers if x['id']==guild_id][0]
+    #     # print(g)
+    #     if not g['config'].role_admin:
+    #         await ctx.send('The server owner needs to set an admin role using `e.set adminrole <role>')
+    #         return
 
     async def log_join(self, member):
         gid = member.guild.id
