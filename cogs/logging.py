@@ -34,27 +34,28 @@ class LogCog():
             return
 
     async def log_join(self, member):
-        log = await self.helpers.get_record('server', member.guild.id)
+        gid = member.guild.id
+        log = await self.helpers.get_record('server', gid)
         if log and log['config'].log_join:
-            # await asyncio.sleep(2)
-            a = self.bot.get_user(member.id)
-            embed = await self.helpers.build_embed(None, 0x36ce31)
+            a = member
+            embed = await self.helpers.build_embed(f'{a.mention}', 0x36ce31)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Join', inline=False)
-            embed.add_field(name="User", value=f'<@{a.id}> ({a.id})', inline=False)
+            embed.add_field(name="Id", value=f'{a.id}', inline=False)
             await self.bot.get_channel(log['config'].log_join).send(embed=embed)
 
 
     async def log_leave(self, member):
-        log = await self.helpers.get_record('server', member.guild.id)
+        gid = member.guild.id
+        log = await self.helpers.get_record('server', gid)
         if log and log['config'].log_leave:
             a = member
-            embed = await self.helpers.build_embed(None, 0xff0000)
+            embed = await self.helpers.build_embed(f'{a.mention}', 0xff0000)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Leave', inline=False)
-            embed.add_field(name="User", value=f'<@{a.id}> ({a.id})', inline=False)
+            embed.add_field(name="Id", value=f'{a.id}', inline=False)
             await self.bot.get_channel(log['config'].log_leave).send(embed=embed)
 
     async def log_delete(self, message):
@@ -66,7 +67,7 @@ class LogCog():
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Delete', inline=False)
             embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
-            embed.add_field(name="Author", value=f'<@{a.id}> ({a.id})', inline=False)
+            embed.add_field(name="Author", value=f'{a.mention} ({a.id})', inline=False)
             embed.add_field(name="Content", value=f'```\n{m.content}\n```')
             await self.bot.get_channel(log['config'].log_message).send(embed=embed)
     async def log_edit(self, before, after):
