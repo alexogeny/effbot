@@ -55,11 +55,12 @@ class Helpers():
             data = [deepcopy(x) for x in getattr(self.bot, f'_{k}s')]
             with self.bot.database.atomic():
                 for item in data:
-                    if 'changed' in item.keys():
-                        del item['changed']
-                    item['config'] = item['config'].as_gzip()
-                    item['update_'] = datetime.utcnow()
-                    m.insert(**item).on_conflict_replace().execute()
+                    if item.get('id', None) != None:
+                        if 'changed' in item.keys():
+                            del item['changed']
+                        item['config'] = item['config'].as_gzip()
+                        item['update_'] = datetime.utcnow()
+                        m.insert(**item).on_conflict_replace().execute()
 
     def load_records(self, models):
         setattr(self.bot, '_models', models)
