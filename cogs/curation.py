@@ -31,8 +31,9 @@ def is_curator_or_higher():
     return commands.check(_is_moderator_or_higher)
 
 
-class CurationCog():
-    """docstring for CurationCog"""
+class Curation():
+    """
+    Manage who can run commands and where, quote users, disable commands."""
     def __init__(self, bot):
         
         self.bot = bot
@@ -252,7 +253,7 @@ class CurationCog():
             return True
 
 def setup(bot):
-    cog = CurationCog(bot)
+    cog = Curation(bot)
     bot.add_listener(cog.curate_channels, "on_message")
     bot.add_check(cog.check_restrictions, call_once=True)
     bot.add_listener(cog.quote_react, "on_reaction_add")

@@ -7,7 +7,7 @@ from datetime import datetime
 import re
 
 class Reporting():
-    """docstring for Reporting"""
+    """Send me plenty of bug reports and suggestions."""
     def __init__(self, bot):
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')

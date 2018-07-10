@@ -4,8 +4,8 @@ import time
 from discord.ext import commands
 from random import choice
 
-class InfoStuff():
-    """docstring for InfoStuff"""
+class Information():
+    """Get information about a user, the server, the bot, etc."""
     def __init__(self, bot):
         
         self.bot = bot
@@ -199,5 +199,5 @@ class InfoStuff():
                                "to send this")
 
 def setup(bot):
-    cog = InfoStuff(bot)
+    cog = Information(bot)
     bot.add_cog(cog)

@@ -19,7 +19,7 @@ def is_admin_or_owner():
     return commands.check(_is_admin_or_owner)
 
 class SettingsCog():
-    """docstring for SettingsCog"""
+    """Set up server roles, configure logging, welcome messages, and so on."""
     def __init__(self, bot):
         self.bot = bot
         self.helpers = self.bot.cogs['Helpers']

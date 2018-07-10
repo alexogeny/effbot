@@ -7,7 +7,7 @@ from datetime import datetime
 import re
 
 class LevelsCog():
-    """docstring for LevelsCog"""
+    """Check your global and local rankins, as well as leaderboards."""
     def __init__(self, bot):
         
         self.bot = bot

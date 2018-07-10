@@ -21,7 +21,7 @@ def is_moderator_or_higher():
 
 
 class ModerationCog():
-    """docstring for ModerationCog"""
+    """Kick, ban, mute ... all the usual suspects."""
     def __init__(self, bot):
         
         self.bot = bot

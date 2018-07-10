@@ -9,7 +9,7 @@ emoji_exp = re.compile(r'<:[A-z0-9_]+:([0-9]+)>')
 aemoji_exp = re.compile(r'<a:[A-z0-9_]+:([0-9]+)>')
 
 class Fun():
-    """docstring for Fun"""
+    """Because who doesn't like to have fun?"""
     def __init__(self, bot):
         
         self.bot = bot
