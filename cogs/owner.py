@@ -291,6 +291,23 @@ class Owner:
             await ctx.send("I cannot do that, I lack the "
                 "\"Change Nickname\" permission.")
 
+    @_set.command(pass_context=True, no_pm=True)
+    @is_owner()
+    async def name(self, ctx, *, name):
+        """Sets Red's name"""
+        name = name.strip()
+        if name != "":
+            try:
+                await self.bot.edit_profile(username=name)
+            except:
+                await ctx.send("Failed to change name. Remember that you"
+                                   " can only do it up to 2 times an hour."
+                                   "Use nicknames if you need frequent "
+                                   "changes. {}set nickname"
+                                   "".format(ctx.prefix))
+            else:
+                await ctx.send("Done.")
+
     # @_set.command(name="token")
     # @is_owner()
     # async def _token(self, token):

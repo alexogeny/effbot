@@ -7,6 +7,7 @@ from discord.ext import commands
 from os import listdir
 from os.path import isfile, join
 from models import Server, Titanlord, User, db
+import re
 
 class Struct(object):
     def __init__(self, **entries):
@@ -72,15 +73,35 @@ class Effribot(commands.Bot):
             is_help_cmd = ctx.command.qualified_name == "help"
             is_forbidden = isinstance(error.original, discord.Forbidden)
             if is_help_cmd and is_forbidden and error.original.text == no_dms:
-                msg = ("I can't send messages to you. Either you blocked me or you disabled server DMs.")
-                await ctx.bot.get_channel(462204160524288021).send(msg)
+                # msg = ("I can't send messages to you. Either you blocked me or you disabled server DMs.")
+                # await ctx.bot.get_channel(462204160524288021).send(msg)
+                pass
+            message = (f"Error in command '{ctx.command.qualified_name}'.")
+            self._last_exception = message
+            a = ctx.message.author
+            g = ctx.message.guild
+            e = await self.cogs['Helpers'].build_embed('Exception raised', 0xff0000)
+            e.set_author(name=f'{g.name}', icon_url=g.icon_url_as(format='jpeg'))
+            e.add_field(name="Command", value=f'{ctx.command.qualified_name}')
+            e.add_field(name="User", value=f'{a.mention}', inline=False)
+            
+            tb = traceback.format_exception(type(error), error, error.__traceback__, limit=2)
 
-            message = (f"Error in command '{ctx.command.qualified_name}'. Traceback:\n")
-
-            message += "".join(traceback.format_exception(type(error), error,
-                                                      error.__traceback__))
-            bot._last_exception = message
-            await ctx.bot.get_channel(462204160524288021).send(inline(message[0:1950]))
+            tb = "\n\n".join([re.sub(r'(C:(\\[^\\]+){1,4})', '', t).strip().replace(
+                'venv\\lib\\site-packages', '...'
+            ).replace(
+                'The above exception was the direct cause of the following exception',
+                'The above exception caused'
+            ).replace(
+                'Traceback (most recent call last):',
+                ''
+            ) for t in tb if t.strip()])
+            
+            e.add_field(name=f'Stack:', value=f'```python\n{tb}\n```')
+            # e.add_field(name='Traceback', value=traceback.format_exc())
+            
+            await self.get_channel(466192124115681281).send(embed=e)
+            # await ctx.bot.get_channel(462204160524288021).send(inline(message[0:1950]))
         return self
 
     async def on_guild_join(self, guild):
