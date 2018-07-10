@@ -212,7 +212,6 @@ class CurationCog():
     
     async def check_restrictions(self, ctx):
         if hasattr(ctx.message, 'guild'):
-            # if not hasattr(ctx,'was_limited'):
             c = ctx.command
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)

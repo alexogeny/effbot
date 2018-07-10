@@ -13,7 +13,7 @@ class LevelsCog():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
         self.xp_unit = 11
-        self.is_command = re.compile(r'^[A-z]{0,1}\W{1,2}\w+')
+        self.is_command = re.compile(r'^[A-z]{0,1}[^A-z0-9\s]{1,2}[A-z0-9]+')
 
     async def _lb_get_rank(self, userid, idlist):
         rank = [idlist.index(user)
@@ -104,7 +104,6 @@ class LevelsCog():
                     if not [x for x in g.xp if x['id']==m.author.id]:
                         g.xp.append({'id': m.author.id, 'xp': 0})
                     u = [x for x in g.xp if x['id']==m.author.id][0]
-                    # print(u)
                     u['xp'] = u['xp'] + xp
 
 
@@ -113,11 +112,3 @@ def setup(bot):
     cog = LevelsCog(bot)
     bot.add_listener(cog.add_xp, "on_message")
     bot.add_cog(cog)
-# def setup(bot):
-#     cog = LevelsCog(bot)
-#     bot.add_listener(cog.curate_channels, "on_message")
-#     bot.add_listener(cog.quote_react, "on_reaction_add")
-#     bot.add_cog(cog)
-# await self.helpers.get_obj(
-#                     ctx.guild, 'channel', 'name', value
-#                 )

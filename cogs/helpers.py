@@ -53,13 +53,12 @@ class Helpers():
         for k in self.bot._models:
             m = self.bot._models[k]
             data = [deepcopy(x) for x in getattr(self.bot, f'_{k}s')]
-            #print(data)
             with self.bot.database.atomic():
                 for item in data:
-                    print(item)
+                    if 'changed' in item.keys():
+                        del item['changed']
                     item['config'] = item['config'].as_gzip()
                     item['update_'] = datetime.utcnow()
-                    #print(item)
                     m.insert(**item).on_conflict_replace().execute()
 
     def load_records(self, models):
@@ -70,26 +69,18 @@ class Helpers():
                 'changed': False, 'config': Struct(i['config']),
                 'id': int(i['id']), 'create_': i['create_'],
                 'update_': i['update_']} for i in result]
-            print(result)
             setattr(self.bot, f'_{k}s', result)
-        #print(getattr(self.bot, '_servers'))
 
     async def get_record(self, model, id):
         result = [x for x in getattr(self.bot,f'_{model}s') if x['id']==id]
-        #print(result)
         if len(result) > 0:
             return result[0]
         else:
             if model == 'user':
-                
-                #print(f'add user {id}')
                 u = {'id': id}
-                #print(u)
                 conf = await self.spawn_config('user')
-                #print(conf.as_string())
                 u['config'] = conf
                 self.bot._users.append(u)
-                #print(u)
                 return u
             elif model == 'server':
                 g = {'id': id}
@@ -103,7 +94,6 @@ class Helpers():
                   if getattr(x, key)==value
                   or value.lower() in getattr(x, key).lower()]
         if result:
-            print(result[0].id)
             return result[0].id
         else:
             return None
