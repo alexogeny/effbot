@@ -39,7 +39,7 @@ class LogCog():
         if log and log['config'].log_join:
             a = member
             embed = await self.helpers.build_embed(f'{a.mention}', 0x36ce31)
-            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+            embed.set_thumbnail(url='https://i.imgur.com/FSWLAco.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Join', inline=False)
             embed.add_field(name="Id", value=f'{a.id}', inline=False)
@@ -52,7 +52,7 @@ class LogCog():
         if log and log['config'].log_leave:
             a = member
             embed = await self.helpers.build_embed(f'{a.mention}', 0xff0000)
-            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+            embed.set_thumbnail(url='https://i.imgur.com/1aAsAvW.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Leave', inline=False)
             embed.add_field(name="Id", value=f'{a.id}', inline=False)
@@ -63,7 +63,7 @@ class LogCog():
         m, c, a = message, message.channel, message.author
         if log and log['config'].log_message and not a.bot:
             embed = await self.helpers.build_embed(None, 0xff0000)
-            embed.set_thumbnail(url='https://discordapp.com/assets/b1868d829b37f0a81533ededb9ffe5f4.svg')
+            embed.set_thumbnail(url='https://i.imgur.com/nOIAqUH.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Delete', inline=False)
             embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
@@ -78,7 +78,7 @@ class LogCog():
             return
         if log and log['config'].log_message and not a.bot:
             embed = await self.helpers.build_embed(None, 0x5e26b7)
-            embed.set_thumbnail(url='https://discordapp.com/assets/b1868d829b37f0a81533ededb9ffe5f4.svg')
+            embed.set_thumbnail(url='https://i.imgur.com/8VYSu5I.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}',
                              icon_url=a.avatar_url_as(format='jpeg'))
             embed.add_field(name="Action", value='Edit', inline=False)
@@ -97,7 +97,7 @@ class LogCog():
         c = channel
         if log and log['config'].log_message:
             embed = await self.helpers.build_embed(None, 0x36ce31)
-            embed.set_thumbnail(url='https://discordapp.com/assets/b1868d829b37f0a81533ededb9ffe5f4.svg')
+            embed.set_thumbnail(url='https://i.imgur.com/yNlWCen.png')
             embed.add_field(name="Action", value='Pin/unpin', inline=False)
             embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
             
