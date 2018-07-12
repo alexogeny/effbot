@@ -176,7 +176,7 @@ class Owner:
     @is_owner()
     @commands.command(name="save", hidden=True)
     async def _save(self, ctx):
-        self.helpers.save_records()
+        self.bot.get_cog('Helpers').save_records()
 
     @is_owner()
     @commands.command(name="reload")
@@ -248,20 +248,37 @@ class Owner:
         server = await self.helpers.get_record('server', ctx.guild.id)
         # server = [s for s in ctx.bot._servers if s['id']==ctx.guild.id]
         if server:
-            for page in pagify(server['config'].as_pretty(), [" "], shorten_by=16):
+            for page in pagify(server['config']('pretty'), [" "], shorten_by=16):
                 await ctx.send(box("json", page.lstrip(" ")))
 
     @commands.command(name='userconfig', visible=False, no_pm=True)
     @is_owner()
     async def _userconfig(self, ctx, user: str):
-        user = await self.helpers.get_obj(
-            ctx.message.guild, 'member', 'name', user
-        )
-        if not user or type(user) == int:
-            user = await self.helpers.get_record('user', user)
+        if not user:
+            user = ctx.message.author.id
+        if not user.isnumeric():
+            user = await ctx.bot.cogs['Helpers'].get_ojb(ctx.message.guild, 'member', 'name', user)
+            user = user.id
         if user:
-            #print(user['config'])
-            await ctx.send(user['config'].as_pretty())
+            g = await self.helpers.get_record('user', int(user))
+
+            if g['id']==int(user):
+                #print(user['config'])
+                await ctx.send(g['config']('pretty'))
+
+    @is_owner()
+    @commands.command(no_pm=True, name="confirm")
+    async def _confirm(self, ctx, kind, user, code):
+        if not kind in ['sc,supportcode,cc,clancode']:
+            return
+        if kind.startswith('s'):
+            if not user.isnumeric():
+                user = await ctx.bot.cogs['Helpers'].get_ojb(ctx.message.guild, 'member', 'name', user)
+                user = user.id
+            if user:
+                g = await ctx.bot.cogs['Helpers'].get_record('user', user)
+                g['config'].tt_code = code
+                await ctx.send('Set the support code for the user')
 
     @commands.command(name="restart")
     @is_owner()

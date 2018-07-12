@@ -31,7 +31,6 @@ class SettingsCog():
     @settings.command(pass_context=True)
     @is_admin_or_owner()
     async def set(self, ctx, setting: str=None, value: str=None):
-
         guild_id = ctx.message.guild.id
         key = setting.lower().strip()
         msg = ctx.message
@@ -52,7 +51,7 @@ class SettingsCog():
         if key == 'modrole':
             result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
             if result:
-                setattr(g['config'], 'role_moderator', result)
+                g['config'].role_moderator = result
                 await ctx.send(f'Set the {key}!')
 
         if key.startswith('log') and key[3:] in 'leaves,joins,messages,moderations':
@@ -74,7 +73,7 @@ class SettingsCog():
         if key == 'quoteschannel':
             result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
             if result:
-                setattr(g['config'], 'chan_quotes', result)
+                g['config'].chan_quotes = result
                 await ctx.send(f'Set the {key} setting to <#{result}>')
 
 def setup(bot):

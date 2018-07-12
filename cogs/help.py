@@ -28,14 +28,8 @@ class Help():
                     value=f'{c.__doc__}\n```\n{cxs}\n```',
                     inline=False
                 )
-                # print([x.name for x in self.bot.get_cog_commands(cog)])
-            # embed.set_thumbnail(url='https://i.imgur.com/1aAsAvW.png')
-            # e.set_author(name='effbot help')
             
             await ctx.send(embed=e)
-
-            # await ctx.send(cogs[0].commands)
-            # await ctx.send(', '.join([c.name.lower() for c in cogs]))
 
 def setup(bot):
     cog = Help(bot)

@@ -19,9 +19,9 @@ def is_curator_or_higher():
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
         u_roles = [a.id for a in msg.author.roles]
         a,b,c=g['config'].role_admin,g['config'].role_moderator,g['config'].role_curator
-        is_admin = a and a in u_roles
-        is_mod = b and b in u_roles
-        is_cur = c and c in u_roles
+        is_admin = a in u_roles
+        is_mod = b in u_roles
+        is_cur = c in u_roles
         if any([is_admin, is_mod, is_cur]):
             return True
         else:
@@ -49,8 +49,7 @@ class Curation():
         chans = channels.split(',')
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
-        if not hasattr(g['config'], 'restrictions'):
-            setattr(g['config'], 'restrictions', [])
+        g['config'].restrictions = getattr(g['config'].restrictions, 'restrictions', [])
         if command.strip().lower() in self.bot.all_commands:
             chans = [await self.helpers.get_obj(
                 m.guild, 'channel', 'name', c
@@ -70,8 +69,7 @@ class Curation():
         chans = channels.split(',')
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
-        if not hasattr(g['config'], 'restrictions'):
-            setattr(g['config'], 'restrictions', [])
+        g['config'].restrictions = getattr(g['config'].restrictions, 'restrictions', [])
         if command.strip().lower() in self.bot.all_commands:
             chans = [await self.helpers.get_obj(
                 m.guild, 'channel', 'name', c
@@ -90,8 +88,7 @@ class Curation():
     async def disable(self, ctx, command: str):
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
-        if not hasattr(g['config'], 'restrictions'):
-            setattr(g['config'], 'restrictions', [])
+        g['config'].restrictions = getattr(g['config'].restrictions, 'restrictions', [])
         if command.strip().lower() in self.bot.all_commands:
             command = self.bot.all_commands[command.strip().lower()].name
             if len([r for r in g['config'].restrictions
@@ -110,8 +107,7 @@ class Curation():
         m = ctx.message
         a = m.author
         g = await self.helpers.get_record('server', m.guild.id)
-        if not hasattr(g['config'], 'restrictions'):
-            setattr(g['config'], 'restrictions', [])
+        g['config'].restrictions = getattr(g['config'].restrictions, 'restrictions', [])
         if command.strip().lower() in self.bot.all_commands:
             c = self.bot.all_commands[command.strip().lower()].name
             roles = [r for r in m.guild.roles]
@@ -137,8 +133,7 @@ class Curation():
         m = ctx.message
         a = m.author
         g = await self.helpers.get_record('server', m.guild.id)
-        if not hasattr(g['config'], 'restrictions'):
-            setattr(g['config'], 'restrictions', [])
+        g['config'].restrictions = getattr(g['config'].restrictions, 'restrictions', [])
         if command.strip().lower() in self.bot.all_commands:
             g['config'].restrictions = [r for r in g['config'].restrictions
                                         if not r['command'] == command]
@@ -219,7 +214,7 @@ class Curation():
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)
             chan = ctx.channel
-            if hasattr(g['config'], 'restrictions'):
+            if g['config'].restrictions:
                 restricted = [r for r in g['config'].restrictions
                               if r['command']==c.name]
                 if len(restricted) > 0:

@@ -78,7 +78,7 @@ class Effribot(commands.Bot):
             e.add_field(name="Command", value=f'{ctx.command.qualified_name}')
             e.add_field(name="User", value=f'{a.mention}', inline=False)
             
-            tb = traceback.format_exception(type(error), error, error.__traceback__, limit=2)
+            tb = traceback.format_exception(type(error), error, error.__traceback__, limit=3)
 
             tb = "\n\n".join([re.sub(r'(C:(\\[^\\]+){1,4})', '', t).strip().replace(
                 'venv\\lib\\site-packages', '...'

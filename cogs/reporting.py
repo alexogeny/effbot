@@ -24,8 +24,8 @@ class Reporting():
         u = await self.helpers.get_record('user', m.author.id)
         c = u['config']
         now = datetime.utcnow().timestamp()
-        if not hasattr(c, 'last_bug') or now - c.last_bug >= 3600:
-            setattr(c, 'last_bug', now)
+        if not c.last_bug or now - c.last_bug >= 3600:
+            c.last_bug = now
             pfx = await self.bot.get_prefix(ctx.message)
             mc = m.clean_content
             passed = 0
@@ -59,8 +59,8 @@ class Reporting():
         u = await self.helpers.get_record('user', m.author.id)
         c = u['config']
         now = datetime.utcnow().timestamp()
-        if not hasattr(c, 'last_suggest') or now - c.last_suggest >= 3600:
-            setattr(c, 'last_suggest', now)
+        c.last_suggest = getattr(c, 'last_suggest', 0)
+        if now - c.last_suggest >= 3600:
             pfx = await self.bot.get_prefix(ctx.message)
             mc = m.clean_content
             passed = 0
@@ -81,6 +81,47 @@ class Reporting():
             await ctx.send('You must wait at least an hour between suggestions.')
             return
         await ctx.send(':ideograph_advantage: Thanks, you have successfully filed your suggestion.')
+
+    
+    @commands.command(name='verify', pass_context=True, no_pm=True, aliases=['verification'])
+    async def _verify(self, ctx, kind: str=None, code: str=None):
+        m = ctx.message
+        a = m.author
+        if a.bot:
+            return
+        if kind not in ['supportcode']:
+            await ctx.send('You can only verify support codes for now.')
+            return
+        if not code or not code.strip():
+            return
+        code = code.strip()
+        u = await self.helpers.get_record('user', m.author.id)
+        c = u['config']
+        now = datetime.utcnow().timestamp()
+        c.last_verify = getattr(c, 'last_verify', 0)
+        if now - c.last_verify >= 3600:
+            c.last_verify = now
+            pfx = await self.bot.get_prefix(ctx.message)
+            mc = m.clean_content
+            passed = 0
+            while not passed:
+                for p in pfx:
+                    if mc.startswith(p):
+                        mc = mc[len(p):]
+                        passed = 1
+            mc = re.sub(r'^\w+','',mc)
+
+            e = await self.helpers.build_embed('Verification', 0xffffff)
+            # e.set_thumbnail(url='https://i.imgur.com/6y7oNyd.png')
+            e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+            e.add_field(name='User', value=f'{a.mention} ({a.id})')
+            e.add_field(name='Type', value=kind.strip())
+            e.add_field(name='Code', value=code)
+            await self.bot.get_channel(466874003039191045).send(embed=e)
+        else:
+            await ctx.send('You must wait at least an hour to reverify.')
+            return
+        await ctx.send(':ideograph_advantage: Thanks, I will do this as soon as I can.')
 
 
 def setup(bot):

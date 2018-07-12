@@ -62,6 +62,8 @@ class ModerationCog():
             await ctx.send("I'm not allowed to do that. Have a word to whomever"
                            "manages my ass.")
 
+    
+
 def setup(bot):
     cog = ModerationCog(bot)
     bot.add_cog(cog)

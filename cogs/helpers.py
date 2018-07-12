@@ -14,17 +14,20 @@ class Struct:
             data = loads(gzip.decompress(data).decode('utf-8'))
         for k, v in data.items():
             setattr(self, k, isinstance(v, dict) and self.__class__(v) or v)
-    def __json__(self):
-        output = {}
-        for k, v in self.__dict__.items():
-            output[k] = (isinstance(v, self.__class__) and v.__json__()) or v
+
+    def __call__(self, fmt: str):
+        assert fmt in 'strprettygzjson'
+        if fmt == 'str':
+            output = dumps(self('json'), separators=(',', ':'))
+        elif fmt == 'pretty':
+            output = '{}'.format(dumps(self('json'), indent=4))
+        elif fmt == 'gz':
+            output = gzip.compress(self('str').encode('utf-8'))
+        elif fmt == 'json':
+            output = {}
+            for k, v in self.__dict__.items():
+                output[k] = (isinstance(v, self.__class__) and v('json')) or v
         return output
-    def as_string(self):
-        return dumps(self.__json__(), separators=(',', ':'))
-    def as_pretty(self):
-        return '{}'.format(dumps(self.__json__(), indent=4))
-    def as_gzip(self):
-        return gzip.compress(self.as_string().encode('utf-8'))
 
 
 class Helpers():
@@ -52,13 +55,13 @@ class Helpers():
     def save_records(self):
         for k in self.bot._models:
             m = self.bot._models[k]
-            data = [deepcopy(x) for x in getattr(self.bot, f'_{k}s')]
             with self.bot.database.atomic():
-                for item in data:
+                for item in getattr(self.bot, f'_{k}s'):
+                    item = deepcopy(item)
                     if item.get('id', None) != None:
                         if 'changed' in item.keys():
                             del item['changed']
-                        item['config'] = item['config'].as_gzip()
+                        item['config'] = item['config']('gz')
                         item['update_'] = datetime.utcnow()
                         m.insert(**item).on_conflict_replace().execute()
 

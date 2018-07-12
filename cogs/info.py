@@ -48,11 +48,11 @@ class Information():
 
     @info.command(name='bot', pass_context=True, no_pm=True)
     async def _bot(self, ctx):
-        embed = discord.Embed(title='Effribot', description='A pretty useful bot, hopefully.')
+        embed = discord.Embed(title='Effbot', description='A pretty useful bot, hopefully.')
         embed.add_field(name='Author', value='effrill3#0001')
         embed.add_field(name='User Count', value=f'{len(self.bot.users)}')
         embed.add_field(name='Server Count', value=f'{len(self.bot.guilds)}')
-        embed.add_field(name='Invite', value='[invite link](https://discordapp.com/api/oauth2/authorize?client_id=461109816807391232&permissions=1576529111&scope=bot)')
+        embed.add_field(name='Invite', value='[invite link]()')
         await ctx.send(embed=embed)
 
 

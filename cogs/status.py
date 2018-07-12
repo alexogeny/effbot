@@ -47,15 +47,15 @@ class RandomStatus():
             current_status = message.guild.me.status
 
             if self.last_change == None: #first run
-                self.last_change = int(time.perf_counter())
+                self.last_change = int(time.time())
                 if len(self.statuses) > 0 and (current_game in self.statuses or current_game == "None"):
                     new_game, activity_type = self.random_status(message)
                     await self.bot.change_presence(
                        activity=(discord.Activity(name=new_game, type=activity_type)), status=current_status)
 
             if message.author.id != self.bot.user.id:
-                if abs(self.last_change - int(time.perf_counter())) >= self.delay:
-                    self.last_change = int(time.perf_counter())
+                if abs(self.last_change - int(time.time())) >= self.delay:
+                    self.last_change = int(time.time())
                     new_game, activity_type = self.random_status(message)
                     if new_game != None:
                         if current_game != new_game:
