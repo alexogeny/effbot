@@ -18,8 +18,8 @@ with Path('./config.json').open('r') as fh:
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
-    if not message.guild:
-        return '.'
+    if isinstance(message.channel, discord.abc.PrivateChannel):
+        return ['e.','.','?']
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 class Effribot(commands.Bot):

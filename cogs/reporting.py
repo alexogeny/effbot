@@ -24,6 +24,7 @@ class Reporting():
         u = await self.helpers.get_record('user', m.author.id)
         c = u['config']
         now = datetime.utcnow().timestamp()
+        c.last_bug = getattr(c, 'last_bug', 0)
         if not c.last_bug or now - c.last_bug >= 3600:
             c.last_bug = now
             pfx = await self.bot.get_prefix(ctx.message)
@@ -61,6 +62,7 @@ class Reporting():
         now = datetime.utcnow().timestamp()
         c.last_suggest = getattr(c, 'last_suggest', 0)
         if now - c.last_suggest >= 3600:
+            c.last_suggest = now
             pfx = await self.bot.get_prefix(ctx.message)
             mc = m.clean_content
             passed = 0

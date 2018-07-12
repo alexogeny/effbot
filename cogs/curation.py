@@ -166,7 +166,7 @@ class Curation():
             await ctx.send('Check you supplied a valid channel name+message id')
 
     async def curate_channels(self, message):
-        if hasattr(message, 'guild'):
+        if not isinstance(message.channel, discord.abc.PrivateChannel):
             m = message
             c, guild, a = m.channel, m.guild, m.author
             g = await self.helpers.get_record('server', guild.id)
@@ -180,7 +180,7 @@ class Curation():
 
     async def quote_react(self, reaction, user):
         m = reaction.message
-        if hasattr(m, 'guild') and reaction.emoji == "⭐":
+        if not isinstance(message.channel, discord.abc.PrivateChannel) and reaction.emoji == "⭐":
             g = await self.helpers.get_record('server', m.guild.id)
             u = user
             q = g['config'].chan_quotes
@@ -209,7 +209,7 @@ class Curation():
             raise RestrictedRestrictError
     
     async def check_restrictions(self, ctx):
-        if hasattr(ctx.message, 'guild'):
+        if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
             c = ctx.command
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)

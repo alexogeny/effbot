@@ -25,26 +25,29 @@ class TapTitans():
     async def tt(self, ctx):
         await ctx.send('TT2 commands')
 
-    # @tl.command(pass_context=True, alias=["in"])
-    # async def at(self, ctx, *, time: str=None, clan: str="0"):
-    #     try:
-    #         timer = self.tl_timers.get(ctx.message.guild)
-    #     except:
-    #         await ctx.send('Set me up first, ffs. `.help tl`')
-    #     else:
-    #         if clan.isdigit():
-    #             clan = timer.get_clan(int(clan))
-    #         else:
-    #             clan = timer.get_clan(timer.find_clan(clan))
-    #         if clan.spawn-time.time() > 21000:
-    #             # display ttk and increment cq value
-    #             # build ttk embed here
-    #             # clan.increment_cq()
-    #         # set new spawm time and append old times to data store
-    #         clan.old.append(dict(spawn=clan.spawn, dead=ctx.message.timestamp))
-    #         clan.spawn = time.from_string(time)
-    #     finally:
-    #         return
+    
+
+    @commands.command(name='claim')
+    async def _claim(self, ctx, key, value):
+        print(key)
+        if not key in ['sc','supportcode','cc','clancode']:
+            return
+        a = ctx.message.author
+        g = ctx.message.guild
+        
+        if key.startswith('s') and not a.bot:
+            if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+                await ctx.message.delete()
+            if a:
+                g = await self.bot.cogs['Helpers'].get_record('user', a.id)
+                if not g['config'].tt_code:
+                    g['config'].tt_code = value.strip()
+                    await ctx.send(f'Set the support code for the user {a.name}#'
+                                   f'{a.discriminator}.')
+                else:
+                    await ctx.send('You have already claimed a code. Please use'
+                                   '`verify` if you would like to change it.')
+
     @tt.command(name="my")
     async def _my(self, ctx, key: str=None, value: str=None):
         await ctx.send('placeholder')

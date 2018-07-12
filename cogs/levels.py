@@ -88,7 +88,7 @@ class LevelsCog():
     async def add_xp(self, message):
         m = message
         a = m.author
-        if hasattr(m, 'guild') and len(message.content) >= 10 and not a.bot:
+        if not isinstance(message.channel, discord.abc.PrivateChannel) and len(message.content) >= 10 and not a.bot:
             if not self.is_command.match(message.content):
                 u = await self.helpers.get_record('user', m.author.id)
                 c = u['config']

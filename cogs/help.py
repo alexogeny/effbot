@@ -31,6 +31,15 @@ class Help():
             
             await ctx.send(embed=e)
 
+    @commands.command(name="support", no_pm=True, aliases=["server"])
+    async def _support(self, ctx):
+        embed = await self.helpers.build_embed('Get effbot support!', 0x36ce31)
+        g = self.bot.get_guild(440785686438871040)
+        embed.set_thumbnail(url=g.icon_url_as(format='jpeg'))
+        #embed.set_author(name=f'Rank: {u.name}#{u.discriminator}', icon_url=u.avatar_url_as(format='jpeg'))
+        #embed.add_field(name=m.guild.name, value=f'{rank_local+1}. **{xp_local}**xp')
+        embed.add_field(name="Server Invite", value='[Click here](https://discord.gg/WvcryZW)')
+        await ctx.send(embed=embed)
 def setup(bot):
     cog = Help(bot)
     bot.add_cog(cog)
