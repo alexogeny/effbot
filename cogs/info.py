@@ -138,13 +138,21 @@ class Information():
             try:
                 user = server.get_member(int(user[2:-1]))
             except:
-                user = [n for n in server.members
-                    if user.lower() in str(n.name).lower()
-                    or user.lower() in str(n.nick).lower()]
+                bck = str(user)
+                user = next((n for n in server.members if n.name.lower()==bck.lower()), None)
+                if not user:
+                    user = next((n for n in server.members if n.name.startswith(bck)), None)
+                if not user:
+                    user = next((n for n in server.members if n.name.endswith(bck)), None)
+                if not user:
+                    user = [n for n in server.members
+                        or bck.title() in n.name
+                        or bck.lower() in str(n.name).lower()
+                        or bck.lower() in str(n.nick).lower()]
             if isinstance(user, list) and len(user) >= 1:
                 user = user[0]
                 print(user)
-            elif isinstance(user, list) and len(user) == 0:
+            elif not user or isinstance(user, list) and len(user) == 0:
                 await ctx.send('I could not find that user. Try a different name or variation?')
                 return
 
