@@ -180,7 +180,7 @@ class Curation():
 
     async def quote_react(self, reaction, user):
         m = reaction.message
-        if not isinstance(message.channel, discord.abc.PrivateChannel) and reaction.emoji == "⭐":
+        if not isinstance(reaction.message.channel, discord.abc.PrivateChannel) and reaction.emoji == "⭐":
             g = await self.helpers.get_record('server', m.guild.id)
             u = user
             q = g['config'].chan_quotes

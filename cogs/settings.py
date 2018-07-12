@@ -54,6 +54,12 @@ class SettingsCog():
                 g['config'].role_moderator = result
                 await ctx.send(f'Set the {key}!')
 
+        if key in ['grandmaster', 'ttgm']:
+            result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
+            if result:
+                g['config'].tt_gm = result
+                await ctx.send(f'Set the grandmaster role!')
+
         if key.startswith('log') and key[3:] in 'leaves,joins,messages,moderations':
             result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
             if result:

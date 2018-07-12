@@ -9,13 +9,46 @@ import time
 SCIFI = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
 LIFI = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
 
+def is_gm_or_admin():
+    async def _is_gm_or_admin(ctx):
+        msg = ctx.message
+        g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
+        #print([a.id for a in msg.author.roles])
+        if g['config'].role_admin in [a.id for a in msg.author.roles]:
+            return True
+        elif msg.author.id == msg.guild.owner_id:
+            return True
+        elif g['config'].tt_gm in [a.id for a in msg.author.roles]:
+            return True
+        elif not getattr(g['config'], 'tt_gm', None):
+            await ctx.send('Ask your server admin to set the GM role')
+            return False
+        else:
+            await ctx.send('Oof, you need to be a GM to do this.')
+            return False
+    return commands.check(_is_gm_or_admin)
+
+def is_gm_or_master():
+    async def _is_gm_or_master(ctx):
+        m = ctx.message
+        g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
+        if g['config'].tt_gm in [a.id for a in msg.author.roles]:
+            return True
+        elif g['config'].tt_master in [a.id for a in msg.author.roles]:
+            return True
+        elif not getattr(g['config'], 'tt_gm', None):
+            await ctx.send('Ask your server admin to set the GM role')
+            return False
+        else:
+            await ctx.send('Oof, you need to be a GM to do this.')
+            return False
 
 class TapTitans():
     """docstring for TapTitans"""
     def __init__(self, bot):
         
         self.bot = bot
-        
+        self.helpers = self.bot.get_cog('Helpers')
         # connect to reminders table
         # load reminders
         self.units = {"minute": 60, "hour": 3600}
@@ -25,7 +58,31 @@ class TapTitans():
     async def tt(self, ctx):
         await ctx.send('TT2 commands')
 
-    
+    @is_gm_or_admin()
+    @tt.command(name='set')
+    async def _masterrole(self, ctx, rank, role):
+        if rank not in ['master', 'knight', 'captain', 'recruit', 'guest', 'vip', 'applicant', 'alumni', 'timer']:
+            await ctx.send('The rank a valid name of an in-game role')
+            return
+        guild = ctx.message.guild
+        if role.isnumeric():
+            role = next((r.name for r in guild.roles if r.id == int(role)), None)
+        if role:
+            g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.message.guild.id)
+            result = await self.helpers.get_obj(ctx.message.guild, 'role', 'name', role)
+            if result:
+                print('yay')
+                setattr(g['config'], f'tt_{rank}', result)
+                result = next((r for r in guild.roles if r.id == int(result)), None)
+                was_true = False
+                if result.mentionable == True:
+                    print('ayyy')
+                    was_true = True
+                    await result.edit(mentionable=False)
+                await ctx.send(f'Set the {rank} role to {result.mention}!')
+                if was_true:
+                    print('ayyyayaya')
+                    await result.edit(mentionable=True)
 
     @commands.command(name='claim')
     async def _claim(self, ctx, key, value):
