@@ -11,9 +11,9 @@ class Help():
         self.helpers = self.bot.get_cog('Helpers')
     
     @commands.command(name='help', no_pm=True, aliases=['helpme'])
-    async def _help(self, ctx, module: str=None, command: str=None):
+    async def _help(self, ctx, command: str=None):
         cogs = [c for c in self.bot.cogs if c not in 'LogCog,TitanLord,Owner,Helpers,RandomStatus']
-        if not module and not command:
+        if not command:
             e = await self.helpers.build_embed(
                 'Available modules of effbot', 0xffffff
             )
@@ -23,6 +23,7 @@ class Help():
                 cxs = ', '.join(
                     [x.name for x in self.bot.get_cog_commands(cog)]
                 )
+
                 e.add_field(
                     name=f'{cog.replace("Cog","")}',
                     value=f'{c.__doc__}\n```\n{cxs}\n```',
@@ -30,6 +31,16 @@ class Help():
                 )
             
             await ctx.send(embed=e)
+        else:
+            e = await self.helpers.build_embed(
+                f'Help for command `{command}`', 0xffffff
+            )
+            c = self.bot.get_command(command.strip().lower())
+            if c:
+                print(c.help)
+                e.add_field(name='Name', value=c.name, inline=False)
+                e.add_field(name='Help text', value=c.help)
+                await ctx.send(embed=e)
 
     @commands.command(name="support", no_pm=True, aliases=["server"])
     async def _support(self, ctx):

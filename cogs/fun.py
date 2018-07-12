@@ -19,6 +19,13 @@ class Fun():
     async def fun(self, ctx):
         pass
 
+    @commands.command(name='bae')
+    async def _bae(self, ctx):
+        if ctx.message.author.id != 321257293557792769:
+            await ctx.send('Oh, you are not bae ...')
+        else:
+            await ctx.send('OMG, HI BAE!!')
+
     @commands.command(name='emote', aliases=['mote', 'e'])
     async def emote(self, ctx, emote: str):
         match = emoji_exp.search(emote.strip())

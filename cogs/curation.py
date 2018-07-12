@@ -188,7 +188,7 @@ class Curation():
             is_admin = g['config'].role_admin in u_roles
             is_mod = g['config'].role_moderator in u_roles
             is_cur = g['config'].role_curator in u_roles
-            if is_admin or is_mod or is_curator:
+            if is_admin or is_mod or is_cur:
                 a = m.author
                 c = m.channel
                 e = await self.helpers.build_embed(m.content, a.color)
