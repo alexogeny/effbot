@@ -3,7 +3,11 @@ import discord
 import asyncio
 from discord.ext import commands
 from random import choice as rndchoice
+from urllib.parse import urlparse
 from discord.ext.commands import DisabledCommand
+
+
+
 class RestrictedWhiteListError(Exception):
     pass
 class RestrictedBlackListError(Exception):
@@ -125,7 +129,13 @@ class Curation():
             if len(_r) == 0:
                 g['config'].restrictions.append({'kind': 'restrict', 'channels':[role.id],
                                              'command': c})
+                was_true = False
+                # if role.mentionable == True:
+                #     was_true = True
+                #     await role.edit(mentionable=False)
                 await ctx.send(f'`{c}` was restricted to `{role.name}`')
+                # if was_true:
+                #     await role.edit(mentionable=True)
 
     @is_curator_or_higher()
     @commands.command(name='unrestrict', no_pm=True)
@@ -171,12 +181,17 @@ class Curation():
             c, guild, a = m.channel, m.guild, m.author
             g = await self.helpers.get_record('server', guild.id)
             if g and c.id in g['config'].chan_curated:
-                if not m.embeds and not m.attachments:
-                    await m.delete()
-                    await self.bot.get_user(a.id).send(
-                        (f'Hey {a.name}, <#{c.id}> is a curated channel,'
-                          ' meaning you can only send links or pictures.')
-                    )
+                try:
+                    r=urlparse(m.content)
+                except:
+                    r=None
+                finally:
+                    if not m.embeds and not m.attachments and not getattr(r, 'netloc', None):
+                        await m.delete()
+                        await self.bot.get_user(a.id).send(
+                            (f'Hey {a.name}, <#{c.id}> is a curated channel,'
+                              ' meaning you can only send links or pictures.')
+                        )
 
     async def quote_react(self, reaction, user):
         m = reaction.message
