@@ -52,7 +52,7 @@ class Information():
         embed.add_field(name='Author', value='effrill3#0001')
         embed.add_field(name='User Count', value=f'{len(self.bot.users)}')
         embed.add_field(name='Server Count', value=f'{len(self.bot.guilds)}')
-        embed.add_field(name='Invite', value='[invite link]()')
+        embed.add_field(name='Invite', value='[Bot Invite Link](https://discordapp.com/api/oauth2/authorize?client_id=466854404965007360&permissions=2146954487&scope=bot)')
         await ctx.send(embed=embed)
 
 

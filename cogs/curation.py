@@ -214,7 +214,7 @@ class Curation():
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)
             chan = ctx.channel
-            if g['config'].restrictions:
+            if getattr(g['config'], 'restrictions', []):
                 restricted = [r for r in g['config'].restrictions
                               if r['command']==c.name]
                 if len(restricted) > 0:
