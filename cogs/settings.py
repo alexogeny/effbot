@@ -76,6 +76,21 @@ class SettingsCog():
                 g['config'].chan_quotes = result
                 await ctx.send(f'Set the {key} setting to <#{result}>')
 
+        if key == 'autorole':
+            result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
+            if result:
+                setattr(g['config'], 'role_auto', result)
+                await ctx.send(f'Set the {key}!')
+
+    async def auto_role(self, member):
+        gid = member.guild.id
+        g = await self.helpers.get_record('server', gid)
+        if g and getattr(g['config'], 'role_auto'):
+            role = next((r for r in member.guild.roles if r.id == getattr(g['config'], 'role_auto')), None)
+            if role:
+                await member.add_roles(role)
+
 def setup(bot):
     cog = SettingsCog(bot)
+    bot.add_listener(cog.auto_role, "on_member_join")
     bot.add_cog(cog)

@@ -36,7 +36,7 @@ class LogCog():
     async def log_join(self, member):
         gid = member.guild.id
         log = await self.helpers.get_record('server', gid)
-        if log and getattr(log['config'], 'log_join'):
+        if log and getattr(log['config'], 'log_join', None):
             a = member
             embed = await self.helpers.build_embed(f'{a.mention}', 0x36ce31)
             embed.set_thumbnail(url='https://i.imgur.com/FSWLAco.png')
@@ -49,7 +49,7 @@ class LogCog():
     async def log_leave(self, member):
         gid = member.guild.id
         log = await self.helpers.get_record('server', gid)
-        if log and getattr(log['config'], 'log_leave'):
+        if log and getattr(log['config'], 'log_leave', None):
             a = member
             embed = await self.helpers.build_embed(f'{a.mention}', 0xff0000)
             embed.set_thumbnail(url='https://i.imgur.com/1aAsAvW.png')
@@ -61,7 +61,7 @@ class LogCog():
     async def log_delete(self, message):
         log = await self.helpers.get_record('server', message.guild.id)
         m, c, a = message, message.channel, message.author
-        if log and getattr(log['config'], 'log_message') and not a.bot:
+        if log and getattr(log['config'], 'log_message', None) and not a.bot:
             embed = await self.helpers.build_embed(None, 0xff0000)
             embed.set_thumbnail(url='https://i.imgur.com/nOIAqUH.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
@@ -76,7 +76,7 @@ class LogCog():
         m2 = after
         if m1.content == m2.content:
             return
-        if log and getattr(log['config'], 'log_message') and not a.bot:
+        if log and getattr(log['config'], 'log_message', None) and not a.bot:
             embed = await self.helpers.build_embed(None, 0x5e26b7)
             embed.set_thumbnail(url='https://i.imgur.com/8VYSu5I.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}',
