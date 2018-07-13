@@ -172,6 +172,7 @@ class Curation():
                 embed.add_field(name="In", value=f'<#{c.id}>')
                 embed.add_field(name="Author", value=f'<@{a.id}>')
                 embed.add_field(name='Quoter', value=f'{m.author.mention}')
+                embed.add_field(name='Jumplink', value=f'[Click here]({message.jump_url})', inline=False)
                 await self.bot.get_channel(q).send(embed=embed)
                 await ctx.send('Quote added successfully!')
             elif message.id in g['config'].list_quotes:
@@ -222,6 +223,7 @@ class Curation():
                 e.add_field(name="In", value=f'<#{c.id}>')
                 e.add_field(name="Author", value=f'<@{a.id}>')
                 e.add_field(name='Quoter', value=f'{user.mention}')
+                e.add_field(name='Jumplink', value=f'[Click here]({m.jump_url})', inline=False)
                 await self.bot.get_channel(q).send(embed=e)
 
 

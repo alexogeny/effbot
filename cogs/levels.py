@@ -63,11 +63,10 @@ class LevelsCog():
         m = ctx.message
         a = m.author
         if not member:
-            u = a.id
+            u = a
         elif member and not member.isnumeric():
-            u = await self.helpers.get_obj(m.guild, 'member', 'name', member)
-        u = self.bot.get_user(u)
-        print(u)
+            u = await self.helpers.choose_member(ctx, m.guild, member)
+        
         g = await self.helpers.get_record('server', m.guild.id)
         u_global = sorted(self.bot._users,
                            key=lambda u: u['config'].xp, reverse=True)

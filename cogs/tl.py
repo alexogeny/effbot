@@ -81,7 +81,7 @@ def tl_checks():
             await ctx.send('The Gm or a master should set the CQ number.\n'
                            'This is the cq of the _next_ TL, not the one that\n'
                            'was just killed.\n'
-                           '`e.tt set cq 1589`')
+                           '`e.tt setcq 1589`')
             return False
         return True
     return commands.check(_tl_checks)
@@ -96,6 +96,30 @@ class TapTitans():
         # load reminders
         self.units = {"minute": 60, "hour": 3600}
         self.dead = 3600*6
+        self.last_check = int(time.time())
+
+    async def timer_check(self):
+        while self is self.bot.get_cog('TapTitans'):
+            if int(time.time()) - self.last_check >= 4.99:
+                await self.update_timers()
+            await asyncio.sleep(10)
+    async def update_timers(self):
+        guilds = [s for s in self.bot._servers if getattr(s['config'], 'next_boss', None)]
+        await asyncio.gather(*[self.update_timer(guild) for guild in guilds])
+    async def update_timer(self, guild):
+        #print(guild['config'].next_boss)
+        if isinstance(guild['config'].next_boss, float):
+            g = self.bot.get_guild(guild['id'])
+            if g is not None:
+                c = g.get_channel(guild['config'].chan_tl)
+            if c is not None:
+                _next = datetime.utcfromtimestamp(guild['config'].next_boss)
+                _next = _next - datetime.utcnow()
+                print(str(_next))
+                m = await c.get_message(guild['config'].boss_msg)
+                await m.edit(
+                    content=f'Titanlord arrives in **{_next}**'
+                )
 
     @commands.group(pass_context=True, invoke_without_command=True, name="tt")
     async def tt(self, ctx):
@@ -123,11 +147,10 @@ class TapTitans():
         if channel.isnumeric():
             channel = next((c.name for c in guild.channels if c.id == int(channel)), None)
         if channel:
-            g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.message.guild.id)
-            result = await self.helpers.get_obj(ctx.message.guild, 'channel', 'name', channel)
+            g = await self.helpers.get_record('server', ctx.message.guild.id)
+            result = await self.helpers.choose_channel(ctx, ctx.message.guild, channel)
             if result:
-                setattr(g['config'], f'chan_{kind}', result)
-                result = next((r for r in guild.channels if r.id == int(result)), None)
+                setattr(g['config'], f'chan_{kind}', result.id)
                 await ctx.send(f'Set the {kind} channel to {result.mention}!')
 
     @is_gm_or_admin()
@@ -149,23 +172,26 @@ class TapTitans():
         if role.isnumeric():
             role = next((r.name for r in guild.roles if r.id == int(role)), None)
         if role:
-            g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.message.guild.id)
-            result = await self.helpers.get_obj(ctx.message.guild, 'role', 'name', role)
+            g = await self.helpers.get_record('server', ctx.message.guild.id)
+            result =await self.helpers.choose_role(ctx, ctx.message.guild, role)
             if result:
-                setattr(g['config'], f'tt_{rank}', result)
-                result = next((r for r in guild.roles if r.id == int(result)), None)
+                setattr(g['config'], f'tt_{rank}', result.id)
+                # result = next((r for r in guild.roles if r.id == int(result)), None)
                 was_true = False
-                if result.mentionable == True:
-                    was_true = True
-                    await result.edit(mentionable=False)
-                await ctx.send(f'Set the {rank} role to {result.mention}!')
-                if was_true:
-                    await result.edit(mentionable=True)
+                try:
+                    if result.mentionable == True:
+                        was_true = True
+                        await result.edit(mentionable=False)
+                    await ctx.send(f'Set the {rank} role to {result.mention}!')
+                    if was_true:
+                        await result.edit(mentionable=True)
+                except discord.Forbidden:
+                    await ctx.send(f'Set the `{rank}` role to `{result.name}`!')
 
     @is_gm_or_master()
     @tl_checks()
-    @commands.command(name='tl', aliases=['boss', 'titanlord'])
-    async def _tl(self, ctx, time):
+    @commands.group(name='tl', aliases=['boss', 'titanlord'], invoke_without_command=True)
+    async def tl(self, ctx, *time):
         """
         Sets a timer running until the next titanlord spawn.
         - accepts most timestam formats
@@ -177,16 +203,53 @@ class TapTitans():
         e.tl 3:22:20
         ```
         """
+        if time[0] == 'in':
+            time = ' '.join(time[1:]).strip()
+        else:
+            time = time[0]
         if time.lower() == 'dead':
             time = '6h'
         if time not in ['now', 'dead']:
+            guild = ctx.message.guild
             _next, _units = await process_time(time)
-            g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.message.guild.id)
-            setattr(g['config'], 'next_boss', str(datetime.utcnow()+_next))
-            #print(_units)
+            g = await self.helpers.get_record('server', ctx.message.guild.id)
+            setattr(g['config'], 'next_boss', datetime.utcnow().timestamp()+_next.total_seconds())
+            boss_msg = await guild.get_channel(g['config'].chan_tl).send(
+                f'Titanlord arrives in **{_next}**'
+            )
+            print(g['config'].next_boss)
+            setattr(g['config'], 'boss_msg', boss_msg.id)
             await ctx.send(':ideograph_advantage: Set a timer running for **{}**'.format(
                 ', '.join(f'{v} {k}' for k, v in _units.items())
             ))
+
+    @is_gm_or_master()
+    @tt.command(name='setcq')
+    async def setcq(self, ctx, cq):
+        """
+        Allows you to set the clan's current quest level _of the next boss_.
+        Requires: GM or Master ranks
+        Example:
+        ```
+        .tt setcq 1580
+        ```
+        """
+        if not cq.isnumeric():
+            await ctx.send('You must supply a valid numerical value for the cq number.')
+            return
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        setattr(g['config'], 'tt_cq', int(cq))
+        await ctx.send(f':ideograph_advantage: Updated the CQ number to `{cq}`!')
+            
+
+    @is_gm_or_master()
+    @tl_checks()
+    @tl.command(name='clear', aliases=['wipe'])
+    async def _clear(self, ctx):
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        setattr(g['config'], 'next_boss', '')
+        setattr(g['config'], 'boss_msg', '')
+        await ctx.send(':ideograph_advantage: Cleared the boss timer!')
 
     @commands.command(name='claim')
     async def _claim(self, ctx, key, value):
@@ -272,84 +335,9 @@ class TapTitans():
             result = '{}{}'.format(number*multiple, last_result)
         flip = {'s': 'letter', 'l': 'scientific'}
         await ctx.send(f'Conversion of {val} from {kind} to {flip[kind[0].lower()]} is **{result}**')
-    # @tl.command(pass_context=True, alias=["in"])
-    # async def at(self, ctx, * clan: str=0):
-    #     await ctx.send('placeholder')
-
-    # @tt.command(pass_context=True)
-    # async def set(self, ctx, setting: str=None, value: str=None):
-
-    #     guild_id = ctx.message.guild.id
-    #     key = setting.lower().strip()
-
-    #     g = [x for x in self.bot._servers if x['id']==guild_id][0]
-    #     print(g)
-    #     if key == 'cq' and not value.isdigit():
-    #         await ctx.send('You have to choose a number for `cq` setting')
-    #         return
-    #     elif key == 'code' and not len(value)<10:
-    #         await ctx.send('Clan code cannot be longer than 10 characters')
-    #         return
-    #     elif key in 'ms prestiges tcq' and not value.isdigit() and not len(value) < 10:
-    #         await ctx.send(f'{key} requirement should be a whole number e.g. 1234')
-    #         return
-    #     elif key in 'timer,when':
-    #         channel = None
-    #         if value[2:-1].isdigit() and value.startswith('<#'):
-    #             value = value[2:-1]
-    #         if value.isdigit():
-    #             channel = self.bot.get_channel(int(value))
-    #         if not channel:
-    #             channel = await self.bot.cogs['Helpers'].get_obj(
-    #                 ctx.guild, 'channel', 'name', value
-    #             )
-    #         if not channel:
-    #             await ctx.send('Sorry, you supplied a channel that does not exist')
-    #             return
-    #         value = channel
-    #     elif key in 'gm,master,captain,knight,recruit,alumni,guest,applicant':
-    #         if not value.isdigit() and value.startswith('<@&'):
-    #             value = value[3:-1]
-    #         if not value.isdigit():
-    #             roles = [r for r in ctx.guild.roles if value.lower() in r.name.lower()]
-    #             if len(roles) > 0:
-    #                 value = str(roles[0].id)
-    #         if not value.isdigit():
-    #             await ctx.send('You need to mention a valid role or ID')
-    #             return
-    #         role = discord.utils.get(ctx.guild.roles, id=int(value))
-    #         if not role:
-    #             await ctx.send('Sorry, you supplied a role that does not exist')
-    #             return
-
-    #     key = f'tt_{key}'
-    #     old_value = getattr(g['config'], key)
-    #     if not value == old_value:
-    #         setattr(g['config'], key, value)
-    #         g['changed']=True
-    #         # output = dict(update=datetime.utcnow())
-    #         # output[key] = value
-    #         # with ctx.bot.database.connection_context():
-    #         #     qry=ctx.bot.models.ServerTT2.update(**output).where(
-    #         #         ctx.bot.models.ServerTT2.id == guild_id
-    #         #     )
-    #         #     qry.execute()
-    #     # await ctx.send(g['config'].as_pretty())
-    #     print(g)
-    #     embed = await self.bot.cogs['Helpers'].build_embed(ctx.message.guild.name,
-    #                                         0xffffff)
-    #     embed.add_field(name="Setting", value=key, inline=False)
-    #     embed.add_field(name="Old", value=str(old_value))
-    #     embed.add_field(name="New", value=str(value))
-    #     await ctx.send(embed=embed)
-        
-    #set export {cq} {data}
-    #set ttk {cq} {data}
-    #set reminders
-    #
-
+    
 def setup(bot):
     cog = TapTitans(bot)
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(cog.check_tl_timers())
+    loop = asyncio.get_event_loop()
+    loop.create_task(cog.timer_check())
     bot.add_cog(cog)
