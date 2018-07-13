@@ -144,7 +144,7 @@ class Information():
                     ctx.send('I could not find that user. :<')
                     return
                 elif len(result) == 1:
-                    user = members[result]
+                    user = members[result[0]]
                 elif len(result) > 1:
                     choices = [members[r] for r in result[0:10]]
                     print(choices)
