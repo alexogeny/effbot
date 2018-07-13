@@ -106,6 +106,30 @@ class Helpers():
     async def search_for(self, items, term):
         return [items.index(x) for x in items if term in x]
 
+
+    async def choose_from(self, ctx, choices, text):
+        chooser = await ctx.send(text)
+        def check(m):
+            return m.content.isnumeric() or m.content.lower().strip() == 'c'
+        try:
+            msg = await self.bot.wait_for('message', check=check)
+        except asyncio.TimeoutError as e:
+            await chooser.delete()
+            await msg.channel.send('Query timed out.')
+            return
+        else:
+            await chooser.delete()
+            if not msg.content.isnumeric():
+                await msg.channel.send('Query cancelled.')
+                return
+            i = int(msg.content)-1
+            if i > -1 and i < len(choices):
+                return choices[i]
+            else:
+                await msg.channel.send('Query cancelled.')
+                return
+
+
     async def struct(self, data):
         return Struct(data)
 
