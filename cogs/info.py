@@ -9,7 +9,7 @@ class Information():
     def __init__(self, bot):
         
         self.bot = bot
-        
+        self.helpers = self.bot.get_cog('Helpers')
 
     @commands.group(pass_context=True, invoke_without_command=True)
     async def info(self, ctx):
@@ -138,28 +138,50 @@ class Information():
             try:
                 user = server.get_member(int(user[2:-1]))
             except:
-                bck = str(user)
-                user = next((n for n in server.members if n.name.lower()==bck.lower()), None)
-                if not user:
-                    user = next((n for n in server.members if n.name.startswith(bck)), None)
-                if not user:
-                    user = next((n for n in server.members if n.name.endswith(bck)), None)
-                if not user:
-                    user = [n for n in server.members
-                        or bck.title() in n.name
-                        or bck.lower() in str(n.name).lower()
-                        or bck.lower() in str(n.nick).lower()]
-            if isinstance(user, list) and len(user) >= 1:
-                user = user[0]
-                print(user)
-            elif not user or isinstance(user, list) and len(user) == 0:
-                await ctx.send('I could not find that user. Try a different name or variation?')
-                return
+                members = server.members
+                result = await self.helpers.search_for([m.name.lower() for m in members], user.lower())
+                if len(result) == 0:
+                    ctx.send('I could not find that user. :<')
+                    return
+                elif len(result) == 1:
+                    user = members[result]
+                elif len(result) > 1:
+                    choices = [members[r] for r in result[0:10]]
+                    print(choices)
+                    choicetext = "{}```\n{}\n-----\n{}```".format(
+                        'I found multiple users. Please reply with a matching number:',
+                        '\n'.join([f'{i+1} {c.name}#{c.discriminator}'
+                        for i, c in enumerate(choices)]),
+                        'Or, type "c" to cancel'
+                    )
+                    chooser = await ctx.send(choicetext)
+                    def check(m):
+                        return m.content.isnumeric() or m.content.lower() == 'c'
+                    try:
+                        message = await self.bot.wait_for('message', check=check)
+                    except asyncio.TimeoutError as e:
+                        await chooser.delete()
+                        await message.channel.send('Oops, you took to long to respond.')
+                    else:
+                        await chooser.delete()
 
-        avatar = await self.bot.cogs['Helpers'].build_embed(f"{user.name}'s avatar", user.colour)
+                        if message.content.strip().lower()=='c':
+                            await message.channel.send('Query cancelled.')
+                            return
+                        elif message.content.isnumeric():
+                            i = int(message.content)-1
+                            if i > -1 and i < len(choices):
+                            # print(0>int(message.content)<=len(choices))
+                                user = choices[i]
+                            print(user)
+            # elif not user:
+            #     await ctx.send('I could not find that user. Try a different name or variation?')
+            #     return
+
+        avatar = await self.helpers.build_embed(f"{user.name}#{user.discriminator}'s avatar", user.colour)
         #avatar = discord.Embed(description=f"{user.name}'s avatar", colour=user.colour,
         #                       url=user.avatar_url)
-        avatar.set_image(url=str(user.avatar_url_as(format='jpeg')))
+        avatar.set_image(url=str(user.avatar_url_as(format='png')))
 
         try:
             await ctx.send(embed=avatar)

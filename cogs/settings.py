@@ -53,6 +53,11 @@ class SettingsCog():
             if result:
                 g['config'].role_moderator = result
                 await ctx.send(f'Set the {key}!')
+        if key == 'curator':
+            result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
+            if result:
+                g['config'].role_curator = result
+                await ctx.send(f'Set the {key}!')
 
         if key in ['grandmaster', 'ttgm']:
             result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)

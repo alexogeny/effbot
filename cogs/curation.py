@@ -155,6 +155,7 @@ class Curation():
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
         q = g['config'].chan_quotes
+        g['config'].list_quotes = getattr(g['config'], 'list_quotes', [])
         if not q:
             await ctx.send('Oops, ask an admin to set up a quotes channel')
             return
@@ -162,14 +163,17 @@ class Curation():
         if result and message_id.isdigit():
             c = self.bot.get_channel(result)
             message = await c.get_message(message_id)
-            if message:
+            if message and message.id not in g['config'].list_quotes:
                 a = message.author
                 embed = await self.helpers.build_embed(message.content, a.color)
                 embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
                 embed.add_field(name="In", value=f'<#{c.id}>')
                 embed.add_field(name="Author", value=f'<@{a.id}>')
                 await self.bot.get_channel(q).send(embed=embed)
+                g['config'].list_quotes.append(message.id)
                 await ctx.send('Quote added successfully!')
+            elif message.id in g['config'].list_quotes:
+                await ctx.send('Oops, it seems that has already been quoted.')
             else:
                 await ctx.send('Did not find that message, sorry!')
         else:
@@ -199,6 +203,9 @@ class Curation():
             g = await self.helpers.get_record('server', m.guild.id)
             u = user
             q = g['config'].chan_quotes
+            g['config'].list_quotes = getattr(g['config'], 'list_quotes', [])
+            if m.id in g['config'].list_quotes:
+                return
             u_roles = [a.id for a in u.roles]
             is_admin = g['config'].role_admin in u_roles
             is_mod = g['config'].role_moderator in u_roles
@@ -211,6 +218,7 @@ class Curation():
                 e.add_field(name="In", value=f'<#{c.id}>')
                 e.add_field(name="Author", value=f'<@{a.id}>')
                 await self.bot.get_channel(q).send(embed=e)
+                g['config'].list_quotes.append(m.id)
 
 
     def check_restricted(self, kind, channel, channels):

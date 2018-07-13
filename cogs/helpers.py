@@ -6,6 +6,7 @@ from json import dumps, loads
 from copy import deepcopy
 import asyncio
 import time
+from difflib import get_close_matches
 import os
 
 class Struct:
@@ -101,6 +102,9 @@ class Helpers():
             return result[0].id
         else:
             return None
+
+    async def search_for(self, items, term):
+        return [items.index(x) for x in items if term in x]
 
     async def struct(self, data):
         return Struct(data)
