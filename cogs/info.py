@@ -147,9 +147,6 @@ class Information():
         if user.is_avatar_animated():
             r = urlparse(user.avatar_url_as(format='gif'))
             avatar.set_image(url=str(f'{r.scheme}://{r.netloc}{r.path}'))
-
-
-
         try:
             await ctx.send(embed=avatar)
         except discord.HTTPException:

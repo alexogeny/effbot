@@ -129,7 +129,7 @@ class Helpers():
                 await msg.channel.send('Query cancelled.')
                 return
 
-    async def choose_member(self, ctx, server: list, user: str):
+    async def choose_member(self, ctx, server, user: str):
         members = server.members
         result = await self.search_for([m.name.lower() for m in members], user.lower())
         if len(result) == 0:
@@ -146,6 +146,40 @@ class Helpers():
             )
             user = await self.choose_from(ctx, choices, choicetext)
             return user
+    async def choose_channel(self, ctx, server, channel: str):
+        channels = [c for c in server.text_channels if c not in server.categories]
+        result = await self.search_for([m.name.lower() for m in channels], channel.lower())
+        if len(result) == 0:
+            return None
+        elif len(result) == 1:
+            return channels[result[0]]
+        elif len(result) > 1:
+            choices = [channels[r] for r in result[0:10]]
+            choicetext = "{}```\n{}\n-----\n{}```".format(
+                'I found multiple channels. Please reply with a matching number:',
+                '\n'.join([f'{i+1} #{c.name}'
+                for i, c in enumerate(choices)]),
+                'Or, type "c" to cancel'
+            )
+            channel = await self.choose_from(ctx, choices, choicetext)
+            return channel
+    async def choose_role(self, ctx, server, role: str):
+        roles = server.roles
+        result = await self.search_for([m.name.lower() for m in roles], role.lower())
+        if len(result) == 0:
+            return None
+        elif len(result) == 1:
+            return roles[result[0]]
+        elif len(result) > 1:
+            choices = [roles[r] for r in result[0:10]]
+            choicetext = "{}```\n{}\n-----\n{}```".format(
+                'I found multiple roles. Please reply with a matching number:',
+                '\n'.join([f'{i+1} @{c.name}'
+                for i, c in enumerate(choices)]),
+                'Or, type "c" to cancel'
+            )
+            role = await self.choose_from(ctx, choices, choicetext)
+            return role
 
 
     async def struct(self, data):

@@ -82,22 +82,23 @@ class SettingsCog():
                 await ctx.send(f'Removed <#{result}> from curated channels')
 
         if key == 'quoteschannel':
-            result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
+            result = await self.helpers.choose_channel(ctx, msg.guild, value)
+            # result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
             if result:
                 g['config'].chan_quotes = result
                 await ctx.send(f'Set the {key} setting to <#{result}>')
 
         if key == 'autorole':
-            result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
+            result = await self.helpers.choose_role(ctx, msg.guild, value)
             if result:
-                setattr(g['config'], 'role_auto', result)
-                await ctx.send(f'Set the {key}!')
+                setattr(g['config'], 'role_auto', result.id)
+                await ctx.send(f'Set the `{key}` to `{result.name}`!')
 
     async def auto_role(self, member):
         gid = member.guild.id
         g = await self.helpers.get_record('server', gid)
-        if g and getattr(g['config'], 'role_auto'):
-            role = next((r for r in member.guild.roles if r.id == getattr(g['config'], 'role_auto')), None)
+        if g and getattr(g['config'], 'role_auto', None):
+            role = next((r for r in member.guild.roles if r.id == getattr(g['config'], 'role_auto', 0)), None)
             if role:
                 await member.add_roles(role)
 
