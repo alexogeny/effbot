@@ -129,6 +129,24 @@ class Helpers():
                 await msg.channel.send('Query cancelled.')
                 return
 
+    async def choose_member(self, ctx, server: list, user: str):
+        members = server.members
+        result = await self.search_for([m.name.lower() for m in members], user.lower())
+        if len(result) == 0:
+            return None
+        elif len(result) == 1:
+            return members[result[0]]
+        elif len(result) > 1:
+            choices = [members[r] for r in result[0:10]]
+            choicetext = "{}```\n{}\n-----\n{}```".format(
+                'I found multiple users. Please reply with a matching number:',
+                '\n'.join([f'{i+1} {c.name}#{c.discriminator}'
+                for i, c in enumerate(choices)]),
+                'Or, type "c" to cancel'
+            )
+            user = await self.choose_from(ctx, choices, choicetext)
+            return user
+
 
     async def struct(self, data):
         return Struct(data)

@@ -129,7 +129,7 @@ class Information():
             await ctx.send("I need the `Embed links` permission to send this")
 
     @commands.command(pass_context=True, no_pm=True)
-    async def avatar(self, ctx, *, user: str=None):
+    async def avatar(self, ctx, user: str=None):
         author = ctx.message.author
         server = ctx.message.guild
 
@@ -139,24 +139,7 @@ class Information():
             try:
                 user = server.get_member(int(user[2:-1]))
             except:
-                members = server.members
-                result = await self.helpers.search_for([m.name.lower() for m in members], user.lower())
-                if len(result) == 0:
-                    ctx.send('I could not find that user. :<')
-                    return
-                elif len(result) == 1:
-                    user = members[result[0]]
-                elif len(result) > 1:
-                    choices = [members[r] for r in result[0:10]]
-                    print(choices)
-                    choicetext = "{}```\n{}\n-----\n{}```".format(
-                        'I found multiple users. Please reply with a matching number:',
-                        '\n'.join([f'{i+1} {c.name}#{c.discriminator}'
-                        for i, c in enumerate(choices)]),
-                        'Or, type "c" to cancel'
-                    )
-                    user = await self.helpers.choose_from(ctx, choices, choicetext)
-                    
+                user = await self.helpers.choose_member(ctx, server, user)
         if not user:
             return
         avatar = await self.helpers.build_embed(f"{user.name}#{user.discriminator}'s avatar", user.colour)
