@@ -165,12 +165,14 @@ class Curation():
             message = await c.get_message(message_id)
             if message and message.id not in g['config'].list_quotes:
                 a = message.author
+                g['config'].list_quotes.append(message.id)
                 embed = await self.helpers.build_embed(message.content, a.color)
                 embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+                embed.add_field(name='Quote', value=f'#{len(g["config"].list_quotes)}')
                 embed.add_field(name="In", value=f'<#{c.id}>')
                 embed.add_field(name="Author", value=f'<@{a.id}>')
+                embed.add_field(name='Quoter', value=f'{m.author.mention}')
                 await self.bot.get_channel(q).send(embed=embed)
-                g['config'].list_quotes.append(message.id)
                 await ctx.send('Quote added successfully!')
             elif message.id in g['config'].list_quotes:
                 await ctx.send('Oops, it seems that has already been quoted.')
@@ -213,12 +215,14 @@ class Curation():
             if is_admin or is_mod or is_cur:
                 a = m.author
                 c = m.channel
+                g['config'].list_quotes.append(m.id)
                 e = await self.helpers.build_embed(m.content, a.color)
                 e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+                e.add_field(name='Quote', value=f'#{len(g["config"].list_quotes)}', inline=False)
                 e.add_field(name="In", value=f'<#{c.id}>')
                 e.add_field(name="Author", value=f'<@{a.id}>')
+                e.add_field(name='Quoter', value=f'{user.mention}')
                 await self.bot.get_channel(q).send(embed=e)
-                g['config'].list_quotes.append(m.id)
 
 
     def check_restricted(self, kind, channel, channels):
