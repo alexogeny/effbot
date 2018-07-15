@@ -43,10 +43,6 @@ def has_update():
             await ctx.send('This server needs to have an `update` role setup.\n'
                            '`.settings set updatesrole rolename`')
             return False
-            if not getattr(g['config'], 'chan_update', None):
-                await ctx.send('This server needs an `update` channel to post updates to.\n'
-                               '`.settings set updateschannel #abc123`')
-                return False
         return True
     return commands.check(_has_update)
 
@@ -58,20 +54,23 @@ class Curation():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    # @commands.group(pass_context=True, name="curation")
-    # async def curation(self, ctx):
-    #     pass
-
-
     @has_update()
     @is_curator_or_higher()
     @commands.command(name='update')
-    async def update(self, ctx):
+    async def update(self, ctx, channel):
         """Posts an update to the updates channel and mentions the updates role."""
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
         a = m.author
         if not a.bot:
+            if channel.startswith('#'):
+                channel = channel[1:]
+            elif channel.startswith('<#') and len(m.channel_mentions)>0:
+                channel = m.channel_mentions[0].name
+            channel = await self.helpers.choose_channel(ctx, m.guild, channel)
+            if not channel:
+                asyncio.ensure_future(ctx.send('Sorry, I could not find a channel with that name.'))
+                return
             role = next((r for r in a.guild.roles if r.id == getattr(g['config'], 'role_update', 0)), None)
             was_false = False
             try:
@@ -86,9 +85,12 @@ class Curation():
                             if mc.startswith(p):
                                 mc = mc[len(p):]
                                 passed = 1
-                    mc = re.sub(r'^\w+','',mc)
+                    mc = re.sub(r'^([^\s]+)','',mc).strip()
+                    print(mc)
+                    mc = re.sub(r'^([^\s]+)','',mc.strip()).strip()
+                    print(mc)
                     mc = f'{mc}\n\n{role.mention}'
-                    send_to = await m.guild.get_channel(g['config'].chan_update).send(mc)
+                    send_to = await channel.send(mc)
                     # await send_to
                 elif role.mentionable == True:
                     await ctx.send('Oops, looks like the role can be abused.'
