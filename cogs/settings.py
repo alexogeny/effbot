@@ -85,8 +85,30 @@ class SettingsCog():
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             # result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
             if result:
-                g['config'].chan_quotes = result
+                g['config'].chan_quotes = result.id
                 await ctx.send(f'Set the {key} setting to <#{result}>')
+
+        if key == 'updateschannel':
+            result = await self.helpers.choose_channel(ctx, msg.guild, value)
+            # result = await self.helpers.get_obj(msg.guild, 'channel', 'name', value)
+            if result:
+                setattr(g['config'],'chan_update', result.id)
+                await ctx.send(f'Set the {key} setting to {result.mention}')
+        if key == 'updatesrole':
+            result = await self.helpers.choose_role(ctx, msg.guild, value)
+            if result:
+                setattr(g['config'], 'role_update', result.id)
+                was_true = False
+                try:
+                    if result.mentionable == True:
+                        was_true = True
+                        await result.edit(mentionable=False)
+                        await ctx.send(f'Set the {key} role to {result.mention}!')
+                    if was_true:
+                        await result.edit(mentionable=True)
+                except discord.Forbidden:
+                    asyncio.ensure_future(ctx.send(f'Set the `{key}` role to `{result.name}`!'))
+                # await ctx.send(f'Set the `{key}` to `{result.name}`!')
 
         if key == 'autorole':
             result = await self.helpers.choose_role(ctx, msg.guild, value)

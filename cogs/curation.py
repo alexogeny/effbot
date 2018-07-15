@@ -1,6 +1,7 @@
 import os, time
 import discord
 import asyncio
+import re
 from discord.ext import commands
 from random import choice as rndchoice
 from urllib.parse import urlparse
@@ -34,6 +35,20 @@ def is_curator_or_higher():
 
     return commands.check(_is_moderator_or_higher)
 
+def has_update():
+    async def _has_update(ctx):
+        msg = ctx.message
+        g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
+        if not getattr(g['config'], 'role_update', None):
+            await ctx.send('This server needs to have an `update` role setup.\n'
+                           '`.settings set updatesrole rolename`')
+            return False
+            if not getattr(g['config'], 'chan_update', None):
+                await ctx.send('This server needs an `update` channel to post updates to.\n'
+                               '`.settings set updateschannel #abc123`')
+                return False
+        return True
+    return commands.check(_has_update)
 
 class Curation():
     """
@@ -46,6 +61,64 @@ class Curation():
     # @commands.group(pass_context=True, name="curation")
     # async def curation(self, ctx):
     #     pass
+
+
+    @has_update()
+    @is_curator_or_higher()
+    @commands.command(name='update')
+    async def update(self, ctx):
+        """Posts an update to the updates channel and mentions the updates role."""
+        m = ctx.message
+        g = await self.helpers.get_record('server', m.guild.id)
+        a = m.author
+        if not a.bot:
+            role = next((r for r in a.guild.roles if r.id == getattr(g['config'], 'role_update', 0)), None)
+            was_false = False
+            try:
+                if role.mentionable == False:
+                    was_false = True
+                    await role.edit(mentionable=True)
+                    pfx = await self.bot.get_prefix(m)
+                    mc = m.content
+                    passed = 0
+                    while not passed:
+                        for p in pfx:
+                            if mc.startswith(p):
+                                mc = mc[len(p):]
+                                passed = 1
+                    mc = re.sub(r'^\w+','',mc)
+                    mc = f'{mc}\n\n{role.mention}'
+                    send_to = await m.guild.get_channel(g['config'].chan_update).send(mc)
+                    # await send_to
+                elif role.mentionable == True:
+                    await ctx.send('Oops, looks like the role can be abused.'
+                        '\nSet mentionable to off before doing an update command.')
+                if was_false:
+                    await role.edit(mentionable=False)
+                    asyncio.ensure_future(ctx.send('Successfully posted the update!'))
+            except discord.Forbidden:
+                asyncio.ensure_future(ctx.send(f'I cannot toggle the updates role to be mentioned.'
+                    '\nI would suggest placing my role above `{role.name}`'))
+            
+
+    @has_update()
+    @commands.command(name='updates')
+    async def _updates(self, ctx, state):
+        m = ctx.message
+        a = m.author
+        if not a.bot and state.lower() in ['on','off']:
+            print('Changing setting for user')
+            g = await self.helpers.get_record('server', a.guild.id)
+            if g and getattr(g['config'], 'role_update', None):
+                role = next((r for r in a.guild.roles if r.id == getattr(g['config'], 'role_update', 0)), None)
+                if role and state.lower() == 'on':
+                    await a.add_roles(role)
+                    await ctx.send(f'Successfully added the updates role'
+                        f' to {a.name}#{a.discriminator}!')
+                elif role and state.lower() == 'off':
+                    await a.remove_roles(role)
+                    await ctx.send(f'Successfully removed the updates role'
+                        f' from {a.name}#{a.discriminator}!')
 
     @is_curator_or_higher()
     @commands.command(pass_context=True, name="whitelist", aliases=["wl"])
