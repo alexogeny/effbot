@@ -95,7 +95,7 @@ class LogCog():
     async def log_pin(self, channel, last_pin):
         log = await self.helpers.get_record('server', channel.guild.id)
         c = channel
-        if log and getattr(log['config'], 'log_message'):
+        if log and getattr(log['config'], 'log_message', None):
             embed = await self.helpers.build_embed(None, 0x36ce31)
             embed.set_thumbnail(url='https://i.imgur.com/yNlWCen.png')
             embed.add_field(name="Action", value='Pin/unpin', inline=False)

@@ -118,8 +118,8 @@ class TapTitans():
         guilds = [s for s in self.bot._servers if getattr(s['config'], 'next_boss', None)]
         await asyncio.gather(*[self.update_timer(guild) for guild in guilds])
     async def update_timer(self, guild):
-        #print(guild['config'].next_boss)
-        if isinstance(guild['config'].next_boss, float):
+        if isinstance(guild['config'].next_boss, float) and getattr(
+            guild['config'], 'boss_msg', None):
             g = self.bot.get_guild(guild['id'])
             if g is not None:
                 c = g.get_channel(guild['config'].chan_tl)
@@ -128,21 +128,52 @@ class TapTitans():
                 _now = datetime.utcnow().timestamp()
                 _m,_s = divmod(_next-_now, 60)
                 _h,_m = divmod(_m, 60)
-                _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
-
                 m = await c.get_message(guild['config'].boss_msg)
-                # if _h==0 and _m==0 and s_==0:
-                    
-                asyncio.ensure_future(m.edit(
-                    content=f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
-                ))
+                final_ping = 0
+                if _h >= 0:
+                    result = '**{:02}:{:02}:{:02}** until boss arrives'.format(
+                        round(_h), round(_m), round(_s)
+                    )
+                else:
+                    final_ping = 1
+                    result = 'Boss **{}** spawned {}'.format(
+                        guild["config"].tt_cq, m.role_mentions[0].mention
+                    )
+                    guild['config'].tt_cq += 1
+                    guild['config'].last_ping = 120
+                    asyncio.ensure_future(c.send(
+                        content=result
+                    ))
+                    guild['config'].boss_msg = 0
+                    guild['config'].when_msg = 0
+                last_ping = guild['config'].last_ping
+                role = getattr(guild['config'], 'tt_timer', '@everyone')
+                current = round(((_next-_now)/60)+.5)
                 if getattr(guild['config'], 'chan_when', None):
                     if getattr(guild['config'], 'when_msg', None):
                         c = g.get_channel(guild['config'].chan_when)
                         m = await c.get_message(guild['config'].when_msg)
                         asyncio.ensure_future(m.edit(
-                            content=f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
+                            content=result
                         ))
+                
+                did_ping = 0
+                if not final_ping:
+                    for preping in getattr(guild['config'], 'tt_intervals', [15,5,1]):
+                        if current <= preping and last_ping > preping and _h >= 0:
+                            setattr(guild['config'], 'last_ping', preping)
+                            role = next((r.mention for r in g.roles if r.id == role), '@everyone')
+                            #setattr(guild['config'], 'when_msg', 0)
+                            m = await c.send(f'{result} {role}')
+                            setattr(guild['config'], 'boss_msg', m.id)
+                            did_ping = 1
+
+                if not did_ping and not final_ping:
+                    if m.role_mentions:
+                        result = f'{result} {m.role_mentions[0].mention}'
+                    asyncio.ensure_future(m.edit(
+                        content = result
+                    ))
 
     @when_check()
     @commands.command(name='when')
@@ -279,15 +310,16 @@ class TapTitans():
             guild = ctx.message.guild
             _next, _units = await process_time(time)
             g = await self.helpers.get_record('server', ctx.message.guild.id)
+            setattr(g['config'], 'last_ping', round(_next.total_seconds()/60+.5))
             now = datetime.utcnow()
             setattr(g['config'], 'next_boss', now.timestamp()+_next.total_seconds())
-            boss_msg = await guild.get_channel(g['config'].chan_tl).send(
-                f'Titanlord arrives in **{_next}**'
-            )
-            setattr(g['config'], 'boss_msg', boss_msg.id)
             await ctx.send(':ideograph_advantage: Set a timer running for **{}**'.format(
                 ', '.join(f'{v} {k}' for k, v in _units.items())
             ))
+            boss_msg = await guild.get_channel(g['config'].chan_tl).send(
+                f'**{_next}** until boss arrives'
+            )
+            setattr(g['config'], 'boss_msg', boss_msg.id)
 
     @is_gm_or_master()
     @tt.command(name='setcq')
@@ -306,7 +338,35 @@ class TapTitans():
         g = await self.helpers.get_record('server', ctx.message.guild.id)
         setattr(g['config'], 'tt_cq', int(cq))
         await ctx.send(f':ideograph_advantage: Updated the CQ number to `{cq}`!')
-            
+    
+    @is_gm_or_master()
+    @tt.command(name='setinterval')
+    async def setinterval(self, ctx):
+        """
+        Set the intevral for when the timer will ping users. IN MINUTES.
+        Requires: GM or Master ranks.
+        Example:
+        ```
+        .tt setinterval 60 15 5 2 1
+        .tt setinterval 15,2,1
+        ```
+        """
+        pfx = await self.bot.get_prefix(ctx.message)
+        mc = ctx.message.clean_content
+        passed = 0
+        while not passed:
+            for p in pfx:
+                if mc.startswith(p):
+                    mc = mc[len(p):]
+                    passed = 1
+        mc = mc[len(ctx.command.name):].strip()
+        rs = [int(i) for i in re.findall(r'\d+', mc)]
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        setattr(g['config'], 'tt_intervals', rs)
+        await ctx.send(':ideograph_advantage: Ping intervals set to: {}'.format(
+            ', '.join([f'`{x}`' for x in rs])
+        ))
+
 
     @is_gm_or_master()
     @tl_checks()
