@@ -247,6 +247,19 @@ class Helpers():
         st = await self.struct(data)
         return st
 
+    @staticmethod
+    def human_format(num):
+        num = float(num)
+        magnitude = 0
+        while abs(num) >= 1000:
+            magnitude += 1
+            num /= 1000.0
+        # add more suffixes if you need them
+        return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T'][magnitude])
+
+    @staticmethod
+    def chunker(seq, size):
+        return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
 def setup(bot):
     cog = Helpers(bot)
