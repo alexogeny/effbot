@@ -45,8 +45,10 @@ class LevelsCog():
                      if m.id in [i[0] for i in ids]}
         
         top10n = all_users
-        top10 = '\n'.join([f'{i+1}. {top10n[u[0]].name}#{top10n[u[0]].discriminator}: **{ids[i][1]}xp**'
-                           for i,u in enumerate(ids)])
+        top10 = '\n'.join(['{}. {}{}: **{}xp**'.format(
+            i+1, getattr(top10n.get(u[0], {}), 'name', 'Unknown'),
+            '#'+getattr(top10n.get(u[0], {}), 'discriminator', '0000'), ids[i][1]
+        ) for i,u in enumerate(ids)])
         e = await self.helpers.build_embed(top10, 0xffffff)
         if location == 'Global':
             e.set_author(name=f'Leaderboard: {location}',

@@ -64,16 +64,7 @@ def tl_checks():
     async def _tl_checks(ctx):
         m = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        if not getattr(g['config'], 'tt_inxtext', None):
-            await ctx.send('The Gm or a master needs to set up ping `inx` text.\n'
-                           '`e.tt setping inx blah blah blah yo @everyone the \n'
-                           'the TL is soon ya in {time} so be ready`')
-            return False
-        elif not getattr(g['config'], 'tt_nowtext', None):
-            await ctx.send('The Gm or master needs to set ping `now` text.\n'
-                           '`e.tt setping now BOSS UP @EVERYONE GO GETTEM`')
-            return False
-        elif not getattr(g['config'], 'chan_tl', None):
+        if not getattr(g['config'], 'chan_tl', None):
             await ctx.send('The Gm or a master needs to set up a TL channel.\n'
                            '`e.tt setchannel tl #abc123`')
             return False
@@ -103,8 +94,6 @@ class TapTitans():
         
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
-        # connect to reminders table
-        # load reminders
         self.units = {"minute": 60, "hour": 3600}
         self.dead = 3600*6
         self.last_check = int(time.time())
@@ -130,14 +119,26 @@ class TapTitans():
                 _h,_m = divmod(_m, 60)
                 m = await c.get_message(guild['config'].boss_msg)
                 final_ping = 0
-                if _h >= 0:
-                    result = '**{:02}:{:02}:{:02}** until boss arrives'.format(
-                        round(_h), round(_m), round(_s)
+                last_ping = guild['config'].last_ping
+                intervals = getattr(guild['config'], 'tt_intervals', [15,5,1])
+                TIME, SPAWN, ROUND, CQ = (
+                    f'**{round(_h):02}:{round(_m):02}:{round(_s):02}**',
+                    (datetime.utcnow()+timedelta(hours=_h,minutes=_m,seconds=_s)).strftime('%I%p'),
+                    0,
+                    guild['config'].tt_cq
+                )
+                if _h >= 0 and last_ping > max(intervals):
+                    result = guild['config'].tt_timertext.format(
+                        TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                    )
+                elif _h >= 0:
+                    result = guild['config'].tt_pingtext.format(
+                        TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
                     )
                 else:
                     final_ping = 1
-                    result = 'Boss **{}** spawned {}'.format(
-                        guild["config"].tt_cq, m.role_mentions[0].mention
+                    result = guild['config'].tt_nowtext.format(
+                        TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
                     )
                     guild['config'].tt_cq += 1
                     guild['config'].last_ping = 120
@@ -147,30 +148,33 @@ class TapTitans():
                     guild['config'].boss_msg = 0
                     guild['config'].when_msg = 0
                 last_ping = guild['config'].last_ping
-                role = getattr(guild['config'], 'tt_timer', '@everyone')
                 current = round(((_next-_now)/60)+.5)
                 if getattr(guild['config'], 'chan_when', None):
                     if getattr(guild['config'], 'when_msg', None):
                         c = g.get_channel(guild['config'].chan_when)
-                        m = await c.get_message(guild['config'].when_msg)
-                        asyncio.ensure_future(m.edit(
-                            content=result
-                        ))
+                        m2 = await c.get_message(guild['config'].when_msg)
+                        if not final_ping:
+                            asyncio.ensure_future(m2.edit(
+                                content=guild['config'].tt_timertext.format(
+                                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                                )
+                            ))
+                        else:
+                            asyncio.ensure_future(m2.edit('Boss spawned!'))
                 
                 did_ping = 0
                 if not final_ping:
-                    for preping in getattr(guild['config'], 'tt_intervals', [15,5,1]):
+                    for preping in intervals:
                         if current <= preping and last_ping > preping and _h >= 0:
                             setattr(guild['config'], 'last_ping', preping)
-                            role = next((r.mention for r in g.roles if r.id == role), '@everyone')
-                            #setattr(guild['config'], 'when_msg', 0)
-                            m = await c.send(f'{result} {role}')
+                            result = guild['config'].tt_pingtext.format(
+                                TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                            )
+                            m = await c.send(result)
                             setattr(guild['config'], 'boss_msg', m.id)
                             did_ping = 1
 
                 if not did_ping and not final_ping:
-                    if m.role_mentions:
-                        result = f'{result} {m.role_mentions[0].mention}'
                     asyncio.ensure_future(m.edit(
                         content = result
                     ))
@@ -179,17 +183,20 @@ class TapTitans():
     @commands.command(name='when')
     async def when(self, ctx):
         g = await self.helpers.get_record('server', ctx.message.guild.id)
-        c = ctx.message.guild.get_channel(g['config'].chan_when)
-        _next = g['config'].next_boss
-        _now = datetime.utcnow().timestamp()
-        _m,_s = divmod(_next-_now, 60)
-        _h,_m = divmod(_m, 60)
-        _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
+        if getattr(g['config'], 'boss_msg', None):
+            c = ctx.message.guild.get_channel(g['config'].chan_when)
+            _next = g['config'].next_boss
+            _now = datetime.utcnow().timestamp()
+            _m,_s = divmod(_next-_now, 60)
+            _h,_m = divmod(_m, 60)
+            _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
 
-        when_msg = await c.send(
-            f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
-        )
-        setattr(g['config'], 'when_msg', when_msg.id)
+            when_msg = await c.send(
+                f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
+            )
+            setattr(g['config'], 'when_msg', when_msg.id)
+        else:
+            asyncio.ensure_future(ctx.send("Oops, there's no boss active rn."))
 
     @commands.group(pass_context=True, invoke_without_command=True, name="tt")
     async def tt(self, ctx):
@@ -223,32 +230,33 @@ class TapTitans():
                 setattr(g['config'], f'chan_{kind}', result.id)
                 await ctx.send(f'Set the {kind} channel to {result.mention}!')
 
-    # @is_gm_or_master()
-    # @tt.command(name='settext')
-    # async def settext(self, ctx, kind):
-    #     m = ctx.message
-    #     a = m.author
-    #     if a.bot:
-    #         return
-    #     if not len(m.content) >= 0:
-    #         await ctx.send('Sorry, you did not specify a text type, nor its contents.')
-    #         return
+    @is_gm_or_master()
+    @tt.command(name='settext', aliases=['setmessage', 'setmsg'])
+    async def settext(self, ctx, kind):
+        m = ctx.message
+        a = m.author
+        if a.bot:
+            return
+        if kind.lower() not in ['ping', 'now', 'timer']:
+            await ctx.send('`kind` must be one of: `ping`, `now`, `timer`')
+            return
         
-    #     g = await self.helpers.get_record('server', m.guild.id)
-    #     c = g['config']
-    #     now = datetime.utcnow().timestamp()
-    #     c.last_suggest = getattr(c, 'last_suggest', 0)
-    #     # if now - c.last_suggest >= 3600:
-    #     #     c.last_suggest = now
-    #         # pfx = await self.bot.get_prefix(ctx.message)
-    #         # mc = m.clean_content
-    #         passed = 0
-    #         while not passed:
-    #             for p in pfx:
-    #                 if mc.startswith(p):
-    #                     mc = mc[len(p):]
-    #                     passed = 1
-    #         mc = re.sub(r'^\w+','',mc)
+        g = await self.helpers.get_record('server', m.guild.id)
+        c = g['config']
+        pfx = await self.bot.get_prefix(ctx.message)
+        mc = m.content
+        passed = 0
+        while not passed:
+            for p in pfx:
+                if mc.startswith(p):
+                    mc = mc[len(p):]
+                    passed = 1
+        mc = re.sub(r'^[^\s]+', '', mc).strip()
+        mc = re.sub(r'^[^\s]+', '', mc).strip()
+        mc = re.sub(r'^[^\s]+', '', mc).strip()
+        setattr(c, f'tt_{kind.lower()}text', mc)
+        e = await self.helpers.build_embed(mc, 0xffffff)
+        await ctx.send(embed=e)
 
     @is_gm_or_admin()
     @tt.command(name='setrank')
@@ -375,6 +383,7 @@ class TapTitans():
         g = await self.helpers.get_record('server', ctx.message.guild.id)
         setattr(g['config'], 'next_boss', '')
         setattr(g['config'], 'boss_msg', '')
+        setattr(g['config'], 'when_msg', '')
         await ctx.send(':ideograph_advantage: Cleared the boss timer!')
 
     @commands.command(name='claim')
