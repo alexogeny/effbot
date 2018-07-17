@@ -1,11 +1,15 @@
 from datetime import datetime
 import peewee as pw 
+from playhouse.postgres_ext import *
 from .base import BaseModel
 
 class Server(BaseModel):
-    config = pw.BlobField(null=True) 
-
-class Titanlord(BaseModel):
-    config = pw.BlobField(null=True)
-    clan_code = pw.TextField(null=False, index=True)
-    spawned_at = pw.DateTimeField(default=datetime.utcnow, null=True)
+    tt = JSONField()
+    users = JSONField()
+    logs = JSONField()
+    roles = JSONField()
+    restrictions = JSONField()
+    channels = JSONField()
+    texts = JSONField()
+    warnings = JSONField()
+    extra = JSONField()

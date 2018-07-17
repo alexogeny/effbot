@@ -8,27 +8,8 @@ import asyncio
 import time
 from difflib import get_close_matches
 import os
-
-class Struct:
-    def __init__(self, data):
-        if isinstance(data, bytes):
-            data = loads(gzip.decompress(data).decode('utf-8'))
-        for k, v in data.items():
-            setattr(self, k, isinstance(v, dict) and self.__class__(v) or v)
-
-    def __call__(self, fmt: str):
-        assert fmt in 'strprettygzjson'
-        if fmt == 'str':
-            output = dumps(self('json'), separators=(',', ':'))
-        elif fmt == 'pretty':
-            output = '{}'.format(dumps(self('json'), indent=4))
-        elif fmt == 'gz':
-            output = gzip.compress(self('str').encode('utf-8'))
-        elif fmt == 'json':
-            output = {}
-            for k, v in self.__dict__.items():
-                output[k] = (isinstance(v, self.__class__) and v('json')) or v
-        return output
+from collections import defaultdict
+from playhouse.shortcuts import dict_to_model, model_to_dict
 
 
 class Helpers():
@@ -50,49 +31,40 @@ class Helpers():
     async def timer_save(self):
         while self is self.bot.get_cog('Helpers'):
             if int(time.time()) - self.last_save >= 299:
-                self.save_records()
+                asyncio.ensure_future(self.save_records())
             await asyncio.sleep(300)
 
-    def save_records(self):
+    async def save_records(self):
         for k in self.bot._models:
-            m = self.bot._models[k]
-            with self.bot.database.atomic():
-                for item in getattr(self.bot, f'_{k}s'):
-                    item = deepcopy(item)
-                    if item.get('id', None) != None:
-                        if 'changed' in item.keys():
-                            del item['changed']
-                        item['config'] = item['config']('gz')
-                        item['update_'] = datetime.utcnow()
-                        m.insert(**item).on_conflict_replace().execute()
+            records = [getattr(self.bot, f'_{k}s')]
+            await self.upsert_records(records)
+
+    async def upsert_records(self, records):
+        model = records[0].__class__
+        data_dicts = [model_to_dict(r) for r in records]
+        with self.bot.db.atomic():
+            for record in data_dicts:
+                model.insert(**record).on_conflict(
+                    preserve=[model.id, model.create_],
+                    update=record
+                )
 
     def load_records(self, models):
         setattr(self.bot, '_models', models)
         for k in models:
-            result = [i for i in list(models[k].select().dicts())]
-            result = [{
-                'changed': False, 'config': Struct(i['config']),
-                'id': int(i['id']), 'create_': i['create_'],
-                'update_': i['update_']} for i in result]
+            result = [i for i in list(models[k].select())]
             setattr(self.bot, f'_{k}s', result)
 
     async def get_record(self, model, id):
-        result = [x for x in getattr(self.bot,f'_{model}s') if x['id']==id]
+        result = [x for x in getattr(self.bot,f'_{model}s') if x.id==id]
         if len(result) > 0:
             return result[0]
         else:
-            if model == 'user':
-                u = {'id': id}
-                conf = await self.spawn_config('user')
-                u['config'] = conf
-                self.bot._users.append(u)
-                return u
-            elif model == 'server':
-                g = {'id': id}
-                conf = await self.spawn_config('server')
-                g['config'] = conf
-                self.bot._servers.append(g)
-                return g
+            valid = getattr(self.bot, f'_{model}s', None)
+            if valid:
+                result = valid[0].__class__(id=id)
+                valid.append(result)
+                return result
 
     async def get_obj(self, server, kind, key, value):
         result = [x for x in getattr(server, f'{kind}s')
@@ -182,70 +154,6 @@ class Helpers():
             return role
 
 
-    async def struct(self, data):
-        return Struct(data)
-
-    async def spawn_config(self, kind):
-        if kind == 'server':
-            data = dict(
-                log_moderation=0,
-                log_messages=0,
-                log_misc=0,
-                log_join=0,
-                log_leave=0,
-                role_admin=0,
-                bl_channels=[],
-                bl_commands=[],
-                role_moderator=0,
-                role_curator=0,
-                chan_quotes=0,
-                chan_curated=[],
-                chan_welcome=0,
-                tt_timer=0,
-                tt_when=0,
-                chan_depart=0,
-                chan_staff=0,
-                tt_ms=0,
-                tt_prestiges=0,
-                tt_tcq=0,
-                tt_code='',
-                tt_pass=0,
-                tt_gm=0,
-                tt_master=0,
-                tt_captain=0,
-                tt_knight=0,
-                tt_recruit=0,
-                tt_applicant=0,
-                tt_guest=0,
-                tt_alumni=0,
-                tt_timertext='{TIME} until boss #{CQ} spawns! ({SPAWN} UTC)',
-                tt_pingtext='{TIME} until boss #{CQ}! Be ready @everyone! ({SPAWN} UTC)',
-                tt_nowtext='Boss #{CQ} spawned! Kill it!!! @everyone',
-                tt_intervals=[60,5],
-                welcome_text='Welcome **{{user.name}}** to **{guild.name}**!',
-                depart_text='So long, **{{user.name}}**, and safe travels!',
-                tt_timerperms=0,
-                tt_recruitperms=0
-            )
-        elif kind == 'user':
-            data = dict(
-                tt_code='',
-                tt_ms=0,
-                tt_tcq=0,
-                tt_prestiges=0,
-                tt_taps=0,
-                tt_playtime='',
-                xp=0,
-                last_xp=0,
-                level=0,
-                weekly=0,
-                last_reset='',
-                currency=100,
-                last_daily='',
-                tree=0
-            )
-        st = await self.struct(data)
-        return st
 
     @staticmethod
     def human_format(num):
@@ -260,6 +168,10 @@ class Helpers():
     @staticmethod
     def chunker(seq, size):
         return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
+    @staticmethod
+    def ingest_timestring(string):
+        return datetime.strptime(string, '%Y-%m-%d %H:%M:%S.%f')
 
 def setup(bot):
     cog = Helpers(bot)

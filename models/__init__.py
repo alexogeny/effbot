@@ -1,3 +1,3 @@
-from .server import Server, Titanlord
+from .server import Server
 from .user import User
 from .base import db

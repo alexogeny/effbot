@@ -2,12 +2,14 @@ import sys, traceback
 import discord
 import json
 import time
+import asyncio
 from pathlib import Path
 from discord.ext import commands
 from os import listdir
 from os.path import isfile, join
-from models import Server, Titanlord, User, db
+from models import Server, User, db
 import re
+from playhouse.shortcuts import dict_to_model
 
 class Struct(object):
     def __init__(self, **entries):
@@ -35,7 +37,7 @@ class Effribot(commands.Bot):
         self.load_extensions()
         self.create_tables()
         self.cogs['Helpers'].load_records(dict(
-            server=Server, titanlord=Titanlord, user=User))
+            server=Server, user=User))
 
     def load_extensions(self):
         self.load_extension('cogs.helpers')
@@ -49,13 +51,8 @@ class Effribot(commands.Bot):
                 traceback.print_exc()
 
     def create_tables(self):
-        if not Path('data').exists():
-            Path('data').mkdir()
-            import sqlite3
-            with sqlite3.connect('data\\db.db') as conn:
-                pass
         with self.database:
-            self.database.create_tables([Server, Titanlord, User])
+            self.database.create_tables([Server, User])
         return
 
 
@@ -101,9 +98,11 @@ class Effribot(commands.Bot):
         )
         if not [x for x in self._servers if x['id']==guild.id]:
             g = {'id': guild.id}
-            conf = await self.cog['Helpers'].spawn_config('server')
-            g['config'] = conf
-            self._servers.append(g)
+            gm = dict_to_model(Server, g)
+            # conf = await self.cog['Helpers'].spawn_config('server')
+            # g['config'] = conf
+            self._servers.append(gm)
+            asyncio.ensure_future(self.cogs['Helpers'].upsert_records([gm]))
 
     async def on_guild_remove(self, guild):
         await self.get_channel(462253601360969758).send(

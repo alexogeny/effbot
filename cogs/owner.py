@@ -176,7 +176,7 @@ class Owner:
     @is_owner()
     @commands.command(name="save", hidden=True)
     async def _save(self, ctx):
-        self.bot.get_cog('Helpers').save_records()
+        asyncio.ensure_future(self.bot.get_cog('Helpers').save_records())
 
     @is_owner()
     @commands.command(name="reload")
@@ -236,7 +236,7 @@ class Owner:
     @commands.command(name="shutdown")
     @is_owner()
     async def _shutdown(self, ctx):
-        self.helpers.save_records()
+        await self.helpers.save_records()
         await self.bot.logout()
 
     @commands.command(name="serverconfig")
