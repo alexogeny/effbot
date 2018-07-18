@@ -28,6 +28,18 @@ class Helpers():
         )
         return embed
 
+    async def try_mention(self, ctx, key, role):
+        was_true = False
+        try:
+            if role.mentionable == True:
+                was_true = True
+                await role.edit(mentionable=False)
+            await ctx.send(f'Set the {key} setting to {role.mention}!')
+            if was_true:
+                await role.edit(mentionable=True)
+        except discord.Forbidden:
+            await ctx.send(f'Set the `{key}` setting to `{role.name}`!')
+
     async def timer_save(self):
         while self is self.bot.get_cog('Helpers'):
             if int(time.time()) - self.last_save >= 299:
@@ -36,23 +48,46 @@ class Helpers():
 
     async def save_records(self):
         for k in self.bot._models:
-            records = [getattr(self.bot, f'_{k}s')]
-            await self.upsert_records(records)
+            records = getattr(self.bot, f'_{k}s')
+            await self.upsert_records(records, self.bot._models[k])
+            print(f'finished {k}')
 
-    async def upsert_records(self, records):
-        model = records[0].__class__
-        data_dicts = [model_to_dict(r) for r in records]
-        with self.bot.db.atomic():
-            for record in data_dicts:
-                model.insert(**record).on_conflict(
-                    preserve=[model.id, model.create_],
-                    update=record
-                )
+    async def upsert_records(self, records, model):
+        with self.bot.database.atomic():
+            # for record in records:
+
+            # #model.drop_table()
+            # #model.create_table()
+            # r=model.replace_many([model_to_dict(r) for r in records]).execute()
+            # print(len(list(r)))
+
+        # data_dicts = [r for r in records]
+            for record in records:
+                r=model_to_dict(record)
+                to_update = {getattr(model, k):v
+                    for k,v in r.items() 
+                    if k not in ['id','create_']}
+                # print(to_update.keys())
+                with self.bot.database.atomic():
+                    query = model.insert(**r).on_conflict(
+                        conflict_target=(model.id,),
+                        preserve=(model.id, model.create_),
+                        update=to_update
+                    ).execute()
+        # print(data_dicts[0])
+        # for record in data_dicts:
+        #     with self.bot.database.atomic():
+        #         model.insert(**record).on_conflict(
+        #             conflict_target=[model.id],
+        #             preserve=[model.id, model.create_],
+        #             update=record
+        #         )
 
     def load_records(self, models):
-        setattr(self.bot, '_models', models)
-        for k in models:
-            result = [i for i in list(models[k].select())]
+        self.bot._models.update(models)
+        print(self.bot._models)
+        for k, v in self.bot._models.items():
+            result = [i for i in list(v.select())]
             setattr(self.bot, f'_{k}s', result)
 
     async def get_record(self, model, id):

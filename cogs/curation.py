@@ -30,7 +30,7 @@ def has_update():
     async def _has_update(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        if not g.roles.get('update'):
+        if not g.roles.get('updates'):
             asyncio.ensure_future(ctx.send(
                 'This server needs to have an `update` role setup.\n'
                 '`.settings set updatesrole rolename`'))
@@ -100,8 +100,8 @@ class Curation():
         if not a.bot and state.lower() in ['on','off']:
             print('Changing setting for user')
             g = await self.helpers.get_record('server', a.guild.id)
-            if g and g.roles.get('update'):
-                role = next((r for r in a.guild.roles if r.id == g.roles.get('update')), None)
+            if g and g.roles.get('updates'):
+                role = next((r for r in a.guild.roles if r.id == g.roles.get('updates')), None)
                 if role and state.lower() == 'on':
                     await a.add_roles(role)
                     await ctx.send(f'Successfully added the updates role'
@@ -188,14 +188,14 @@ class Curation():
             c = self.bot.all_commands[command.strip().lower()].name
             roles = [r for r in m.guild.roles]
             if not role.isnumeric():
-                role = await self.helpers.choose_role(ctx, msg.guild, role)
+                role = await self.helpers.choose_role(ctx, m.guild, role)
                 if not role:
                     return
                 if c not in g.restrictions:
                     g.restrictions[c] = dict(wl=[], bl=[], disable=False,
                                              restrict=[])
                 if role.id not in g.restrictions[c]['restrict']:
-                        g.restrictions[c]['restrict'].append(c)
+                    g.restrictions[c]['restrict'].append(role.id)
                     await ctx.send(f'`{c}` was restricted to `{role.name}`')
                 else:
                     g.restrictions[c]['restrict']=[
@@ -223,11 +223,13 @@ class Curation():
                 g.extra['quotes'].append(message.id)
                 embed = await self.helpers.build_embed(message.content, a.color)
                 embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-                embed.add_field(name='Quote', value=f'#{len(g["config"].list_quotes)}')
-                embed.add_field(name="In", value=f'<#{c.id}>')
-                embed.add_field(name="Author", value=f'<@{a.id}>')
-                embed.add_field(name='Quoter', value=f'{m.author.mention}')
-                embed.add_field(name='Jumplink', value=f'[Click here]({message.jump_url})', inline=False)
+                embed.add_field(name=f'Quote #{len(g.extra["quotes"])}', value=f'in {c.mention}')
+                # embed.add_field(name="In", value=f'<#{c.id}>')
+                # embed.add_field(name="Author", value=f'<@{a.id}>')
+                # embed.add_field(name='Quoter', value=f'{m.author.mention}')
+                # embed.add_field(name='Jumplink', value=f'[Click here]({message.jump_url})', inline=False)
+                e.add_field(name=f'Quoted by {user.name}#{user.discriminator}',
+                            value=f'{m.jump_url}')
                 await self.bot.get_channel(q).send(embed=embed)
                 await ctx.send('Quote added successfully!')
             elif message.id in g.extra['quotes']:
@@ -261,6 +263,7 @@ class Curation():
             g = await self.helpers.get_record('server', m.guild.id)
             u = user
             q = g.channels.get('quotes')
+            print(q)
             if not q:
                 return
             if m.id in g.extra.get('quotes',[]):
@@ -276,13 +279,16 @@ class Curation():
             if not g.extra.get('quotes'):
                 g.extra['quotes']=[]
             g.extra['quotes'].append(m.id)
+            print(m.content)
             e = await self.helpers.build_embed(m.content, a.color)
             e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-            e.add_field(name='Quote', value=f'#{len(g["config"].list_quotes)}', inline=False)
-            e.add_field(name="In", value=f'<#{c.id}>')
-            e.add_field(name="Author", value=f'<@{a.id}>')
-            e.add_field(name='Quoter', value=f'{user.mention}')
-            e.add_field(name='Jumplink', value=f'[Click here]({m.jump_url})', inline=False)
+            e.add_field(name=f'Quote #{len(g.extra["quotes"])}', value=f'in {c.mention}')
+            # e.add_field(name='Quote', value=f'#{len(g["config"].list_quotes)}', inline=False)
+            # e.add_field(name="In", value=f'<#{c.id}>')
+            # e.add_field(name="Author", value=f'<@{a.id}>')
+            e.add_field(name=f'Quoted by {user.name}#{user.discriminator}',
+                        value=f'{m.jump_url}')
+            # e.add_field(name='Jumplink', value=f'[Click here]({m.jump_url})', inline=False)
             asyncio.ensure_future(self.bot.get_channel(q).send(embed=e))
 
     
@@ -292,25 +298,21 @@ class Curation():
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)
             chan = ctx.channel
-            if c.strip().lower() in self.bot.all_commands:
-                c = self.bot.all_commands[command.strip().lower()].name
-            else:
-                return True
-            if c not in g.restrictions:
-                return True
-                chan = chan.id
+            c = self.bot.all_commands[c.name].name
+            if g.restrictions.get(c):
                 r = g.restrictions[c]
-
+                print(r)
+                print([i for i in m.author.roles])
                 if r['disable']==True:
                     msg = 'That command is disabled in this server.'
-                elif not [ur for ur in m.author.roles if ur.id in r['restrict']]:
+                elif bool(r['restrict']) and not set([i.id for i in m.author.roles]).intersection(r['restrict']):
                     msg = ('You do not have the required roles to'
                            ' use this command.')
-                elif chan.id not in r['wl'] and len(r['wl'])>0:
+                elif bool(r['wl']) and chan not in r['wl']:
                     msg = 'That command can only be used in: {}'.format(
                         ', '.join([f'<#{c}>' for c in r['wl']])
                     )
-                elif chan.id in r['bl']:
+                elif bool(r['bl']) and chan in r['bl']:
                     msg = 'That command is disabled in this channel.'
                 else:
                     return True

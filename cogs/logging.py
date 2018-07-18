@@ -39,7 +39,7 @@ class LogCog():
     async def log_delete(self, message):
         guild = await self.helpers.get_record('server', message.guild.id)
         m, c, a = message, message.channel, message.author
-        if guild.get('message') and not a.bot:
+        if guild.logs.get('message') and not a.bot:
             embed = await self.helpers.build_embed(None, 0xff0000)
             embed.set_thumbnail(url='https://i.imgur.com/nOIAqUH.png')
             embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))

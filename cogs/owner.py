@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
-
+from playhouse.shortcuts import dict_to_model, model_to_dict
+import json
+from json import dumps
 import importlib
 import traceback
 import asyncio
@@ -19,6 +21,15 @@ class CogUnloadError(Exception):
     pass
 class OwnerUnloadWithoutReloadError(CogUnloadError):
     pass
+
+class DecimalEncoder(json.JSONEncoder):
+    def _iterencode(self, o, markers=None):
+        if isinstance(o, decimal.Decimal):
+            # wanted a simple yield str(o) in the next line,
+            # but that would mean a yield on the line with super(...),
+            # which wouldn't work (see my comment below), so...
+            return (str(o) for o in [o])
+        return super(DecimalEncoder, self)._iterencode(o, markers)
 
 def box(lang, text):
     return f"```{lang}\n{text}\n```"
@@ -241,14 +252,15 @@ class Owner:
 
     @commands.command(name="serverconfig")
     @is_owner()
-    async def _serverconfig(self, ctx):
+    async def _serverconfig(self, ctx, subtag):
         # await ctx.send(ctx.guild.id)
         #print(self.bot._servers)
         #await ctx.send(ctx.bot._servers)
         server = await self.helpers.get_record('server', ctx.guild.id)
         # server = [s for s in ctx.bot._servers if s['id']==ctx.guild.id]
+        as_dict = model_to_dict(server).get(subtag, {})
         if server:
-            for page in pagify(server['config']('pretty'), [" "], shorten_by=16):
+            for page in pagify(dumps(as_dict, indent=2, cls=DecimalEncoder), [" "], shorten_by=16):
                 await ctx.send(box("json", page.lstrip(" ")))
 
     @commands.command(name='userconfig', visible=False, no_pm=True)

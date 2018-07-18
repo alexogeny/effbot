@@ -98,12 +98,13 @@ class LevelsCog():
             if not self.is_command.match(message.content):
                 u = await self.helpers.get_record('user', m.author.id)
                 now = datetime.utcnow().timestamp()
-                last_xp = c.timers.get('last_xp')
+                
+                last_xp = u.timers.get('last_xp')
                 if not last_xp or now - last_xp >= 25:
                     xp = self.xp_unit + rndchoice([1,2,2,2,2,2,3,3,4,3,2,2,4,15])
                     g = await self.helpers.get_record('server', m.guild.id)
-                    c.timers['last_xp'] = now
-                    c.xp['amount'] = c.xp.get('amount', 0) + xp
+                    u.timers['last_xp'] = now
+                    u.xp['amount'] = u.xp.get('amount', 0) + xp
                     if not g.users:
                         g.users = []
                     if not [x for x in g.users if x['id']==m.author.id]:

@@ -4,12 +4,12 @@ from playhouse.postgres_ext import *
 from .base import BaseModel
 
 class Server(BaseModel):
-    tt = JSONField()
-    users = JSONField()
-    logs = JSONField()
-    roles = JSONField()
-    restrictions = JSONField()
-    channels = JSONField()
-    texts = JSONField()
-    warnings = JSONField()
-    extra = JSONField()
+    tt = JSONField(default={})
+    users = JSONField(default=[])
+    logs = JSONField(default={})
+    roles = JSONField(default={})
+    restrictions = JSONField(default={})
+    channels = JSONField(default={})
+    texts = JSONField(default={})
+    warnings = JSONField(default={})
+    extra = JSONField(default={})

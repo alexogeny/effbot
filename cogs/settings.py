@@ -37,91 +37,55 @@ class SettingsCog():
         msg = ctx.message
         g = await self.helpers.get_record('server', msg.guild.id)
         
-        if key == 'adminrole' and msg.author.id in [msg.guild.owner_id, 305879281580638228]:
-            result = await self.helpers.get_obj(msg.guild, 'role', 'name', value)
-            if result:
-                g.roles['admin'] = result
-                await ctx.send('Successfully updated the admin role!')
-            else:
-                await ctx.send('Sorry, I could not find a role with that name.')
+        if key.replace('role', '')=='admin' and msg.author.id in [msg.guild.owner_id, 305879281580638228]:
+            result = await self.helpers.choose_role(ctx, msg.guild, value)
+            key = key.replace('role', '')
+            result = await self.helpers.choose_role(ctx, msg.guild, value)
+            if not result:
+                asyncio.ensure_future(ctx.send('No roles found!'))
+                return
+            g.roles[key]=result.id
+            asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
+            
+        elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto']:
+            key = key.replace('role', '')
+            result = await self.helpers.choose_role(ctx, msg.guild, value)
+            if not result:
+                asyncio.ensure_future(ctx.send('No roles found!'))
+                return
+            g.roles[key]=result.id
+            asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
             return
 
-        elif key == 'modrole':
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if result:
-                g.roles['moderator'] = result
-                await ctx.send(f'Set the {key}!')
-        elif key == 'curator':
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if result:
-                g.roles['curator'] = result
-                await ctx.send(f'Set the {key}!')
-
-        elif key in ['grandmaster', 'ttgm', 'gm']:
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if result:
-                g.tt['role_gm'] = result
-                await ctx.send(f'Set the grandmaster role!')
 
         elif key.startswith('log') and key[3:] in 'leave,join,message,moderation':
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             if result:
-                g.roles[key[3:]] = result.id
+                g.logs[key[3:]] = result.id
+                print(g.logs)
                 await ctx.send(f'Set the {key} setting to {result.mention}')
 
-        elif key == 'curated':
-            result = await self.helpers.choose_channel(ctx, msg.guild, value)
-            # c=g['config'].chan_curated
-            if not g.channels.get('curated'):
-                g.channels['curated'] = []
-            if result and result not in g.channels['curated']:
-                g.channels['curated'].append(result)
-                await ctx.send(f'Added <#{result}> to curated channels')
-            elif result and result in g.channels['curated']:
-                g.channels['curated'] = [ch for ch in g.channels['curated'] if ch!=c]
-                await ctx.send(f'Removed {result.mention} from curated channels')
 
-        elif key == 'quoteschannel':
+        elif key.replace('channel', '') in ['quotes', 'updates', 'curated']:
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
-            if result:
-                g.channels['quotes'] = result.id
-                await ctx.send(f'Set the {key} setting to {result.mention}')
-
-        elif key == 'updateschannel':
-            result = await self.helpers.choose_channel(ctx, msg.guild, value)
-            if result:
-                g.channels['updates'] = result.id
-                await ctx.send(f'Set the {key} setting to {result.mention}')
-        elif key == 'updatesrole':
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if result:
-                g.roles['updates'] = result.id
-                was_true = False
-                try:
-                    if result.mentionable == True:
-                        was_true = True
-                        await result.edit(mentionable=False)
-                        await ctx.send(f'Set the {key} role to {result.mention}!')
-                    if was_true:
-                        asyncio.ensure_future(result.edit(mentionable=True))
-                except discord.Forbidden:
-                    asyncio.ensure_future(ctx.send(f'Set the `{key}` role to `{result.name}`!'))
-                # await ctx.send(f'Set the `{key}` to `{result.name}`!')
-
-        elif key == 'autorole':
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if result:
-                g.roles['auto'] = result.id
-                was_true = False
-                try:
-                    if result.mentionable == True:
-                        was_true = True
-                        await result.edit(mentionable=False)
-                        await ctx.send(f'Set the {key} role to {result.mention}!')
-                    if was_true:
-                        asyncio.ensure_future(result.edit(mentionable=True))
-                except discord.Forbidden:
-                    asyncio.ensure_future(ctx.send(f'Set the `{key}` role to `{result.name}`!'))
+            key = key.replace('channel', '')
+            if not g.channels.get(key):
+                g.channels[key] = []
+            if result and key == 'curated' and result not in g.channels[key]:
+                g.channels[key].append(result.id)
+                asyncio.ensure_future(ctx.send(
+                    f'Added {result.mention} to curated channels.'
+                ))
+            elif result and key == 'curated' and result in g.channels[key]:
+                g.channels[key] = [c for c in g.channels[key] if c!=result.id]
+                asyncio.ensure_future(ctx.send(
+                    f'Removed {result.mention} from curated channels.'
+                ))
+            elif result:
+                g.channels[key] = result.id
+                asyncio.ensure_future(ctx.send(
+                    f'Set the {key} setting to {result.mention}'
+                ))
 
     async def auto_role(self, member):
         gid = member.guild.id

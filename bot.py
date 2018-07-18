@@ -36,6 +36,7 @@ class Effribot(commands.Bot):
         self.description = "effrill3's custom bot"
         self.load_extensions()
         self.create_tables()
+        self._models = {}
         self.cogs['Helpers'].load_records(dict(
             server=Server, user=User))
 
@@ -87,7 +88,7 @@ class Effribot(commands.Bot):
                 ''
             ) for t in tb if t.strip()])
             
-            e.add_field(name=f'Stack:', value=f'```python\n{tb}\n```')
+            e.add_field(name=f'Stack:', value=f'```python\n{tb[0:1023]}\n```')
             
             await self.get_channel(466192124115681281).send(embed=e)
         return self

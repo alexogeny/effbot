@@ -4,8 +4,8 @@ from playhouse.postgres_ext import *
 from .base import BaseModel
 
 class User(BaseModel):
-    tt = JSONField()
-    timers = JSONField()
-    xp = JSONField()
-    currency = JSONField()
-    fun = JSONField()
+    tt = JSONField(default={})
+    timers = JSONField(default={})
+    xp = JSONField(default={})
+    currency = JSONField(default={})
+    fun = JSONField(default={})
