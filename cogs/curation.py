@@ -207,16 +207,17 @@ class Curation():
     @commands.command(pass_context=True, name="quote")
     async def quote(self, ctx, channel: str, message_id: str):
         m = ctx.message
+        a = m.author
         g = await self.helpers.get_record('server', m.guild.id)
         q = g.channels.get('quotes')
         if not q:
             asyncio.ensure_future(ctx.send('Oops, ask an admin to set up a quotes channel'))
             return
-        result = await self.helpers.get_obj(m.guild, 'channel', 'name', channel)
+        result = await self.helpers.choose_channel(ctx, m.guild, channel)
         if result and message_id.isdigit():
             if not g.extra.get('quotes'):
                 g.extra['quotes']=[]
-            c = self.bot.get_channel(result)
+            c = result
             message = await c.get_message(message_id)
             if message and message.id not in g.extra.get('quotes'):
                 a = message.author
@@ -224,11 +225,7 @@ class Curation():
                 embed = await self.helpers.build_embed(message.content, a.color)
                 embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
                 embed.add_field(name=f'Quote #{len(g.extra["quotes"])}', value=f'in {c.mention}')
-                # embed.add_field(name="In", value=f'<#{c.id}>')
-                # embed.add_field(name="Author", value=f'<@{a.id}>')
-                # embed.add_field(name='Quoter', value=f'{m.author.mention}')
-                # embed.add_field(name='Jumplink', value=f'[Click here]({message.jump_url})', inline=False)
-                e.add_field(name=f'Quoted by {user.name}#{user.discriminator}',
+                embed.add_field(name=f'Quoted by {a.name}#{a.discriminator}',
                             value=f'{m.jump_url}')
                 await self.bot.get_channel(q).send(embed=embed)
                 await ctx.send('Quote added successfully!')
@@ -283,12 +280,8 @@ class Curation():
             e = await self.helpers.build_embed(m.content, a.color)
             e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             e.add_field(name=f'Quote #{len(g.extra["quotes"])}', value=f'in {c.mention}')
-            # e.add_field(name='Quote', value=f'#{len(g["config"].list_quotes)}', inline=False)
-            # e.add_field(name="In", value=f'<#{c.id}>')
-            # e.add_field(name="Author", value=f'<@{a.id}>')
             e.add_field(name=f'Quoted by {user.name}#{user.discriminator}',
                         value=f'{m.jump_url}')
-            # e.add_field(name='Jumplink', value=f'[Click here]({m.jump_url})', inline=False)
             asyncio.ensure_future(self.bot.get_channel(q).send(embed=e))
 
     
