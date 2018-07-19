@@ -16,11 +16,13 @@ class LogCog():
         guild = await self.helpers.get_record('server', gid)
         if guild.logs.get('join'):
             a = member
-            embed = await self.helpers.build_embed(f'{a.mention}', 0x36ce31)
-            embed.set_thumbnail(url='https://i.imgur.com/FSWLAco.png')
-            embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-            embed.add_field(name="Action", value='Join', inline=False)
-            embed.add_field(name="Id", value=f'{a.id}', inline=False)
+            
+            await asyncio.sleep(5)
+            embed = await self.helpers.build_embed(f'Joined the server', 0x36ce31)
+            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+            embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})', icon_url='https://i.imgur.com/FSWLAco.png')
+            #embed.add_field(name="Action", value='Join', inline=False)
+            # embed.add_field(name="Id", value=f'{a.id}', inline=False)
             asyncio.ensure_future(self.bot.get_channel(guild.logs['join']).send(embed=embed))
 
 
@@ -29,23 +31,23 @@ class LogCog():
         guild = await self.helpers.get_record('server', gid)
         if guild.logs.get('leave'):
             a = member
-            embed = await self.helpers.build_embed(f'{a.mention}', 0xff0000)
-            embed.set_thumbnail(url='https://i.imgur.com/1aAsAvW.png')
-            embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-            embed.add_field(name="Action", value='Leave', inline=False)
-            embed.add_field(name="Id", value=f'{a.id}', inline=False)
+            embed = await self.helpers.build_embed(f'Left the server', 0xff0000)
+            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+            embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})', icon_url='https://i.imgur.com/1aAsAvW.png')
+            # embed.add_field(name="Action", value='Leave', inline=False)
+            # embed.add_field(name="Id", value=f'{a.id}', inline=False)
             asyncio.ensure_future(self.bot.get_channel(guild.logs['leave']).send(embed=embed))
 
     async def log_delete(self, message):
         guild = await self.helpers.get_record('server', message.guild.id)
         m, c, a = message, message.channel, message.author
         if guild.logs.get('message') and not a.bot:
-            embed = await self.helpers.build_embed(None, 0xff0000)
-            embed.set_thumbnail(url='https://i.imgur.com/nOIAqUH.png')
-            embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-            embed.add_field(name="Action", value='Delete', inline=False)
-            embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
-            embed.add_field(name="Author", value=f'{a.mention} ({a.id})', inline=False)
+            embed = await self.helpers.build_embed(f'Message deleted in {c.mention}', 0xff0000)
+            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+            embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})', icon_url='https://i.imgur.com/nOIAqUH.png')
+            # embed.add_field(name="Action", value='Delete', inline=False)
+            # embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
+            # embed.add_field(name="Author", value=f'{a.mention} ({a.id})', inline=False)
             embed.add_field(name="Content", value=f'```\n{m.content}\n```')
             asyncio.ensure_future(self.bot.get_channel(guild.logs['message']).send(embed=embed))
     
@@ -56,19 +58,19 @@ class LogCog():
         if m1.content == m2.content:
             return
         if guild.logs.get('message') and not a.bot:
-            embed = await self.helpers.build_embed(None, 0x5e26b7)
-            embed.set_thumbnail(url='https://i.imgur.com/8VYSu5I.png')
-            embed.set_author(name=f'{a.name}#{a.discriminator}',
-                             icon_url=a.avatar_url_as(format='jpeg'))
-            embed.add_field(name="Action", value='Edit', inline=False)
-            embed.add_field(name="In", value=f'<#{c.id}> ({c.id})',
-                            inline=False)
-            embed.add_field(name="Author",
-                            value=f'<@{a.id}> ({a.id})', inline=False)
+            embed = await self.helpers.build_embed(f'Message edited in {c.mention}', 0x5e26b7)
+            embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+            embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})',
+                             icon_url='https://i.imgur.com/8VYSu5I.png')
+            # embed.add_field(name="Action", value='Edit', inline=False)
+            # embed.add_field(name="In", value=f'<#{c.id}> ({c.id})',
+                            # inline=False)
+            # embed.add_field(name="Author",
+                            # value=f'<@{a.id}> ({a.id})', inline=False)
             embed.add_field(name="Content before",
                             value=f'```\n{m1.content[0:800]}\n```', inline=False)
             embed.add_field(name="Content after", value=f'```\n{m2.content[0:800]}\n```')
-            embed.add_field(name='Jumplink', value=f'[Click here to go there]({m2.jump_url})', inline=False)
+            embed.add_field(name='Jumplink', value=f'{m2.jump_url}', inline=False)
             asyncio.ensure_future(self.bot.get_channel(guild.logs['message']).send(embed=embed))
 
     async def log_pin(self, channel, last_pin):

@@ -47,14 +47,14 @@ class SettingsCog():
             g.roles[key]=result.id
             asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
             
-        elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto']:
+        elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto', 'dj']:
             key = key.replace('role', '')
             result = await self.helpers.choose_role(ctx, msg.guild, value)
             if not result:
                 asyncio.ensure_future(ctx.send('No roles found!'))
                 return
             g.roles[key]=result.id
-            asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
+            asyncio.ensure_future(self.helpers.try_mention(ctx, f'{key} role', result))
             return
 
 

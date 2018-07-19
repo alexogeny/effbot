@@ -38,6 +38,18 @@ def has_update():
         return True
     return commands.check(_has_update)
 
+def has_dj():
+    async def _has_dj(ctx):
+        msg = ctx.message
+        g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
+        if not g.roles.get('dj'):
+            asyncio.ensure_future(ctx.send(
+                'This server needs to have a `DJ` role setup.\n'
+                '`.settings set djrole rolename`'))
+            return False
+        return True
+    return commands.check(_has_dj)
+
 class Curation():
     """
     Manage who can run commands and where, quote users, disable commands."""
@@ -204,6 +216,29 @@ class Curation():
                     await ctx.send(f'`{role.name}` removed from `{c}` restrictions')
 
     @is_curator_or_higher()
+    @has_dj()
+    @commands.command(name='dj', aliases=['djadd'], no_pm=True)
+    async def dj(self, ctx, user: str=None):
+        if not user:
+            user = ctx.message.author
+        else:
+            user = await self.helpers.choose_member(ctx, ctx.message.guild, user)
+        if not user:
+            return
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        dj = g.roles.get('dj')
+        role = next((r for r in user.guild.roles if r.id == dj), None)
+        if role not in [r for r in user.roles]:
+            await user.add_roles(role)
+            asyncio.ensure_future(ctx.send('Successfully added `DJ` role to '
+                                           f'{user.name}#{user.discriminator}.'))
+        else:
+            await user.remove_roles(role)
+            asyncio.ensure_future(ctx.send('Successfully removed `DJ` role from '
+                                           f'{user.name}#{user.discriminator}.'))
+
+
+    @is_curator_or_higher()
     @commands.command(pass_context=True, name="quote")
     async def quote(self, ctx, channel: str, message_id: str):
         m = ctx.message
@@ -260,7 +295,7 @@ class Curation():
             g = await self.helpers.get_record('server', m.guild.id)
             u = user
             q = g.channels.get('quotes')
-            print(q)
+            # print(q)
             if not q:
                 return
             if m.id in g.extra.get('quotes',[]):
@@ -276,7 +311,7 @@ class Curation():
             if not g.extra.get('quotes'):
                 g.extra['quotes']=[]
             g.extra['quotes'].append(m.id)
-            print(m.content)
+            # print(m.content)
             e = await self.helpers.build_embed(m.content, a.color)
             e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
             e.add_field(name=f'Quote #{len(g.extra["quotes"])}', value=f'in {c.mention}')
@@ -294,8 +329,8 @@ class Curation():
             c = self.bot.all_commands[c.name].name
             if g.restrictions.get(c):
                 r = g.restrictions[c]
-                print(r)
-                print([i for i in m.author.roles])
+                # print(r)
+                # print([i for i in m.author.roles])
                 if r['disable']==True:
                     msg = 'That command is disabled in this server.'
                 elif bool(r['restrict']) and not set([i.id for i in m.author.roles]).intersection(r['restrict']):
