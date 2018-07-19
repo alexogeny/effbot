@@ -302,42 +302,36 @@ class TapTitans():
                 asyncio.ensure_future(ctx.send(
                     'Action cancelled.'))
 
-    # @is_gm_or_admin()
-    # @tt.command(name='setrank')
-    # async def _setrank(self, ctx, rank, role):
-    #     """
-    #     Sets a discord role to an in-game clan rank.
-    #     - you can specify a role by name or ID
-    #     - emojis will be automatically converted to unicode
-    #     Example:
-    #     ```
-    #     e.tt setrank timer :bell:
-    #     ```
-    #     """
-    #     if rank not in ['master', 'knight', 'captain', 'recruit', 'guest', 'vip', 'applicant', 'alumni', 'timer']:
-    #         await ctx.send('The rank a valid name of an in-game role')
-    #         return
-    #     guild = ctx.message.guild
-    #     if role.isnumeric():
-    #         role = next((r.name for r in guild.roles if r.id == int(role)), None)
-    #     if role:
-    #         g = await self.helpers.get_record('server', ctx.message.guild.id)
-    #         result =await self.helpers.choose_role(ctx, ctx.message.guild, role)
-    #         if result:
-    #             setattr(g['config'], f'tt_{rank}', result.id)
-    #             # result = next((r for r in guild.roles if r.id == int(result)), None)
-    #             was_true = False
-    #             try:
-    #                 if result.mentionable == True:
-    #                     was_true = True
-    #                     await result.edit(mentionable=False)
-    #                 await ctx.send(f'Set the {rank} role to {result.mention}!')
-    #                 if was_true:
-    #                     await result.edit(mentionable=True)
-    #             except discord.Forbidden:
-    #                 await ctx.send(f'Set the `{rank}` role to `{result.name}`!')
+    @is_gm_or_admin()
+    @tt.command(name='setrank')
+    async def _setrank(self, ctx, rank, role):
+        """
+        Sets a discord role to an in-game clan rank.
+        - you can specify a role by name or ID
+        - emojis will be automatically converted to unicode
+        Example:
+        ```
+        e.tt setrank timer :bell:
+        ```
+        """
+        if rank not in ['master', 'knight', 'captain', 'recruit', 'guest',
+            'vip', 'applicant', 'alumni', 'timer']:
+            await ctx.send('The rank must be a valid name of an in-game role'
+                ' or a tt2 related rank. You can choose from:\n```\nmaster,'
+                ' knight, captain, recruit, guest, vip, applicant, alumni,'
+                ' timer\n```')
+            return
+        guild = ctx.message.guild
+        if role:
+            if role.startswith('#'):
+                role = role[1:]
+            g = await self.helpers.get_record('server', ctx.message.guild.id)
+            result =await self.helpers.choose_role(ctx, ctx.message.guild, role)
+            if result:
+                g.tt[rank] = result.id
+                asyncio.ensure_future(self.helpers.try_mention(ctx, f'{rank} role', result))
 
-    @is_gm_or_master()
+    @can_do_timers()
     @tl_checks()
     @commands.group(name='tl', aliases=['boss', 'titanlord', 'setboss'], invoke_without_command=True)
     async def tl(self, ctx, *time):
@@ -487,33 +481,33 @@ class TapTitans():
     #                 started_at+=1
 
 
-    # @is_gm_or_master()
-    # @tt.command(name='setinterval')
-    # async def setinterval(self, ctx):
-    #     """
-    #     Set the intevral for when the timer will ping users. IN MINUTES.
-    #     Requires: GM or Master ranks.
-    #     Example:
-    #     ```
-    #     .tt setinterval 60 15 5 2 1
-    #     .tt setinterval 15,2,1
-    #     ```
-    #     """
-    #     pfx = await self.bot.get_prefix(ctx.message)
-    #     mc = ctx.message.clean_content
-    #     passed = 0
-    #     while not passed:
-    #         for p in pfx:
-    #             if mc.startswith(p):
-    #                 mc = mc[len(p):]
-    #                 passed = 1
-    #     mc = mc[len(ctx.command.name):].strip()
-    #     rs = [int(i) for i in re.findall(r'\d+', mc)]
-    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
-    #     setattr(g['config'], 'tt_intervals', rs)
-    #     await ctx.send(':ideograph_advantage: Ping intervals set to: {}'.format(
-    #         ', '.join([f'`{x}`' for x in rs])
-    #     ))
+    @is_gm_or_master()
+    @tt.command(name='setinterval', aliases=['setintervals'])
+    async def setinterval(self, ctx):
+        """
+        Set the intevral for when the timer will ping users. IN MINUTES.
+        Requires: GM or Master ranks.
+        Example:
+        ```
+        .tt setinterval 60 15 5 2 1
+        .tt setinterval 15,2,1
+        ```
+        """
+        pfx = await self.bot.get_prefix(ctx.message)
+        mc = ctx.message.clean_content
+        passed = 0
+        while not passed:
+            for p in pfx:
+                if mc.startswith(p):
+                    mc = mc[len(p):]
+                    passed = 1
+        mc = mc[len(ctx.command.name):].strip()
+        rs = [int(i) for i in re.findall(r'\d+', mc)]
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        g.tt['ping_intervals'] = rs
+        await ctx.send(':ideograph_advantage: Ping intervals set to: {}'.format(
+            ', '.join([f'`{x}`' for x in rs])
+        ))
 
 
     @is_gm_or_master()
