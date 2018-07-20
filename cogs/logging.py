@@ -21,8 +21,6 @@ class LogCog():
             embed = await self.helpers.build_embed(f'Joined the server', 0x36ce31)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})', icon_url='https://i.imgur.com/FSWLAco.png')
-            #embed.add_field(name="Action", value='Join', inline=False)
-            # embed.add_field(name="Id", value=f'{a.id}', inline=False)
             asyncio.ensure_future(self.bot.get_channel(guild.logs['join']).send(embed=embed))
 
 
@@ -34,8 +32,6 @@ class LogCog():
             embed = await self.helpers.build_embed(f'Left the server', 0xff0000)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})', icon_url='https://i.imgur.com/1aAsAvW.png')
-            # embed.add_field(name="Action", value='Leave', inline=False)
-            # embed.add_field(name="Id", value=f'{a.id}', inline=False)
             asyncio.ensure_future(self.bot.get_channel(guild.logs['leave']).send(embed=embed))
 
     async def log_delete(self, message):
@@ -45,9 +41,6 @@ class LogCog():
             embed = await self.helpers.build_embed(f'Message deleted in {c.mention}', 0xff0000)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})', icon_url='https://i.imgur.com/nOIAqUH.png')
-            # embed.add_field(name="Action", value='Delete', inline=False)
-            # embed.add_field(name="In", value=f'<#{c.id}> ({c.id})', inline=False)
-            # embed.add_field(name="Author", value=f'{a.mention} ({a.id})', inline=False)
             embed.add_field(name="Content", value=f'```\n{m.content}\n```')
             asyncio.ensure_future(self.bot.get_channel(guild.logs['message']).send(embed=embed))
     
@@ -62,11 +55,6 @@ class LogCog():
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a.name}#{a.discriminator} ({a.id})',
                              icon_url='https://i.imgur.com/8VYSu5I.png')
-            # embed.add_field(name="Action", value='Edit', inline=False)
-            # embed.add_field(name="In", value=f'<#{c.id}> ({c.id})',
-                            # inline=False)
-            # embed.add_field(name="Author",
-                            # value=f'<@{a.id}> ({a.id})', inline=False)
             embed.add_field(name="Content before",
                             value=f'```\n{m1.content[0:800]}\n```', inline=False)
             embed.add_field(name="Content after", value=f'```\n{m2.content[0:800]}\n```')

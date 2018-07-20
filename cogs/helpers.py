@@ -28,6 +28,16 @@ class Helpers():
         )
         return embed
 
+    async def full_embed(self, description, colour=0, thumbnail=None, fields={}, author={}):
+        e = await self.build_embed(description, colour)
+        for field in fields:
+            e.add_field(name=field, value=fields[field])
+        if author:
+            e.set_author(name=author['name'], icon_url=author['image'])
+        if thumbnail:
+            e.set_thumbnail(url=thumbnail)
+        return e
+
     async def try_mention(self, ctx, key, role):
         was_true = False
         try:

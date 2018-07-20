@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from discord.ext import commands
 from string import ascii_lowercase
 from itertools import chain, zip_longest
+from random import choice
+from math import log, log10, floor
 from collections import defaultdict
 from pprint import pprint
 import os
@@ -15,6 +17,18 @@ LIFI = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
 LETTERS = re.compile(r'^[hms]')
 MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
+
+def round_to_x(x, n):
+    return round(x, -int(floor(log10(x))) + (n - 1))
+
+def boss_hitpoints(level: int) -> int:
+    return round(100000*pow(level, pow(level, .028))+.5)
+
+def advance_start(level: int) -> float:
+    return round(100*min(.003*pow(log(level+4),2.741), .9), 2)
+
+def clan_damage(level: int) -> float:
+    return round(pow(1.0233, level) + pow(level, 1.05), 2)
 
 async def process_time(input_time: str) -> timedelta:
     match = TIME_SUCKER.findall(input_time)
@@ -63,6 +77,21 @@ def is_gm_or_master():
             await ctx.send('Oof, you need to be a GM or master to do this.')
             return False
     return commands.check(_is_gm_or_master)
+
+def can_do_timers():
+    async def _can_do_timers(ctx):
+        m = ctx.message
+        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
+        aroles = [a.id for a in m.author.roles]
+        if g.roles.get('grandmaster') in aroles:
+            return True
+        if g.tt.get('master') in aroles:
+            return True
+        if g.tt.get('timer') in aroles:
+            return True
+        asyncio.ensure_future(ctx.send('You do not have the necessary permissions.'))
+        return False
+    return commands.check(_can_do_timers)
 
 def tl_checks():
     async def _tl_checks(ctx):
@@ -174,7 +203,7 @@ class TapTitans():
                 did_ping = 0
                 if not final_ping:
                     for preping in intervals:
-                        if current <= preping and last_ping > preping and _h >= 0:
+                        if current <= preping and last_ping > preping and _h >= 0 and not did_ping:
                             guild.tt['last_ping'] = preping
                             result = guild.tt['ping_text'].format(
                                 TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
@@ -270,6 +299,31 @@ class TapTitans():
             embed=e))
 
     @is_gm_or_master()
+    @tt.command(name='settz')
+    async def settz(self, ctx, tz):
+        """Sets the clan's timezone.\nCan be any **whole** digit, positive or negative,\n
+        between -12 and 15.
+        Examples:
+        ```\n.tt settz +7\n.tt settz -10\n```
+        """
+        m = ctx.message
+        g = await self.helpers.get_record('server', m.guild.id)
+        a = m.author
+        if a.bot:
+            return
+        if re.match(r'^[0-9-+]+$', tz):
+            tz = int(tz)
+            if 15 > round(tz-.5,0) > -13:
+                g.tt['tz'] = tz
+                if tz > 0:
+                    tz = f'+{tz}'
+                asyncio.ensure_future(ctx.send(f'Set the timezone to UTC{tz}.'))
+                return
+
+        asyncio.ensure_future(ctx.send('You did not supply a valid timezone setting.'))
+
+
+    @is_gm_or_master()
     @tt.command(name='settexts')
     async def settexts(self, ctx):
         m = ctx.message
@@ -337,31 +391,74 @@ class TapTitans():
     async def tl(self, ctx, *time):
         """
         Sets a timer running until the next titanlord spawn.
-        - accepts most timestam formats
-        - requires
+        - accepts most timestam formats\n- requires master or higher, or timer role set
         Examples:
-        ```
-        e.tl dead
-        e.tl 5h30m
-        e.tl 3:22:20
-        ```
+        ```\n.tl dead\n.tl in 5h30m\n.tl 3:22:20\n```
+        You can also set the boss by using the TTK, which is, IMO, much easier.
+        ```\n.tl ttk 2m20s\n```
         """
-        if time[0] == 'in':
-            time = ' '.join(time[1:]).strip()
-        else:
-            time = time[0]
-        if time.lower() == 'dead':
-            time = '6h'
-        if time not in ['now', 'dead', 'when']:
+        set_by_ttk, next_boss = False, None
+        if time[0] == 'ttk':
+            set_by_ttk = True
+        if time[0] in ['in', 'now', 'dead', 'ttk']:
+            if time in ['now', 'dead']:
+                time = '6h'
+            else:
+                time = ' '.join(time[1:]).strip()
             guild = ctx.message.guild
-            _next, _units = await process_time(time)
             g = await self.helpers.get_record('server', ctx.message.guild.id)
-            g.tt['last_ping'] = round(_next.total_seconds()/60+.5)
+            _next, _units = await process_time(time)
+            g.tt['last_ping'] = round((_next.total_seconds()+21600)/60+.5)
             now = datetime.utcnow()
-            g.tt['next_boss'] = now.timestamp()+_next.total_seconds()
-            await ctx.send(':ideograph_advantage: Set a timer running for **{}**'.format(
-                ', '.join(f'{v} {k}' for k, v in _units.items())
-            ))
+            # print(_next.total_seconds())
+            if not set_by_ttk:
+                next_boss = now.timestamp()+_next.total_seconds()
+                res = ':ideograph_advantage: Set a timer running for **{}**'.format(
+                    ', '.join(f'{v} {k}' for k, v in _units.items())
+                )
+            elif g.tt.get('next_boss') and set_by_ttk:
+                next_boss = g.tt['next_boss']+_next.total_seconds()+21605
+                ts = next_boss-now.timestamp()
+                
+                _m,_s = divmod(ts, 60)
+                _h,_m = divmod(_m, 60)
+                res = ':ideograph_advantage: Set a timer for {:02} hours, {:02} minutes, {:02} seconds.'.format(
+                    round(_h), round(_m), round(_s)
+                )
+            elif set_by_ttk and not g.tt.get('next_boss'):
+                asyncio.ensure_future(ctx.send('Oops, you cannot set by TTK until'
+                    ' a boss has spawned beforehand.'))
+                return
+
+            if g.tt.get('next_boss'):
+                icon = 'https://i.imgur.com/{}.png'.format(choice([
+                    '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
+                    'eYtmbjg', 'Y6jfEhM']))
+                c_dmg = round_to_x(clan_damage(g.tt['cq_number']-1)*100,3)
+                c_adv = advance_start(g.tt['cq_number']-1)
+                c_hp = boss_hitpoints(g.tt['cq_number']-1)
+
+                c_offset = g.tt.get('tz', 0)
+                c_spawn = datetime.fromtimestamp(next_boss+(c_offset*60*60))
+                # print(c_spawn)
+                if c_offset > 0:
+                    c_offset = f'+{c_offset}'
+                c_spawn = c_spawn.strftime('%H:%M:%S UTC{}').format(c_offset or '')
+                field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
+                field2 = f'Spawns at **{c_spawn}** with **{c_hp:,}** hitpoints.'
+                e = await self.helpers.full_embed(
+                    "Killed in {}", thumbnail=icon,
+                    fields={
+                        'Bonuses':field1,
+                        'Next Boss':field2 
+                    },
+                    author=dict(name=f'Boss #{g.tt["cq_number"]-1}',
+                                image=icon)
+                )
+                await guild.get_channel(g.tt['tl_channel']).send(embed=e)
+
+            g.tt['next_boss'] = next_boss
+            await guild.get_channel(g.tt['tl_channel']).send(res)
             boss_msg = await guild.get_channel(g.tt['tl_channel']).send(
                 f'**{_next}** until boss arrives'
             )
