@@ -57,6 +57,26 @@ class SettingsCog():
             asyncio.ensure_future(self.helpers.try_mention(ctx, f'{key} role', result))
             return
 
+        elif key.replace('text', '') in ['welcome']:
+            pfx = await self.bot.get_prefix(ctx.message)
+            mc = ctx.message.content
+            passed = 0
+            while not passed:
+                for p in pfx:
+                    if mc.startswith(p):
+                        mc = mc[len(p):].strip()
+                        passed = 1
+            mc = mc.replace('settings set '+key, '')
+            g.texts['welcome'] = mc
+            USERNUMBER = await self.helpers.member_number(ctx.message.author, ctx.message.guild)
+            e = await self.helpers.build_embed(mc.format(
+                USERID=ctx.message.author.id, USERNAME=ctx.message.author.name,
+                USERDISCRIMINATOR=ctx.message.author.discriminator,
+                USERNUMBER=USERNUMBER, SERVERNAME=ctx.guild.name
+            ), 0xffffff)
+            asyncio.ensure_future(ctx.send(
+                f'Set the {key.replace("text", "")} text to:',
+                embed=e))
 
         elif key.startswith('log') and key[3:] in 'leave,join,message,moderation':
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
@@ -66,7 +86,7 @@ class SettingsCog():
                 await ctx.send(f'Set the {key} setting to {result.mention}')
 
 
-        elif key.replace('channel', '') in ['quotes', 'updates', 'curated']:
+        elif key.replace('channel', '') in ['quotes', 'updates', 'curated', 'welcome']:
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             key = key.replace('channel', '')
             if not g.channels.get(key):
@@ -95,7 +115,22 @@ class SettingsCog():
             if role:
                 asyncio.ensure_future(member.add_roles(role))
 
+    async def welcome_message(self, member):
+        gid = member.guild.id
+        g = await self.helpers.get_record('server', gid)
+        if g.texts.get('welcome') and g.channels.get('welcome'):
+            USERNUMBER = await self.helpers.member_number(member, member.guild)
+            asyncio.ensure_future(member.guild.get_channel(g.channels['welcome']).send(
+                g.texts['welcome'].format(
+                    **dict(USERNAME=member.name, USERID=member.id, SERVERID=gid,
+                           SERVERNAME=member.guild.name,
+                           USERDISCRIMINATOR=member.discriminator,
+                           USERNUMBER=USERNUMBER)
+                )
+            ))
+
 def setup(bot):
     cog = SettingsCog(bot)
     bot.add_listener(cog.auto_role, "on_member_join")
+    bot.add_listener(cog.welcome_message, "on_member_join")
     bot.add_cog(cog)

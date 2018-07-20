@@ -38,6 +38,9 @@ class Helpers():
             e.set_thumbnail(url=thumbnail)
         return e
 
+    async def member_number(self, member, guild):
+        return sorted(guild.members, key=lambda m: m.joined_at).index(member) + 1
+
     async def try_mention(self, ctx, key, role):
         was_true = False
         try:
