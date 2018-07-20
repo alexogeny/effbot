@@ -1,8 +1,11 @@
 import discord
 import random
+import re
 import time
 from discord.ext import commands
 from random import choice
+
+SPACE = re.compile(r'  +')
 
 class Help():
     """A good start to get help from."""
@@ -37,9 +40,9 @@ class Help():
             )
             c = self.bot.get_command(command.strip().lower())
             if c:
-                print(c.help)
+                # print(c.help)
                 e.add_field(name='Name', value=c.name, inline=False)
-                e.add_field(name='Help text', value=c.help)
+                e.add_field(name='Help text', value=SPACE.sub(' ', c.help))
                 await ctx.send(embed=e)
 
     @commands.command(name="support", no_pm=True, aliases=["server"])

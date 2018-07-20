@@ -140,9 +140,9 @@ class TapTitans():
 
     async def timer_check(self):
         while self is self.bot.get_cog('TapTitans'):
-            if int(time.time()) - self.last_check >= 9.99:
+            if int(time.time()) - self.last_check >= 9.999998:
                 asyncio.ensure_future(self.update_timers())
-            await asyncio.sleep(10)
+            await asyncio.sleep(9.999999)
     async def update_timers(self):
         guilds = [s for s in self.bot._servers if s.tt.get('next_boss')]
         await asyncio.gather(*[self.update_timer(guild) for guild in guilds])
@@ -151,71 +151,84 @@ class TapTitans():
             g = self.bot.get_guild(int(guild.id))
             if g is not None:
                 c = g.get_channel(guild.tt['tl_channel'])
-            if c is not None:
-                _next = guild.tt['next_boss']
-                _now = datetime.utcnow().timestamp()
-                _m,_s = divmod(_next-_now, 60)
-                _h,_m = divmod(_m, 60)
-                m = await c.get_message(guild.tt['boss_message'])
-                final_ping = 0
-                last_ping = guild.tt['last_ping']
-                intervals = guild.tt.get('ping_intervals', [15,5,1])
-                TIME, SPAWN, ROUND, CQ = (
-                    f'**{round(_h):02}:{round(_m):02}:{round(_s):02}**',
-                    (datetime.utcnow()+timedelta(hours=_h,minutes=_m,seconds=_s)).strftime('%I%p'),
-                    0,
-                    guild.tt['cq_number']
+            if c is None:
+                return
+            _next = guild.tt['next_boss']
+            _now = datetime.utcnow().timestamp()
+            _m,_s = divmod(_next-_now, 60)
+            _h,_m = divmod(_m, 60)
+            m = await c.get_message(guild.tt['boss_message'])
+            final_ping = 0
+            last_ping = guild.tt['last_ping']
+            intervals = guild.tt.get('ping_intervals', [15,5,1])
+            TIME, SPAWN, ROUND, CQ = (
+                f'**{round(_h):02}:{round(_m):02}:{round(_s):02}**',
+                (datetime.utcnow()+timedelta(hours=_h,minutes=_m,seconds=_s)).strftime('%I%p'),
+                0,
+                guild.tt['cq_number']
+            )
+            if _h >= 0 and last_ping < min([_next-i*60 for i in intervals]):
+                result = guild.tt['timer_text'].format(
+                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
                 )
-                if _h >= 0 and last_ping > max(intervals):
-                    result = guild.tt['timer_text'].format(
-                        TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                    )
-                elif _h >= 0:
-                    result = guild.tt['ping_text'].format(
-                        TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                    )
-                else:
-                    final_ping = 1
-                    result = guild.tt['now_text'].format(
-                        TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                    )
-                    guild.tt['cq_number'] += 1
-                    guild.tt['last_ping'] = 120
-                    asyncio.ensure_future(c.send(
-                        content=result
-                    ))
-                    guild.tt['boss_message'] = 0
-                    guild.tt['when_message'] = 0
-                last_ping = guild.tt['last_ping']
-                current = round(((_next-_now)/60)+.5)
-                if guild.tt.get('when_channel') and guild.tt.get('when_message'):
-                    c = g.get_channel(guild.tt['when_channel'])
-                    m2 = await c.get_message(guild.tt['when_message'])
-                    if not final_ping:
-                        asyncio.ensure_future(m2.edit(
-                            content=guild.tt['timer_text'].format(
-                                TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                            )
-                        ))
-                    else:
-                        asyncio.ensure_future(m2.edit('Boss spawned!'))
-                
-                did_ping = 0
+            elif _h >= 0:
+                result = guild.tt['ping_text'].format(
+                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                )
+            # elif not guild.tt['boss_message'] and _h < 0:
+            #     avgttk = guild.tt.get('avgttk', 65)
+            #     if _next + avgttk*60 < _now:
+            #         #do after ping
+            #     elif _now-last_ping >= 3600:
+            #         # do round ping
+            else:
+                final_ping = 1
+                result = guild.tt['now_text'].format(
+                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                )
+                guild.tt['cq_number'] += 1
+                guild.tt['last_ping'] = _now
+                asyncio.ensure_future(c.send(
+                    content=result
+                ))
+                guild.tt['boss_message'] = 0
+                guild.tt['when_message'] = 0
+            # last_ping = guild.tt['last_ping']
+            current = round(((_next-_now)/60)+.5)
+            if guild.tt.get('when_channel') and guild.tt.get('when_message'):
+                c = g.get_channel(guild.tt['when_channel'])
+                m2 = await c.get_message(guild.tt['when_message'])
                 if not final_ping:
-                    for preping in intervals:
-                        if current <= preping and last_ping > preping and _h >= 0 and not did_ping:
-                            guild.tt['last_ping'] = preping
-                            result = guild.tt['ping_text'].format(
-                                TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                            )
-                            m = await c.send(result)
-                            guild.tt['boss_message'] = m.id
-                            did_ping = 1
-
-                if not did_ping and not final_ping:
-                    asyncio.ensure_future(m.edit(
-                        content = result
+                    asyncio.ensure_future(m2.edit(
+                        content=guild.tt['timer_text'].format(
+                            TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                        )
                     ))
+                else:
+                    asyncio.ensure_future(m2.edit('Boss spawned!'))
+            
+            did_ping = 0
+            if not final_ping and not did_ping:
+                for preping in intervals:
+                    in_window = _next-preping*60<_now
+                    # i=intervals.index(preping)
+                    # i_next = intervals[i-1:i-1] or pow(10,5)
+                    passed_prev = last_ping < _next-preping*60
+
+                    if in_window and passed_prev and _h>=0 and not did_ping:
+                    # if current <= preping and last_ping > preping and _h >= 0 and not did_ping:
+                        guild.tt['last_ping'] = _now
+                        result = guild.tt['ping_text'].format(
+                            TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                        )
+                        m = await c.send(result)
+                        guild.tt['boss_message'] = m.id
+                        did_ping = 1
+
+            if not did_ping and not final_ping:
+                asyncio.ensure_future(m.edit(
+                    content = result
+                ))
 
     # @when_check()
     # @commands.command(name='when')
@@ -275,8 +288,8 @@ class TapTitans():
         a = m.author
         if a.bot:
             return
-        if kind.lower() not in ['ping', 'now', 'timer']:
-            await ctx.send('`kind` must be one of: `ping`, `now`, `timer`')
+        if kind.lower() not in ['ping', 'now', 'timer', 'round', 'after']:
+            await ctx.send('`kind` must be one of: `ping`, `now`, `timer`, `round`, `after`')
             return
         
         g = await self.helpers.get_record('server', m.guild.id)
@@ -350,6 +363,8 @@ class TapTitans():
                 g.tt['timer_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC)'
                 g.tt['ping_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC) @everyone'
                 g.tt['now_text'] = 'BOSS #{CQ} SPAWNED @everyone!!!'
+                g.tt['round_text'] = 'Ding! Time for round {ROUND}, @everyone'
+                g.tt['after_text'] = 'Hey {TIMER}, set the timer and export CQ data!'
                 asyncio.ensure_future(ctx.send(
                     ':ideograph_advantage: Set the texts to the defaults.'))
             elif 'ance' in msg.content.lower():
@@ -401,15 +416,31 @@ class TapTitans():
         if time[0] == 'ttk':
             set_by_ttk = True
         if time[0] in ['in', 'now', 'dead', 'ttk']:
-            if time in ['now', 'dead']:
-                time = '6h'
-            else:
-                time = ' '.join(time[1:]).strip()
             guild = ctx.message.guild
             g = await self.helpers.get_record('server', ctx.message.guild.id)
+            if time[0] == 'dead':
+                time = '6h'
+            elif time[0] == 'now':
+                time='0s'
+                result = g.tt['now_text'].format(
+                    CQ=g.tt.get('cq_number',1)
+                )
+                c = guild.get_channel(g.tt['tl_channel'])
+                _now = datetime.utcnow().timestamp()
+                g.tt['next_boss'] = _now
+                g.tt['cq_number'] += 1
+                g.tt['last_ping'] = _now
+                asyncio.ensure_future(c.send(
+                    content=result
+                ))
+                g.tt['boss_message'] = 0
+                g.tt['when_message'] = 0
+                return
+            else:
+                time = ' '.join(time[1:]).strip()
             _next, _units = await process_time(time)
-            g.tt['last_ping'] = round((_next.total_seconds()+21600)/60+.5)
             now = datetime.utcnow()
+            g.tt['last_ping'] = now.timestamp()
             # print(_next.total_seconds())
             if not set_by_ttk:
                 next_boss = now.timestamp()+_next.total_seconds()
