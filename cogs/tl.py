@@ -12,6 +12,7 @@ import asyncio
 import re
 import datetime as dt
 import time
+UOT = 60
 SCIFI = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
 LIFI = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
@@ -46,48 +47,45 @@ async def process_time(input_time: str) -> timedelta:
 def is_gm_or_admin():
     async def _is_gm_or_admin(ctx):
         msg = ctx.message
+        roles = [r.id for r in msg.author.roles]
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        #print([a.id for a in msg.author.roles])
-        if g.roles.get('admin') in [a.id for a in msg.author.roles]:
-            return True
-        elif msg.author.id == msg.guild.owner_id:
-            return True
-        elif g.roles.get('grandmaster') in [a.id for a in msg.author.roles]:
+        is_admin = g.roles.get('admin') in roles
+        is_owner = msg.author.id == msg.guild.owner_id
+        is_gm = g.roles.get('grandmaster') in roles
+        if is_admin or is_owner or is_gm:
             return True
         elif not g.roles.get('grandmaster'):
             await ctx.send('Ask your server admin to set the GM role')
-            return False
         else:
             await ctx.send('Oof, you need to be a GM to do this.')
-            return False
+        return False
     return commands.check(_is_gm_or_admin)
 
 def is_gm_or_master():
     async def _is_gm_or_master(ctx):
         m = ctx.message
+        roles = [r.id for r in m.author.roles]
         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        if g.roles.get('grandmaster') in [a.id for a in m.author.roles]:
-            return True
-        elif g.tt.get('master') in [a.id for a in m.author.roles]:
+        is_gm = g.roles.get('grandmaster') in roles
+        is_master = g.tt.get('master') in roles
+        if is_gm or is_master:
             return True
         elif not g.roles.get('grandmaster'):
             await ctx.send('Ask your server admin to set the GM role')
-            return False
         else:
             await ctx.send('Oof, you need to be a GM or master to do this.')
-            return False
+        return False
     return commands.check(_is_gm_or_master)
 
 def can_do_timers():
     async def _can_do_timers(ctx):
         m = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        aroles = [a.id for a in m.author.roles]
-        if g.roles.get('grandmaster') in aroles:
-            return True
-        if g.tt.get('master') in aroles:
-            return True
-        if g.tt.get('timer') in aroles:
+        roles = [a.id for a in m.author.roles]
+        is_gm = g.roles.get('grandmaster') in roles
+        is_master = g.tt.get('master') in roles
+        is_timer = g.tt.get('timer') in roles
+        if is_gm or is_master or is_timer:
             return True
         asyncio.ensure_future(ctx.send('You do not have the necessary permissions.'))
         return False
@@ -211,12 +209,9 @@ class TapTitans():
             if not final_ping and not did_ping:
                 for preping in intervals:
                     in_window = _next-preping*60<_now
-                    # i=intervals.index(preping)
-                    # i_next = intervals[i-1:i-1] or pow(10,5)
                     passed_prev = last_ping < _next-preping*60
 
                     if in_window and passed_prev and _h>=0 and not did_ping:
-                    # if current <= preping and last_ping > preping and _h >= 0 and not did_ping:
                         guild.tt['last_ping'] = _now
                         result = guild.tt['ping_text'].format(
                             TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
@@ -353,18 +348,25 @@ class TapTitans():
         try:
             msg = await self.bot.wait_for('message', check=check)
         except asyncio.TimeoutError as e:
-            await chooser.delete()
-            await msg.channel.send('Query timed out.')
+            asyncio.ensure_future(chooser.delete())
+            asyncio.ensure_future(msg.channel.send('Query timed out.'))
             return
         else:
             asyncio.ensure_future(chooser.delete())
             if 'onfir' in msg.content.lower():
                 g = await self.helpers.get_record('server', m.guild.id)
-                g.tt['timer_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC)'
-                g.tt['ping_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC) @everyone'
-                g.tt['now_text'] = 'BOSS #{CQ} SPAWNED @everyone!!!'
-                g.tt['round_text'] = 'Ding! Time for round {ROUND}, @everyone'
-                g.tt['after_text'] = 'Hey {TIMER}, set the timer and export CQ data!'
+                g.tt.update(dict(
+                    timer_text='{TIME} until boss #{CQ} ({SPAWN} UTC)',
+                    ping_text='{TIME} until boss #{CQ} ({SPAWN} UTC) @everyone',
+                    now_text='BOSS #{CQ} SPAWNED @everyone!!!',
+                    round_text='Ding! Time for round {ROUND}, @everyone',
+                    after_text='Hey {TIMER}, set the timer and export CQ data!'
+                ))
+                # g.tt['timer_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC)'
+                # g.tt['ping_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC) @everyone'
+                # g.tt['now_text'] = 'BOSS #{CQ} SPAWNED @everyone!!!'
+                # g.tt['round_text'] = 'Ding! Time for round {ROUND}, @everyone'
+                # g.tt['after_text'] = 'Hey {TIMER}, set the timer and export CQ data!'
                 asyncio.ensure_future(ctx.send(
                     ':ideograph_advantage: Set the texts to the defaults.'))
             elif 'ance' in msg.content.lower():

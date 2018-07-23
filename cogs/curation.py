@@ -326,6 +326,7 @@ class Curation():
             m = ctx.message
             g = await self.helpers.get_record('server', m.guild.id)
             chan = ctx.channel
+            # print(chan)
             c = self.bot.all_commands[c.name].name
             if g.restrictions.get(c):
                 r = g.restrictions[c]
@@ -336,7 +337,7 @@ class Curation():
                 elif bool(r['restrict']) and not set([i.id for i in m.author.roles]).intersection(r['restrict']):
                     msg = ('You do not have the required roles to'
                            ' use this command.')
-                elif bool(r['wl']) and chan not in r['wl']:
+                elif bool(r['wl']) and chan.id not in r['wl']:
                     msg = 'That command can only be used in: {}'.format(
                         ', '.join([f'<#{c}>' for c in r['wl']])
                     )

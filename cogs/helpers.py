@@ -11,7 +11,6 @@ import os
 from collections import defaultdict
 from playhouse.shortcuts import dict_to_model, model_to_dict
 
-
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
