@@ -212,15 +212,19 @@ class TapTitans():
             current = round(((_next-_now)/60)+.5)
             if guild.tt.get('when_channel') and guild.tt.get('when_message'):
                 c = g.get_channel(guild.tt['when_channel'])
-                m2 = await c.get_message(guild.tt['when_message'])
-                if not final_ping:
-                    asyncio.ensure_future(m2.edit(
-                        content=guild.tt['timer_text'].format(
-                            TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                        )
-                    ))
+                try:
+                    m2 = await c.get_message(guild.tt['when_message'])
+                except discord.errors.NotFound:
+                    pass
                 else:
-                    asyncio.ensure_future(m2.edit('Boss spawned!'))
+                    if not final_ping:
+                        asyncio.ensure_future(m2.edit(
+                            content=guild.tt['timer_text'].format(
+                                TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                            )
+                        ))
+                    else:
+                        asyncio.ensure_future(m2.edit('Boss spawned!'))
             
             did_ping = 0
             if not final_ping and not did_ping:
@@ -432,7 +436,7 @@ class TapTitans():
         for user, loa in sorted(g.tt.get('loa').items(), key=lambda k: k[1]):
 
             expires = datetime.utcfromtimestamp(loa)
-            if expires > now:
+            if loa-now.timestamp()>3600:
                 user = f'<@{user}>'
                 result.append('{} - {}'.format(user,
                     expires.strftime('%a, %d %B at %I:%M%p UTC')))
