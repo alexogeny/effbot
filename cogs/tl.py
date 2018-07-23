@@ -16,7 +16,7 @@ UOT = 60
 SCIFI = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
 LIFI = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
-LETTERS = re.compile(r'^[hms]')
+LETTERS = re.compile(r'^[wdhms]')
 MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
 
 def round_to_x(x, n):
@@ -60,6 +60,23 @@ def is_gm_or_admin():
             await ctx.send('Oof, you need to be a GM to do this.')
         return False
     return commands.check(_is_gm_or_admin)
+
+def has_any_clan_role():
+    async def _has_any_clan_role(ctx):
+        m = ctx.message
+        roles = [r.id for r in m.author.roles]
+        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
+        is_gm = g.roles.get('grandmaster') in roles
+        has_any = any([True
+                       for r
+                       in ['master','captain','knight','recruit','mercenary']
+                       if g.tt.get(r) in roles])
+        print(has_any)
+        if is_gm or has_any:
+            return True
+        asyncio.ensure_future(ctx.send('You must be in the clan to file a LoA.'))
+        return False
+    return commands.check(_has_any_clan_role)
 
 def is_gm_or_master():
     async def _is_gm_or_master(ctx):
@@ -225,24 +242,24 @@ class TapTitans():
                     content = result
                 ))
 
-    # @when_check()
-    # @commands.command(name='when')
-    # async def when(self, ctx):
-    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
-    #     if getattr(g['config'], 'boss_msg', None):
-    #         c = ctx.message.guild.get_channel(g['config'].chan_when)
-    #         _next = g['config'].next_boss
-    #         _now = datetime.utcnow().timestamp()
-    #         _m,_s = divmod(_next-_now, 60)
-    #         _h,_m = divmod(_m, 60)
-    #         _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
+    @when_check()
+    @commands.command(name='when')
+    async def when(self, ctx):
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        if g.tt.get('boss_message') and g.tt.get('when_channel'):
+            c = ctx.message.guild.get_channel(g.tt['when_channel'])
+            _next = g.tt['next_boss']
+            _now = datetime.utcnow().timestamp()
+            _m,_s = divmod(_next-_now, 60)
+            _h,_m = divmod(_m, 60)
+            _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
 
-    #         when_msg = await c.send(
-    #             f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
-    #         )
-    #         setattr(g['config'], 'when_msg', when_msg.id)
-    #     else:
-    #         asyncio.ensure_future(ctx.send("Oops, there's no boss active rn."))
+            when_msg = await c.send(
+                f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
+            )
+            g.tt['when_message'] = when_msg.id
+        else:
+            asyncio.ensure_future(ctx.send("Oops, there's no boss active rn."))
 
     @commands.group(pass_context=True, invoke_without_command=True, name="tt")
     async def tt(self, ctx):
@@ -262,7 +279,7 @@ class TapTitans():
         e.tt setchannel report #weekly-update
         ```
         """
-        if kind not in ['tl', 'when', 'paste', 'report']:
+        if kind not in ['tl', 'when', 'paste', 'report', 'masters']:
             await ctx.send('Channel kind must be one of: tl, when, paste, report')
         guild = ctx.message.guild
         if channel.startswith('#'):
@@ -401,6 +418,50 @@ class TapTitans():
             if result:
                 g.tt[rank] = result.id
                 asyncio.ensure_future(self.helpers.try_mention(ctx, f'{rank} role', result))
+
+    @is_gm_or_master()
+    @commands.command(name='loas', aliases=['absences'])
+    async def _loas(self, ctx):
+        m = ctx.message
+        g = await self.helpers.get_record('server', m.guild.id)
+        if not g.tt.get('loa'):
+            return
+        result = []
+        now = datetime.utcnow()
+
+        for user, loa in sorted(g.tt.get('loa').items(), key=lambda k: k[1]):
+
+            expires = datetime.utcfromtimestamp(loa)
+            if expires > now:
+                user = f'<@{user}>'
+                result.append('{} - {}'.format(user,
+                    expires.strftime('%a, %d %B at %I:%M%p UTC')))
+        e = await self.helpers.build_embed('Currently active LOAs:\n\n{}'.format(
+            '\n'.join(result)
+        ), 0xffffff)
+        asyncio.ensure_future(ctx.send(embed=e))
+
+    @has_any_clan_role()
+    @commands.command(name='loa', aliases=['absent'])
+    async def _loa(self, ctx, timeframe):
+        m = ctx.message
+        a = m.author
+        g = await self.helpers.get_record('server', m.guild.id)
+        if not g.tt.get('loa'):
+            g.tt['loa']={}
+        _next, _units = await process_time(timeframe)
+        if not _next or timeframe in 'clearstop':
+            g.tt['loa'][str(a.id)] = datetime.utcnow().timestamp()
+            asyncio.ensure_future(ctx.send(':ideograph_advantage: LoA cleared.'))
+            return
+        g.tt['loa'][str(a.id)] = (datetime.utcnow()+_next).timestamp()
+        units = ', '.join(f'{v} {k}' for k, v in _units.items())
+        asyncio.ensure_future(ctx.send(
+            f':ideograph_advantage: Leave of Absence filed for **{units}**'))
+        if g.tt.get('masters_channel'):
+            asyncio.ensure_future(m.guild.get_channel(
+                g.tt['masters_channel']
+            ).send(f':ideograph_advantage: {a.mention} just filed a leave of absence for {units}'))
 
     @can_do_timers()
     @tl_checks()

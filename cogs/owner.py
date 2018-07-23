@@ -283,16 +283,19 @@ class Owner:
     @is_owner()
     @commands.command(no_pm=True, name="confirm")
     async def _confirm(self, ctx, kind, user, code):
-        if not kind in ['sc,supportcode,cc,clancode']:
+        if kind not in ['sc','supportcode','cc','clancode']:
             return
-        if kind.startswith('s'):
-            if not user.isnumeric():
-                user = await ctx.bot.cogs['Helpers'].get_ojb(ctx.message.guild, 'member', 'name', user)
-                user = user.id
-            if user:
-                g = await ctx.bot.cogs['Helpers'].get_record('user', user)
-                g['config'].tt_code = code
-                await ctx.send('Set the support code for the user')
+        # user = await self.helpers.get_record('user', ctx.message.author.id)
+        # else:
+        if not user.isnumeric():
+            user = await self.helpers.choose_member(ctx, ctx.message.guild, user)
+            user = user.id
+        # else:
+        user = await self.helpers.get_record('user', int(user))
+        # user = await self.helpers.get_record('user', user.id)
+        if kind.startswith('s') and user:
+            user.tt['code'] = code
+            asyncio.ensure_future(ctx.send('Set the support code for the user!'))
 
     @commands.command(name="restart")
     @is_owner()
