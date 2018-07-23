@@ -517,98 +517,104 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(
                 f':ideograph_advantage: Updated the CQ number to `{cq}`!'))
     
-    # @is_gm_or_master()
-    # @tt.command(name='report')
-    # async def _report(self, ctx):
-    #     TD = dt.date.today()
-    #     TD = datetime(TD.year, TD.month, TD.day, 0, 0)
-    #     this_monday = TD + timedelta(days=-TD.weekday())
-    #     last_monday = TD + timedelta(days=-TD.weekday(), weeks=-1)
-    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
-    #     c = getattr(g['config'], 'chan_paste', None)
-    #     print(c)
-    #     if c:
-    #         c = ctx.message.guild.get_channel(c)
-    #         messages = await c.history(limit=100).flatten()
-    #         result = [m for m in messages]
-    #         cqs = [int(re.match(r'```CQ (\d+)', r.content).group(1))
-    #                for r in result
-    #                if re.match(r'```CQ \d+', r.content)
-    #                and r.created_at > last_monday
-    #                and r.created_at < this_monday]
-    #         result = [r.content.split('\n')
-    #                   for r in result
-    #                   if r.content.startswith('```')
-    #                   and r.created_at > last_monday
-    #                   and r.created_at < this_monday]
-    #         result = [[
-    #             s.replace('```','').split(',') for s in r
-    #             if len(s.split(','))==4
-    #             and not s.startswith('```')
-    #             and s.split(',')[0].isnumeric()
-    #         ] for r in result]
+    @is_gm_or_master()
+    @tt.command(name='report')
+    async def _report(self, ctx):
+        TD = dt.date.today()
+        TD = datetime(TD.year, TD.month, TD.day, 0, 0)
+        this_monday = TD + timedelta(days=-TD.weekday())
+        last_monday = TD + timedelta(days=-TD.weekday(), weeks=-1)
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        c = g.tt.get('paste_channel')
+        print(c)
+        if c:
+            c = ctx.message.guild.get_channel(c)
+            messages = await c.history(limit=100).flatten()
+            result = [m for m in messages]
+            cqs = [int(re.match(r'```CQ (\d+)', r.content).group(1))
+                   for r in result
+                   if re.match(r'```CQ \d+', r.content)
+                   and r.created_at > last_monday
+                   and r.created_at < this_monday]
+            result = [r.content.split('\n')
+                      for r in result
+                      if r.content.startswith('```')
+                      and r.created_at > last_monday
+                      and r.created_at < this_monday]
+            result = [[
+                s.replace('```','').split(',') for s in r
+                if len(s.split(','))==4
+                and not s.startswith('```')
+                and s.split(',')[0].isnumeric()
+            ] for r in result]
 
-    #         headers = ['rank', 'name', 'id', 'damage']
-    #         started, ended, total = min(cqs), max(cqs), len(result)
-    #         missed = ended - started - total
-    #         all_hits = list(chain.from_iterable(result))
-    #         #pprint(all_hits)
-    #         result = defaultdict(lambda: dict(
-    #             id='', name='', hit=0, dmg=0, atd=0
-    #         ))
-    #         for hit in all_hits:
-    #             id = hit[2]
-    #             if not result[id]['id']:
-    #                 result[id]['id']=id
-    #             if int(hit[3])>0:
-    #                 result[id]['hit'] += 1
-    #                 result[id]['dmg'] += int(hit[3])
-    #             if not result[id]['name']:
-    #                 u = next((x['id'] for x in self.bot._users
-    #                           if getattr(x['config'], 'tt_code', None)==hit[2]), hit[1])
-    #                 if isinstance(u, int):
-    #                     u = ctx.guild.get_member(u)
-    #                     if u:
-    #                         u = u.mention
-    #                     result[id]['name']=u
-    #                 else:
-    #                     result[id]['name']=hit[1]
-    #         final = []
-    #         for id, data in result.items():
-    #             result[id]['atd'] = round((result[id]['hit']+missed)/total*100)
-    #             final.append(result[id])
-    #         final = sorted(final, key=lambda x: x['atd'], reverse=True)
-    #         # row = "{:<26} {:<8} {:<8}"
-    #         # pprint(final[0:5])
-    #         # content1='\n'.join(
-    #         #     row.format(
-    #         #         r['name'], f"{round(r['atd'],0)}%",
-    #         #         self.helpers.human_format(r['dmg'])
-    #         #     ) for r in final[0:25]
-    #         # )
-    #         # content2='\n'.join(
-    #         #     row.format(
-    #         #         r['name'], f"{round(r['atd'],0)}%",
-    #         #         self.helpers.human_format(r['dmg'])
-    #         #     ) for r in final[26:]
-    #         # )#10: 62% (598.20M)
-    #         # e1 = await self.helpers.build_embed(content1, 0xffffff)
-    #         # e2 = await self.helpers.build_embed(content2, 0xffffff)
-    #         colours = [0x146B3A, 0xF8B229, 0xEA4630, 0xBB2528]
-    #         started_at = 0
-    #         report_to = c = getattr(g['config'], 'chan_report', None)
-    #         if report_to:
-    #             report_to = ctx.message.guild.get_channel(report_to)
-    #             for chunk in self.helpers.chunker(final, 21):
-    #                 e3 = await self.helpers.build_embed(f'Attendance report part {started_at+1}.',
-    #                     colours[started_at])
-    #                 for i,r in enumerate(chunk):
-    #                     name = f'#{started_at*18+i+1}: {r["atd"]}% ({self.helpers.human_format(r["dmg"])})'
-    #                     e3.add_field(
-    #                         name=f'{name:<24}',
-    #                         value=r['name'], inline=True)
-    #                 asyncio.ensure_future(report_to.send(embed=e3))
-    #                 started_at+=1
+            headers = ['rank', 'name', 'id', 'damage']
+            started, ended, total = min(cqs), max(cqs), len(result)
+            missed = ended - started - total
+            all_hits = list(chain.from_iterable(result))
+            #pprint(all_hits)
+            result = defaultdict(lambda: dict(
+                id='', name='', hit=0, dmg=0, atd=0
+            ))
+            for hit in all_hits:
+                id = hit[2]
+                if not result[id]['id']:
+                    result[id]['id']=id
+                if int(hit[3])>30000000:
+                    result[id]['hit'] += 1
+                    result[id]['dmg'] += int(hit[3])
+                if not result[id]['name']:
+                    u = next((x.id for x in self.bot._users
+                              if x.tt.get('code')==hit[2]), hit[1])
+                    
+                    if str(u).isnumeric():
+                        u = ctx.guild.get_member(int(u))
+                        if u:
+                            u = u.mention
+                        result[id]['name']=u
+                    else:
+                        result[id]['name']=hit[1]
+            final = []
+            for id, data in result.items():
+                result[id]['atd'] = round((result[id]['hit']+missed)/total*100)
+                final.append(result[id])
+            final = sorted(final, key=lambda x: x['atd'], reverse=True)
+            # row = "{:<26} {:<8} {:<8}"
+            # pprint(final[0:5])
+            # content1='\n'.join(
+            #     row.format(
+            #         r['name'], f"{round(r['atd'],0)}%",
+            #         self.helpers.human_format(r['dmg'])
+            #     ) for r in final[0:25]
+            # )
+            # content2='\n'.join(
+            #     row.format(
+            #         r['name'], f"{round(r['atd'],0)}%",
+            #         self.helpers.human_format(r['dmg'])
+            #     ) for r in final[26:]
+            # )#10: 62% (598.20M)
+            # e1 = await self.helpers.build_embed(content1, 0xffffff)
+            # e2 = await self.helpers.build_embed(content2, 0xffffff)
+            colours = [0x146B3A, 0xF8B229, 0xEA4630, 0xBB2528]
+            started_at = 0
+            report_to = c = g.tt.get('report_channel')
+            if report_to:
+                report_to = ctx.message.guild.get_channel(report_to)
+                for chunk in self.helpers.chunker(final, 21):
+                    result = []
+                    for i,r in enumerate(chunk):
+                        name = f'`#{started_at*18+i+1:02}`: `{r["atd"]:02}%` (`{self.helpers.human_format(r["dmg"]): <7}`)'
+                        # e3.add_field(
+                            # name=f'{name:<24}',
+                            # value=r['name'], inline=True)
+                        result.append(f'{name} - {r["name"]}')
+                    e3 = await self.helpers.build_embed(
+                        'Attendance report part {}.\n\n{}'.format(
+                            started_at+1, "\n".join(result)
+                        ), colours[started_at]
+                    )
+                    asyncio.ensure_future(report_to.send(embed=e3))
+                    started_at+=1
 
 
     @is_gm_or_master()
