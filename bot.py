@@ -57,7 +57,7 @@ class Effribot(commands.Bot):
                 traceback.print_exc()
 
     def create_tables(self):
-        with self.database:
+        with self.database.atomic():
             self.database.create_tables([Server, User])
         return
 
