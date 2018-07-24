@@ -1,7 +1,7 @@
 import sqlite3
 import pytest
 import peewee
-from bot import Effbot, get_prefix
+from bot import Effribot, get_prefix
 from models.base import BaseModel
 
 @pytest.fixture(autouse=True)
@@ -18,7 +18,7 @@ def mock_models(monkeypatch):
     monkeypatch.setattr(models, 'User', mock_user)
 
 def test_bot_exists():
-    assert Effbot(command_prefix=get_prefix)
+    assert Effribot(command_prefix=get_prefix)
 
 # def test_bot_runs():
 #     assert bot.run()
