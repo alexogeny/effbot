@@ -5,6 +5,7 @@ import time
 import asyncio
 from pathlib import Path
 from discord.ext import commands
+import os
 from os import listdir
 from os.path import isfile, join
 from models import Server, User, db
