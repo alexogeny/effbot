@@ -53,6 +53,7 @@ jobs:
           path: test-reports
           destination: test-reports
   deploy:
+    machine: true
     steps:
       - checkout
       - run:
