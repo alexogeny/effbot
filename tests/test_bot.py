@@ -1,4 +1,4 @@
-import sqlite3
+
 import pytest
 import peewee
 from bot import Effribot, get_prefix

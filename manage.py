@@ -2,7 +2,7 @@ import subprocess
 import os, signal, time
 
 def run_as_test():
-    proc = subprocess.Popen('python bot.py')
+    proc = subprocess.Popen('python ./bot.py')
     time.sleep(10)
     if getattr(signal, 'SIGKILL', None):
         os.kill(proc.pid, signal.SIGKILL)
