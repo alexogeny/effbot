@@ -1,5 +1,4 @@
 asyncpg==0.17.0
-discord.py==1.0.0a0
 peewee==3.5.2
 psycopg2==2.7.5
 PyGithub==1.40
