@@ -13,7 +13,7 @@ default-docker-config: &default-docker-config
 
 jobs:
   build:
-    working_directory: ~/effbot
+    working_directory: ~/repo
     <<: *default-docker-config
 
     steps:
