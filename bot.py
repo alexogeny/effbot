@@ -15,8 +15,13 @@ class Struct(object):
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
-with Path('./config.json').open('r') as fh:
-    CONFIG = json.load(fh)
+if Path('./config.json').exists():
+    with Path('./config.json').open('r') as fh:
+        CONFIG = json.load(fh)
+else:
+    CONFIG = dict(PREFIXES=['e.', '.', 'effbot '],
+                  COGS_DIR="cogs",
+                  TOKEN=None)
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
@@ -111,7 +116,7 @@ class Effribot(commands.Bot):
         )
 
     def run(self):
-        token = self.config['TOKEN']
+        token = self.config.get('TOKEN', os.environ.get('TOKEN', ""))
         try:
             super().run(token, bot=True, reconnect=True)
         except discord.errors.LoginFailure:
