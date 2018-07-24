@@ -65,7 +65,7 @@ class Effribot(commands.Bot):
 
 
     async def on_ready(self):
-        print(f'Logged in as {bot.user.name}')
+        print(f'Logged in as {self.user.name}')
         print('--------')
 
     async def on_command_error(self, ctx, error):
