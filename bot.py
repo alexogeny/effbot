@@ -1,6 +1,8 @@
 import sys, traceback
 import discord
 import json
+import subprocess
+import signal
 import time
 import asyncio
 from pathlib import Path
@@ -22,7 +24,7 @@ if Path('./config.json').exists():
 else:
     CONFIG = dict(PREFIXES=['e.', '.', 'effbot '],
                   COGS_DIR="cogs",
-                  TOKEN=None)
+                  TOKEN=os.getenv("TOKEN"))
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
@@ -116,9 +118,9 @@ class Effribot(commands.Bot):
         )
 
     def run(self):
-        token = self.config.get('TOKEN', os.environ.get('TOKEN', ""))
+        token = self.config.get('TOKEN', os.getenv('TOKEN'))
         try:
-            super().run(token, bot=True, reconnect=True)
+            super().run(token, bot=True, reconnect=True).logout()
         except discord.errors.LoginFailure:
             print("failed to login to discord")
 
