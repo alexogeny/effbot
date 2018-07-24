@@ -1,9 +1,10 @@
 import sqlite3
 import pytest
+import peewee
 
 
 def test_bot_exists():
-    with pytest.raises(sqlite3.OperationalError, message="Expected no tables to exist"):
+    with pytest.raises(peewee.OperationalError, message="Expected no tables to exist"):
         from bot import bot
         assert bot
 
