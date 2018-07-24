@@ -211,9 +211,9 @@ class TapTitans():
             # last_ping = guild.tt['last_ping']
             current = round(((_next-_now)/60)+.5)
             if guild.tt.get('when_channel') and guild.tt.get('when_message'):
-                c = g.get_channel(guild.tt['when_channel'])
+                c2 = g.get_channel(guild.tt['when_channel'])
                 try:
-                    m2 = await c.get_message(guild.tt['when_message'])
+                    m2 = await c2.get_message(guild.tt['when_message'])
                 except discord.errors.NotFound:
                     del guild.tt['when_message']
                 else:
