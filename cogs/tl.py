@@ -215,7 +215,7 @@ class TapTitans():
                 try:
                     m2 = await c.get_message(guild.tt['when_message'])
                 except discord.errors.NotFound:
-                    pass
+                    del guild.tt['when_message']
                 else:
                     if not final_ping:
                         asyncio.ensure_future(m2.edit(

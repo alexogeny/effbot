@@ -21,8 +21,7 @@ if Path('./config.json').exists():
 else:
     CONFIG = dict(PREFIXES=['e.', '.', 'effbot '],
                   COGS_DIR="cogs",
-                  TOKEN=None,
-                  MODE=0)
+                  TOKEN=None)
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
@@ -37,15 +36,13 @@ class Effribot(commands.Bot):
         self.remove_command('help')
         self.config = CONFIG
         self.database = db
+        self.create_tables()
         self.start_time = time.time()
         self._last_exception = None
         self.description = "effrill3's custom bot"
         self.load_extensions()
-        if self.config.get('MODE', 1) == 1:
-            self.create_tables()
-            self._models = {}
-            self.cogs['Helpers'].load_records(dict(
-                server=Server, user=User))
+        self._models = {}
+        self.cogs['Helpers'].load_records(dict(server=Server, user=User))
 
     def load_extensions(self):
         self.load_extension('cogs.helpers')
