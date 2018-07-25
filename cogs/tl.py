@@ -176,17 +176,18 @@ class TapTitans():
             final_ping = 0
             last_ping = guild.tt['last_ping']
             intervals = guild.tt.get('ping_intervals', [15,5,1])
+            not_final = _next-_now > 10
             TIME, SPAWN, ROUND, CQ = (
                 f'**{round(_h):02}:{round(_m):02}:{round(_s):02}**',
                 (datetime.utcnow()+timedelta(hours=_h,minutes=_m,seconds=_s)).strftime('%I%p'),
                 0,
                 guild.tt['cq_number']
             )
-            if _h >= 0 and last_ping < min([_next-i*60 for i in intervals]):
+            if _h >= 0 and last_ping < min([_next-i*60 for i in intervals]) and not_final:
                 result = guild.tt['timer_text'].format(
                     TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
                 )
-            elif _h >= 0:
+            elif _h >= 0 and not_final:
                 result = guild.tt['ping_text'].format(
                     TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
                 )
@@ -203,28 +204,32 @@ class TapTitans():
                 )
                 guild.tt['cq_number'] += 1
                 guild.tt['last_ping'] = _now
+                if guild.tt.get('when_message'):
+                    c2 = g.get_channel(guild.tt['when_channel'])
+                    m2 = await c2.get_message(guild.tt['when_message'])
+                    guild.tt['when_message'] = 0
+                guild.tt['boss_message'] = 0
+                await asyncio.sleep(_next-_now-.2)
+                if guild.tt.get('when_message'):
+                    asyncio.ensure_future(m2.edit(content='Boss spawned!'))
                 asyncio.ensure_future(c.send(
                     content=result
                 ))
-                guild.tt['boss_message'] = 0
-                guild.tt['when_message'] = 0
             # last_ping = guild.tt['last_ping']
             current = round(((_next-_now)/60)+.5)
-            if guild.tt.get('when_channel') and guild.tt.get('when_message'):
+            if guild.tt.get('when_channel') and guild.tt.get('when_message') and not_final:
                 c2 = g.get_channel(guild.tt['when_channel'])
                 try:
                     m2 = await c2.get_message(guild.tt['when_message'])
                 except discord.errors.NotFound:
                     del guild.tt['when_message']
                 else:
-                    if not final_ping:
-                        asyncio.ensure_future(m2.edit(
-                            content=guild.tt['timer_text'].format(
-                                TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                            )
-                        ))
-                    else:
-                        asyncio.ensure_future(m2.edit('Boss spawned!'))
+                    asyncio.ensure_future(m2.edit(
+                        content=guild.tt['timer_text'].format(
+                            TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
+                        )
+                    ))
+                        
             
             did_ping = 0
             if not final_ping and not did_ping:
@@ -250,8 +255,12 @@ class TapTitans():
     @commands.command(name='when')
     async def when(self, ctx):
         g = await self.helpers.get_record('server', ctx.message.guild.id)
-        if g.tt.get('boss_message') and g.tt.get('when_channel'):
-            c = ctx.message.guild.get_channel(g.tt['when_channel'])
+        when_channel = g.tt.get('when_channel')
+        if when_channel and not ctx.channel.id == when_channel:
+            asyncio.ensure_future(ctx.send(f'You can only do this in: <#{when_channel}>'))
+            return
+        if g.tt.get('boss_message') and when_channel:
+            c = ctx.message.guild.get_channel(when_channel)
             _next = g.tt['next_boss']
             _now = datetime.utcnow().timestamp()
             _m,_s = divmod(_next-_now, 60)
@@ -321,6 +330,8 @@ class TapTitans():
         mc = re.sub(r'^[^\s]+', '', mc).strip()
         mc = re.sub(r'^[^\s]+', '', mc).strip()
         mc = re.sub(r'^[^\s]+', '', mc).strip()
+        for unit in ['time', 'cq', 'round', 'spawn', 'timer']:
+            mc = mc.replace('{'+unit+'}', '{'+unit.upper()+'}')
         g.tt[f'{kind.lower()}_text'] = mc
         e = await self.helpers.build_embed(mc, 0xffffff)
         asyncio.ensure_future(ctx.send(
@@ -511,13 +522,17 @@ class TapTitans():
             # print(_next.total_seconds())
             if not set_by_ttk:
                 next_boss = now.timestamp()+_next.total_seconds()
+                ttk = 21600-_next.total_seconds()
+                _m, _s = divmod(ttk, 60)
+                _h, _m = divmod(_m, 60)
+                _, ttk = await process_time('{_h}h{_m}m{_s}s')
                 res = ':ideograph_advantage: Set a timer running for **{}**'.format(
                     ', '.join(f'{v} {k}' for k, v in _units.items())
                 )
             elif g.tt.get('next_boss') and set_by_ttk:
-                next_boss = g.tt['next_boss']+_next.total_seconds()+21605
+                next_boss = g.tt['next_boss']+_next.total_seconds()+21600
                 ts = next_boss-now.timestamp()
-                
+                ttk = _units
                 _m,_s = divmod(ts, 60)
                 _h,_m = divmod(_m, 60)
                 res = ':ideograph_advantage: Set a timer for {:02} hours, {:02} minutes, {:02} seconds.'.format(
@@ -529,6 +544,7 @@ class TapTitans():
                 return
 
             if g.tt.get('next_boss'):
+                ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
                 icon = 'https://i.imgur.com/{}.png'.format(choice([
                     '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
                     'eYtmbjg', 'Y6jfEhM']))
@@ -544,8 +560,10 @@ class TapTitans():
                 c_spawn = c_spawn.strftime('%H:%M:%S UTC{}').format(c_offset or '')
                 field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
                 field2 = f'Spawns at **{c_spawn}** with **{c_hp:,}** hitpoints.'
+                
                 e = await self.helpers.full_embed(
-                    "Killed in {}", thumbnail=icon,
+                    "Killed in **{}**".format(ttk),
+                    thumbnail=icon,
                     fields={
                         'Bonuses':field1,
                         'Next Boss':field2 
@@ -553,9 +571,10 @@ class TapTitans():
                     author=dict(name=f'Boss #{g.tt["cq_number"]-1}',
                                 image=icon)
                 )
-                await guild.get_channel(g.tt['tl_channel']).send(embed=e)
+                asyncio.ensure_future(guild.get_channel(g.tt['tl_channel']).send(embed=e))
 
             g.tt['next_boss'] = next_boss
+            await asyncio.sleep(1)
             await guild.get_channel(g.tt['tl_channel']).send(res)
             boss_msg = await guild.get_channel(g.tt['tl_channel']).send(
                 f'**{_next}** until boss arrives'
