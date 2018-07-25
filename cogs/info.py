@@ -59,13 +59,24 @@ class Information():
 
     @info.command(name='commands')
     async def _commands(self, ctx):
-        commands = 'Commands available:\n'+', '.join([
-            c.qualified_name
-            for c
-            in self.bot.commands
-        ])
-        asyncio.ensure_future(ctx.send(commands))
+        cogs = [c for c in self.bot.cogs if c not in 'LogCog,TitanLord,Owner,Helpers,RandomStatus']
+        e = await self.helpers.build_embed(
+            'Available modules of effbot', 0xffffff
+        )
+        
+        for cog in cogs:
+            c = self.bot.get_cog(cog)
+            cxs = ', '.join(
+                [x.name for x in self.bot.get_cog_commands(cog)]
+            )
 
+            e.add_field(
+                name=f'{cog.replace("Cog","")}',
+                value=f'```\n{cxs}\n```',
+                inline=False
+            )
+        
+        await ctx.send(embed=e)
 
     @info.command(name='user', no_pm=True)
     async def _user(self, ctx, *, user: str=None):
@@ -160,45 +171,45 @@ class Information():
         except discord.HTTPException:
             await ctx.send("I need the `Embed links` permission to post avatars here.")
 
-    # @info.command(name='server', pass_context=True, no_pm=True)
-    # async def _server(self, ctx):
-    #     """Shows server's informations"""
-    #     server = ctx.message.guild
-    #     online = len([m.status for m in server.members
-    #                   if m.status != discord.Status.offline])
-    #     total_users = len(server.members)
-    #     text_channels = len(server.text_channels)
-    #     voice_channels = len(server.voice_channels)
-    #     passed = (ctx.message.created_at - server.created_at).days
-    #     created_at = ("Since {}. That's over {} days ago!"
-    #                   "".format(server.created_at.strftime("%d %b %Y %H:%M"),
-    #                             passed))
+    @info.command(name='server', pass_context=True, no_pm=True)
+    async def _server(self, ctx):
+        """Shows server's informations"""
+        server = ctx.message.guild
+        online = len([m.status for m in server.members
+                      if m.status != discord.Status.offline])
+        total_users = len(server.members)
+        text_channels = len(server.text_channels)
+        voice_channels = len(server.voice_channels)
+        passed = (ctx.message.created_at - server.created_at).days
+        created_at = ("Since {}. That's over {} days ago!"
+                      "".format(server.created_at.strftime("%d %b %Y %H:%M"),
+                                passed))
 
-    #     colour = ''.join([choice('0123456789ABCDEF') for x in range(6)])
-    #     colour = int(colour, 16)
+        colour = ''.join([choice('0123456789ABCDEF') for x in range(6)])
+        colour = int(colour, 16)
 
-    #     data = discord.Embed(
-    #         description=created_at,
-    #         colour=discord.Colour(value=colour))
-    #     data.add_field(name="Region", value=str(server.region))
-    #     data.add_field(name="Users", value="{}/{}".format(online, total_users))
-    #     data.add_field(name="Text Channels", value=text_channels)
-    #     data.add_field(name="Voice Channels", value=voice_channels)
-    #     data.add_field(name="Roles", value=len(server.roles))
-    #     data.add_field(name="Owner", value=str(server.owner))
-    #     data.set_footer(text=f"Server ID: {server.id}")
+        data = discord.Embed(
+            description=created_at,
+            colour=discord.Colour(value=colour))
+        data.add_field(name="Region", value=str(server.region))
+        data.add_field(name="Users", value="{}/{}".format(online, total_users))
+        data.add_field(name="Text Channels", value=text_channels)
+        data.add_field(name="Voice Channels", value=voice_channels)
+        data.add_field(name="Roles", value=len(server.roles))
+        data.add_field(name="Owner", value=str(server.owner))
+        data.set_footer(text=f"Server ID: {server.id}")
 
-    #     if server.icon_url:
-    #         data.set_author(name=server.name, url=server.icon_url)
-    #         data.set_thumbnail(url=server.icon_url)
-    #     else:
-    #         data.set_author(name=server.name)
+        if server.icon_url:
+            data.set_author(name=server.name, url=server.icon_url)
+            data.set_thumbnail(url=server.icon_url)
+        else:
+            data.set_author(name=server.name)
 
-    #     try:
-    #         await ctx.send(embed=data)
-    #     except discord.HTTPException:
-    #         await ctx.send("I need the `Embed links` permission "
-    #                            "to send this")
+        try:
+            await ctx.send(embed=data)
+        except discord.HTTPException:
+            await ctx.send("I need the `Embed links` permission "
+                               "to send this")
 
 def setup(bot):
     cog = Information(bot)
