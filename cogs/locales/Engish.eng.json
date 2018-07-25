@@ -1,4 +1,7 @@
 {
 "help taptitans": "this is the tap titans module",
-"help": "General help page. For all module listings and so on. Test live update."
+"help": "General help page. For all module listings and so on. Test live update.",
+"help tt setinterval": "Set the interval for when the timer will ping users. This should be any number, from 1-60, in minutes only.\n\nRequires: GM or Master ranks.\n\nExample:\n```\n.tt setinterval 60 15 5 2 1\n.tt setinterval 15,2,1```",
+"help tt setintervals": "refer to tt setinterval",
+"help tt settext": "Set the text used for certain pings and information.\n\nThere are several template tags available: `{time}`, `{spawn}`, `{cq}`, `{round}`.\n\nRequires: GM or master rank\n\nUsage:`.tt settext <text_type> <text_content>`\n\nExample:\n```.tt settext timer {time} until boss #{cq} (at {spawn})```"
 }

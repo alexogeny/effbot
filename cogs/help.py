@@ -67,8 +67,8 @@ class Help():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
         self.locales = LocaleGetter()
-        print(self.locales.locales)
-        print(self.locales.posixes)
+        # print(self.locales.locales)
+        # print(self.locales.posixes)
     
     @commands.command(name='help', no_pm=True, aliases=['helpme'])
     async def _help(self, ctx, module: str=None, command: str=None):
@@ -86,6 +86,10 @@ class Help():
             text = getattr(self.locales.get_locale('eng'),
                            f"help {module} {command}",
                            "No help text available.")
+        if text.startswith("refer to"):
+            print(f"help {text[9:]}")
+            text = getattr(self.locales.get_locale('eng'), f"help {text[9:]}",
+                "No help text available.")
         e = await self.helpers.build_embed(
             text, 0xffffff
         )

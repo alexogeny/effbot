@@ -37,8 +37,8 @@ class Reporting():
     #                     passed = 1
 
     #         e = await self.helpers.build_embed('Bug Report', 0xffffff)
-    #         e.set_thumbnail(url='https://i.imgur.com/uoAST0b.png')
-    #         e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+    #         e.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+    #         e.set_author(name=f'{a.name}#{a.discriminator}', icon_url='https://i.imgur.com/uoAST0b.png')
     #         e.add_field(name='User', value=f'{a.mention} ({a.id})')
     #         e.add_field(name='Content', value=mc[len(ctx.command.name):].strip())
     #         await self.bot.get_channel(466133068730597377).send(embed=e)
@@ -73,11 +73,10 @@ class Reporting():
     #                     passed = 1
     #         mc = re.sub(r'^\w+','',mc)
 
-    #         e = await self.helpers.build_embed('Suggestion', 0xffffff)
-    #         e.set_thumbnail(url='https://i.imgur.com/6y7oNyd.png')
-    #         e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-    #         e.add_field(name='User', value=f'{a.mention} ({a.id})')
-    #         e.add_field(name='Content', value=mc.strip())
+    #         e = await self.helpers.build_embed('Suggested: {mc.strip()}', 0xffffff)
+    #         e.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
+    #         e.set_author(name=f'{a.name}#{a.discriminator} ({a.id})',
+                           # icon_url='https://i.imgur.com/6y7oNyd.png')
     #         await self.bot.get_channel(462474193779294218).send(embed=e)
     #     else:
     #         await ctx.send('You must wait at least an hour between suggestions.')
