@@ -57,6 +57,15 @@ class Information():
         embed.add_field(name='Invite', value='[Bot Invite Link](https://discordapp.com/api/oauth2/authorize?client_id=466854404965007360&permissions=2146954487&scope=bot)')
         asyncio.ensure_future(ctx.send(embed=embed))
 
+    @info.command(name='commands')
+    async def _commands(self, ctx):
+        commands = 'Commands available:\n'+', '.join([
+            c.qualified_name
+            for c
+            in self.bot.commands
+        ])
+        asyncio.ensure_future(ctx.send(commands))
+
 
     # @info.command(name='user', pass_context=True, no_pm=True)
     # async def _user(self, ctx, *, user: str=None):
