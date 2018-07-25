@@ -75,7 +75,7 @@ class Curation():
             if not channel:
                 asyncio.ensure_future(ctx.send('Sorry, I could not find a channel with that name.'))
                 return
-            role = next((r for r in a.guild.roles if r.id == g.roles.get('update')), None)
+            role = next((r for r in a.guild.roles if r.id == g.roles.get('updates')), None)
             was_false = False
             try:
                 if role.mentionable == False:
