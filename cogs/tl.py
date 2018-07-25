@@ -177,9 +177,18 @@ class TapTitans():
             last_ping = guild.tt['last_ping']
             intervals = guild.tt.get('ping_intervals', [15,5,1])
             not_final = _next-_now > 10
+
+
+            c_offset = guild.tt.get('tz', 0)
+            c_spawn = datetime.fromtimestamp(_next+(c_offset*60*60))
+            if c_offset > 0:
+                c_offset = f'+{c_offset}'
+            c_spawn = c_spawn.strftime('%H:%M:%S UTC{}').format(c_offset or '')
+
+
             TIME, SPAWN, ROUND, CQ = (
                 f'**{round(_h):02}:{round(_m):02}:{round(_s):02}**',
-                (datetime.utcnow()+timedelta(hours=_h,minutes=_m,seconds=_s)).strftime('%I%p'),
+                c_spawn,
                 0,
                 guild.tt['cq_number']
             )
@@ -484,12 +493,7 @@ class TapTitans():
             count = int(stage)//500*2+8-int(ip)
             e = await self.helpers.full_embed(
                 f"Titancount at stage **{stage}** (IP level {ip}) would be: **{count}**",
-                # thumbnail="https://i.imgur.com/MY8x9aY.png",
                 colour=0x8ad24f,
-                # fields={
-                #     'Bonuses':field1,
-                #     'Next Boss':field2 
-                # },
                 author=dict(name='TT2 Titancount',
                             image="https://i.imgur.com/MY8x9aY.png")
             )
@@ -680,22 +684,7 @@ class TapTitans():
                 result[id]['atd'] = round((result[id]['hit']+missed)/total*100)
                 final.append(result[id])
             final = sorted(final, key=lambda x: x['atd'], reverse=True)
-            # row = "{:<26} {:<8} {:<8}"
-            # pprint(final[0:5])
-            # content1='\n'.join(
-            #     row.format(
-            #         r['name'], f"{round(r['atd'],0)}%",
-            #         self.helpers.human_format(r['dmg'])
-            #     ) for r in final[0:25]
-            # )
-            # content2='\n'.join(
-            #     row.format(
-            #         r['name'], f"{round(r['atd'],0)}%",
-            #         self.helpers.human_format(r['dmg'])
-            #     ) for r in final[26:]
-            # )#10: 62% (598.20M)
-            # e1 = await self.helpers.build_embed(content1, 0xffffff)
-            # e2 = await self.helpers.build_embed(content2, 0xffffff)
+
             colours = [0x146B3A, 0xF8B229, 0xEA4630, 0xBB2528]
             started_at = 0
             report_to = c = g.tt.get('report_channel')
@@ -721,15 +710,6 @@ class TapTitans():
     @is_gm_or_master()
     @tt.command(name='setinterval', aliases=['setintervals'])
     async def setinterval(self, ctx):
-        """
-        Set the intevral for when the timer will ping users. IN MINUTES.
-        Requires: GM or Master ranks.
-        Example:
-        ```
-        .tt setinterval 60 15 5 2 1
-        .tt setinterval 15,2,1
-        ```
-        """
         pfx = await self.bot.get_prefix(ctx.message)
         mc = ctx.message.clean_content
         passed = 0
