@@ -478,6 +478,23 @@ class TapTitans():
                 g.tt['masters_channel']
             ).send(f':ideograph_advantage: {a.mention} just filed a leave of absence for {units}'))
 
+    @commands.command(name='titancount', aliases=['ip'])
+    async def _titancount(self, ctx, stage='5000', ip='0'):
+        if stage.isnumeric() and ip.isnumeric():
+            count = int(stage)//500*2+8-int(ip)
+            e = await self.helpers.full_embed(
+                f"Titancount at stage **{stage}** (IP level {ip}) would be: **{count}**",
+                # thumbnail="https://i.imgur.com/MY8x9aY.png",
+                colour=0x8ad24f,
+                # fields={
+                #     'Bonuses':field1,
+                #     'Next Boss':field2 
+                # },
+                author=dict(name='TT2 Titancount',
+                            image="https://i.imgur.com/MY8x9aY.png")
+            )
+            asyncio.ensure_future(ctx.send(embed=e))
+
     @can_do_timers()
     @tl_checks()
     @commands.group(name='tl', aliases=['boss', 'titanlord', 'setboss'], invoke_without_command=True)
