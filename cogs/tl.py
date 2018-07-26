@@ -163,9 +163,15 @@ class TapTitans():
         await asyncio.gather(*[self.update_timer(guild) for guild in guilds])
     async def update_timer(self, guild):
         if isinstance(guild.tt.get('next_boss'), float) and guild.tt.get('boss_message'):
+            if not guild.tt.get('tl_channel'):
+                asyncio.ensure_future(ctx.send('Did you forget to set a boss channel? Cancelling.'))
+                guild.tt['next_boss']=0
+                guild.tt['boss_message']=0
+                return
             g = self.bot.get_guild(int(guild.id))
+
             if g is not None:
-                c = g.get_channel(guild.tt['tl_channel'])
+                c = g.get_channel(guild.tt.get('tl_channel'))
             if c is None:
                 return
             _next = guild.tt['next_boss']
