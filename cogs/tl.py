@@ -172,7 +172,12 @@ class TapTitans():
             _now = datetime.utcnow().timestamp()
             _m,_s = divmod(_next-_now, 60)
             _h,_m = divmod(_m, 60)
-            m = await c.get_message(guild.tt['boss_message'])
+            try:
+                m = await c.get_message(guild.tt['boss_message'])
+            except discord.errors.NotFound:
+                await c.send('Oops, someone deleted the timer message. I am clearing the boss. RESET IT.')
+                guild.tt['next_boss']=0
+                return
             final_ping = 0
             last_ping = guild.tt['last_ping']
             intervals = guild.tt.get('ping_intervals', [15,5,1])
