@@ -187,7 +187,7 @@ class TapTitans():
 
 
             TIME, SPAWN, ROUND, CQ = (
-                f'**{round(_h):02}:{round(_m):02}:{round(_s):02}**',
+                f'**{floor(_h):02}:{floor(_m):02}:{floor(_s):02}**',
                 c_spawn,
                 0,
                 guild.tt['cq_number']
