@@ -25,6 +25,28 @@ class SettingsCog():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
+    @commands.group(name="my", pass_context=True)
+    async def my(self, ctx):
+        pass
+
+    @my.command(name="language")
+    async def _language(self, ctx, language_code=None):
+        available_locales = '`{}`'.format('`, `'.join(
+            self.bot.get_cog('Help').locales.locales.keys()
+        ))
+        if not language_code:
+            asyncio.ensure_future(ctx.send(f'Available Languages: {available_locales}'))
+            return
+        lc = language_code.lower().strip()
+        if lc in available_locales:
+            g = await self.helpers.get_record('user', ctx.author.id)
+            g.tt['locale'] = lc
+            asyncio.ensure_future(ctx.send(f'Set your locale to: `{lc}`'))
+        else:
+            asyncio.ensure_future(ctx.send(
+                f'Sorry, but `{lc}` is not an available locale.\nAvailable locales: {available_locales}'))
+        # asyncio.ensure_future(ctx.send())
+
     @commands.group(pass_context=True, name="settings")
     async def settings(self, ctx):
         pass
