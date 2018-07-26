@@ -102,7 +102,7 @@ class Help():
             name = f'{module} {command}'
             if not help_.get(module.lower().strip()):
                 lc = self.locales.get_locale('eng')
-                help_ = getattr(lc, module.lower().strip())
+                help_ = getattr(lc, "help")
                 fields.update({keys_['error']: text})
                 text = help_.get(f"{module.lower().strip()} {command.lower().strip()}")
         if isinstance(text, dict) and text.get('refer to'):
