@@ -120,7 +120,7 @@ class Effribot(commands.Bot):
     def run(self):
         token = self.config.get('TOKEN', os.getenv('TOKEN'))
         try:
-            super().run(token, bot=True, reconnect=True).logout()
+            super().run(token, bot=True, reconnect=True)
         except discord.errors.LoginFailure:
             print("failed to login to discord")
 
