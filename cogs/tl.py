@@ -177,6 +177,7 @@ class TapTitans():
             except discord.errors.NotFound:
                 await c.send('Oops, someone deleted the timer message. I am clearing the boss. RESET IT.')
                 guild.tt['next_boss']=0
+                guild.tt['boss_message']=0
                 return
             final_ping = 0
             last_ping = guild.tt['last_ping']
