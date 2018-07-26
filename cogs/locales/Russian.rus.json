@@ -1,5 +1,28 @@
 {
-"help suggestion": "Предоставляет пользователю предложить идею.\n\nПрава: любой может использовать эту команду.\n\nИспользование: `.suggestion <текст>`\n\nПример: ```.suggestion please add the description for all the commands```",
-"help disable": "Отключить команду.\n\nПрава: владелец, администратор, модератор\n\nИспользование: `.disable <команда>`\n\nПример: ```.disable enable```",
-"help bae": "Проверяет, девушка ли вы. Скорее всего, нет.\n\nПрава: без ограничений.\n\nИспользование: `.bae`"
+    "keys": {
+        "description": "Описание", 
+        "requires": "Требует", 
+        "usage": "Использование", 
+        "example": "Пример"
+    },
+    "help": {
+        "suggestion": {
+            "description": "Предоставляет пользователю предложить идею.",
+            "requires": "любой может использовать эту команду.",
+            "usage": ".suggestion <текст>",
+            "example": ".suggestion please add the description for all the commands"
+        },
+        "disable": {
+            "description": "Отключить команду.",
+            "requires": "владелец, администратор, модератор",
+            "usage": ".disable <команда>",
+            "example": ".disable emote"
+        },
+        "bae": {
+            "description": "Проверяет, девушка ли вы. Скорее всего, нет.",
+            "requires": "",
+            "usage": ".bae",
+            "example": ""
+        }
+    }
 }

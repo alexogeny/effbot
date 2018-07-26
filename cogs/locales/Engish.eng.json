@@ -1,4 +1,10 @@
 {
+    "keys": {
+        "description": "description", 
+        "requires": "requires", 
+        "usage": "usage", 
+        "example": "example"
+    },
     "help": {
         "taptitans": {},
         "help": {

@@ -27,10 +27,11 @@ class Helpers():
         )
         return embed
 
-    async def full_embed(self, description, colour=0, thumbnail=None, fields={}, author={}):
+    async def full_embed(self, description, colour=0, thumbnail=None,
+                         fields={}, author={}, inline=True):
         e = await self.build_embed(description, colour)
         for field in fields:
-            e.add_field(name=field, value=fields[field])
+            e.add_field(name=field, value=fields[field], inline=inline)
         if author:
             e.set_author(name=author['name'], icon_url=author['image'])
         if thumbnail:
