@@ -102,10 +102,14 @@ class SettingsCog():
 
         elif key.startswith('log') and key[3:] in 'leave,join,message,moderation':
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
-            if result:
-                g.logs[key[3:]] = result.id
-                print(g.logs)
-                await ctx.send(f'Set the {key} setting to {result.mention}')
+            if result or value=="0":
+                if value == "0":
+                    g.logs[key[3:]] = 0
+                    await ctx.send(f'Unset the {key} setting.')
+                else:
+                    g.logs[key[3:]] = result.id
+                # print(g.logs)
+                    await ctx.send(f'Set the {key} setting to {result.mention}')
 
 
         elif key.replace('channel', '') in ['quotes', 'updates', 'curated', 'welcome']:
