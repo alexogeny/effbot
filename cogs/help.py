@@ -68,6 +68,17 @@ class Help():
         self.helpers = self.bot.get_cog('Helpers')
         self.locales = LocaleGetter()
     
+    @commands.command(name='translations')
+    async def _translations(self, ctx, *text):
+        text = ' '.join([t.lower().strip() for t in text])
+        result = {
+            locale: bool(getattr(self.locales.get_locale(locale), 'help', {}).get(text))
+            for locale in self.locales.locales
+        }
+        asyncio.ensure_future(ctx.send(
+            '\n'.join([f'{r}: {result[r]}' for r in result])
+        ))
+
     @commands.command(name='help', no_pm=True, aliases=['helpme'])
     async def _help(self, ctx, module: str=None, command: str=None):
         g = await self.helpers.get_record('user', ctx.author.id)
