@@ -70,31 +70,57 @@ class Help():
     
     @commands.command(name='help', no_pm=True, aliases=['helpme'])
     async def _help(self, ctx, module: str=None, command: str=None):
-        help_ = getattr(self.locales.get_locale('eng'), "help")
+        g = await self.helpers.get_record('user', ctx.author.id)
+        ulc = g.tt.get('locale', 'eng')
+        lc = self.locales.get_locale(ulc)
+        keys_, help_ = getattr(lc, "keys"), getattr(lc, "help")
+        error_ = getattr(lc, "error")
+        fields = {}
         if not module and not command:
             text = help_.get('help')
             name = 'help'
-        elif module and not command:
+        elif module and not command and ulc=='eng':
             text = help_.get(module.lower().strip(), "No help text available.")
             name = f'{module}'
-        elif module and command:
+        elif module and command and ulc=='eng':
             text = help_.get(
                 f"{module.lower().strip()} {command.lower().strip()}",
                 "No help text available.")
             name = f'{module} {command}'
-        if text.get('refer to'):
+        elif module and not command and ulc!='eng':
+            text = help_.get(module.lower().strip(), getattr(lc, "error"))
+            name = f'{module}'
+            if not help_.get(module.lower().strip()):
+                lc = self.locales.get_locale('eng')
+                help_ = getattr(lc, "help")
+                fields.update({keys_['error']: text})
+                text = help_.get(module.lower().strip())
+        elif module and command and ulc!='eng':
+            text = help_.get(
+                f"{module.lower().strip()} {command.lower().strip()}",
+                getattr(lc, "error"))
+            name = f'{module} {command}'
+            if not help_.get(module.lower().strip()):
+                lc = self.locales.get_locale('eng')
+                help_ = getattr(lc, module.lower().strip())
+                fields.update({keys_['error']: text})
+                text = help_.get(f"{module.lower().strip()} {command.lower().strip()}")
+        if isinstance(text, dict) and text.get('refer to'):
             text = help_.get(text['refer to'])
         ff = lambda x, y: x in ['usage', 'example'] and f'```{y}```' or y
         related = [h for h in help_ if h.startswith(name) and h != name]
-        fields = {
-            k:ff(k, v) for k,v in text.items()
-            if k in ['description', 'requires', 'usage', 'example']
-            and v
-        }
+        if isinstance(text, dict):
+            fields.update({
+                keys_[k]:ff(k, v) for k,v in text.items()
+                if k in ['description', 'requires', 'usage', 'example']
+                and v
+            })
+        else:
+            fields.update({keys_['error']: error_})
         if related:
-            fields['related commands'] = '`{}`'.format('`, `'.join(related))
+            fields[keys_['related commands']] = '`{}`'.format('`, `'.join(related))
         e = await self.helpers.full_embed(
-            f'Help for command: {name}', fields=fields, inline=False
+            f'{keys_["help text"]}: {name}', fields=fields, inline=False
         )
             
         asyncio.ensure_future(ctx.send(embed=e))

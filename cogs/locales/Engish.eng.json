@@ -3,8 +3,12 @@
         "description": "description", 
         "requires": "requires", 
         "usage": "usage", 
-        "example": "example"
+        "example": "example",
+        "error": "error",
+        "related commands": "related commands",
+        "help text": "Help for command"
     },
+    "error": "No help text file found.",
     "help": {
         "taptitans": {},
         "help": {
@@ -167,6 +171,12 @@
             "requires": "",
             "usage": ".support",
             "example": ""
+        },
+        "my": {
+            "description": "Change user settings.",
+            "requires": "",
+            "usage": ".my <setting> <value>",
+            "example": ".my language"
         }
     }
 }
