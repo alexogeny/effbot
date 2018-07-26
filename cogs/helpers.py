@@ -104,13 +104,13 @@ class Helpers():
             setattr(self.bot, f'_{k}s', result)
 
     async def get_record(self, model, id):
-        result = [x for x in getattr(self.bot,f'_{model}s') if x.id==id]
-        if len(result) > 0:
+        result = [x for x in getattr(self.bot,f'_{model}s') if x.id==int(id)]
+        if len(result) == 1:
             return result[0]
         else:
             valid = getattr(self.bot, f'_{model}s', None)
             if valid:
-                result = valid[0].__class__(id=id)
+                result = valid[0].__class__(id=int(id))
                 valid.append(result)
                 return result
 
