@@ -1,28 +1,166 @@
 {
-"help taptitans": "this is the tap titans module",
-"help": "Shows information about a command and its syntax.\n\nRequires: any person can use this command, no rank needed.\n\nUsage: `.help <command>`\n\nExample:\n```.help leadearboard```\nTo get a list of commands, do `.info commands`",
-"help tt setinterval": "Set the interval (in minutes) for when the timer will ping users before the next clan quest begins.\n\nRequires: GM or Master ranks.\n\nUsage: `.tt setinterval <time1>, <time2>, <time3>, <time4>, [...], <timeN>`\n\nExample:\n```\n.tt setinterval 60 15 5 2 1\n.tt setinterval 15,2,1```",
-"help tt setintervals": "refer to tt setinterval",
-"help tt settext": "Set the text used for certain pings and information.\n\nThere are several template tags available: `{time}`, `{spawn}`, `{cq}`, `{round}`.\n\nRequires: GM or master rank\n\nUsage:`.tt settext <text_type> <text_content>`\n\nExample:\n```.tt settext timer {time} until boss #{cq} (at {spawn})```",
-"help emote": "Used to transform an emote into a .jpg or .gif, depending on the emote. \n\nRequires: Any person can use this command, no rank needed.\n\nUsage: `.emote <emote>` \n\nExample:\n```.emote :5:```", 
-"help titancount": "Calculates how many titans you will have at any given stage/ip level.\n\nRequires: Any person can use this command, no rank needed.\n\nUsage: `.titancount <stage> <ip>`\n\nExample:\n```.titancount 16000 30```",
-"help 8ball": "Ask 8ball a yes or no question and receive an answer.\n\nRequires: any server user can use this command\n\nUsage: `.8ball <question>`\n\nExample:\n```.8ball will I ever be happy?```",
-"help when": "Displays the remaining time before your Clan's next Clan Quest begins.\n\n Requires: Any person can use this command, no rank needed, but only in the clan's `when` channel.\n\nUsage: `.when boss`",
-"help when boss": "refer to when",
-"help boss clear": "Clears previous set boss timers\n\nRequires: master/gm/timer permissions.\n\nUsage: `.clear boss`",
-"help math": "Used to do calculations.\n\nRequires: Any person can use this command, no rank needed.\n\nUsage: `.math <calculation>`\n\nExample: ```.math 1+1``` \n\nOperations:\n+ (addition)\n- (subtraction)\n\\* (multiplication)\n/ (division)\n^ (exponentiation)\n\u221A (square root)\n% (modulo)\n() (parentheses/brackets)",
-"help leaderboard": "Used to look at the current leaderboard, based on xp.\n\nRequires: any person can use this command, no rank needed.\n\nUsage: `.lb` `.leaderboard`",
-"help lb": "refer to leaderboard",
-"help bae": "Tells you if you are bae. Which you're probably not.\n\nRequires: Any person can use this command, no rank needed.\n\nUsage: `.bae`\n\nExample:\n```.bae```",
-"help avatar": "Used to get the profile picture of an user, it can be .jpg or .gif.\n\nRequires: no requirements\n\nUsage: `.avatar <username>`\n\nExample: ```.avatar effrill3```",
-"help rank": "Shows your or a user's current rank in the leaderboard.\n\nRequires: no requirements\n\nUsage: `.rank` `.rank <username>`\n\nExample: ```.rank jibril```",
-"help info server": "Gives the general information about the server: region, users, text and voice channels, roles and the owner.\n\nUsage: `.info server`",
-"help server": "refer to info server",
-"help loa": "Set a leave of absence and let your clan know how long you will be away.\n\nRequires: you must have a clan associated role to do this.\n\nUsage: `.loa <time> <message>`\n\nExample: ```.loa 51w17d17m32s```",
-"help loa clear": "Clear a previously set leave of absence. \n\nRequires: you must have a clan associated role to do this.\n\nUsage: `.loa clear`",
-"help suggestion": "File a suggestion or enhancement request. Limited to once an hour.\n\nRequires: `<text>` longer than 30 characters.\n\nUsage: `.suggest <text>`\n\nExample: ```.suggest let the bot quote images```",
-"help suggest": "refer to suggestion",
-"help enable": "Enables a disabled command.\n\nRequires: owner, admin, moderator, curator\n\nUsage: `.enable <command>`\n\nExample: ```.enable emote```",
-"help disable": "Disables an enabled command.\n\nRequires: owner, admin, moderator, curator\n\nUsage: `.disable <command>`\n\nExample: ```.disable emote```",
-"help boss": "Sets a timer for the next clan quest.\n\nRequires: GM, master, or timer role\n\nUsage: `.boss <now|in|ttk> <time>`\n\nExample: ```.boss in 5h30m10s\n.boss ttk 1m59s```"
+    "help": {
+        "taptitans": {},
+        "help": {
+            "description": "Shows information about a command and its syntax.\nTo show a list of commands, do `.info commands`",
+            "requires": "",
+            "usage": ".help <command>",
+            "example": ".help leaderboard"
+        },
+        "tt setinterval": {
+            "description": "Set the interval (in minutes) for when the timer will ping users befor the next clan quest begins.",
+            "requires": "GM or Master rank role for TT2",
+            "usage": ".tt setinterval <time1>, <time2>, <time3>, [...], <timeN>",
+            "example": ".tt setinterval 15 10 5 2 1"
+        },
+        "tt settext": {
+            "description": "Set the text used for certain pings and information. There are several tags available: `{time}`, `{spawn}`, `{cq}`, `{round}`.",
+            "requires": "GM or Master rank role for TT2",
+            "usage": ".tt settext <text_type> <text_content...>",
+            "example": ".tt settext timer {time} until boss #{cq} (@ {spawn})"
+        },
+        "emote": {
+            "description": "Used to transform an emote into a .jpg or .gif, depending on the emote.",
+            "requires": "",
+            "usage": ".emote <emote>",
+            "example": ".emote :5:"
+        },
+        "titancount": {
+            "description": "Calculates how many titans you will have at any given stage + IP level.",
+            "requires": "",
+            "usage": ".titancount <stage> <ip>",
+            "example": ".titancount 16000 30"
+        },
+        "8ball": {
+            "description": "Ask 8ball a yes or no question and receive an answer.",
+            "requires": "",
+            "usage": ".8ball <question...>",
+            "example": ".8ball Will I ever be happy?"
+        },
+        "when": {
+            "description": "Displays the remaining time before your clan's next Clan Quest begins.",
+            "requires": "Can only be run from the `when` channel set by admin",
+            "usage": ".when boss",
+            "example": ""
+        },
+        "boss clear": {
+            "description": "Clears any previously set boss timer.",
+            "requires": "GM or master or timer rank",
+            "usage": ".boss clear",
+            "example": ""
+        },
+        "math": {
+            "description": "Used to do calculations.\nOperations:\n+ (addition)\n- (subtraction)\n\\* (multiplication)\n/ (division)\n^ (exponentiation)\n\u221A (square root)\n% (modulo)\n() (parentheses/brackets)",
+            "requires": "",
+            "usage": ".math <calculation...>",
+            "example": ".math ((1+1)*(4^2))/7"
+        },
+        "=": {"refer to": "math"},
+        "leaderboard": {
+            "description": "Used to look at the current leaderboard, based on XP earned.",
+            "requires": "",
+            "usage": ".lb",
+            "example": ".leaderboard"
+        },
+        "bae": {
+            "description": "Tells you if you are, or are not, bae. (Hint: you probably are not bae.)",
+            "requires": "",
+            "usage": ".bae",
+            "example": ""
+        },
+        "avatar": {
+            "description": "Shows the avatar of a user. Works for animated avatars.",
+            "requires": "",
+            "usage": ".avatar <username>",
+            "example": ".avatar effrill3"
+        },
+        "rank": {
+            "description": "Shows your or a user's current rank in the leaderboards.",
+            "requires": "",
+            "usage": ".rank <username>",
+            "example": ".rank jibril"
+        },
+        "info server": {
+            "description": "Gives general information about the server including: region, users, text and voice channels, role count, and owner.",
+            "requires": "",
+            "usage": ".info server",
+            "example": ""
+        },
+        "loa": {
+            "description": "Set a leave of absence and let your clan know how long you will be away.",
+            "requires": "A TT2 clan related role.",
+            "usage": ".loa <time> <message...>",
+            "example": ".loa 51w29d23h59m59s I'm just really, really lazy, ok?"
+        },
+        "loa clear": {
+            "description": "Clears your currently set LoA (if you set one).",
+            "requires": "a currently set leave of absence and a tt2 related role",
+            "usage": ".loa clear",
+            "example": ""
+        },
+        "suggestion": {
+            "description": "File a suggestion or enhancement request.",
+            "requires": "more than 30 characters and one per hour maximum",
+            "usage": ".suggest <suggestion...>",
+            "example": ".suggest Let the bot quote images in the quotes channel."
+        },
+        "enable": {
+            "description": "Enables a disabled command.",
+            "requires": "owner, admin, moderator, curator",
+            "usage": ".enable <command>",
+            "example": ".enable emote"
+        },
+        "disable": {
+            "description": "Disables an enabled command.",
+            "requires": "owner, admin, moderator, curator",
+            "usage": ".disable <command>",
+            "example": ".disable emote"
+        },
+        "boss": {
+            "description": "A collection of commands for setting and clearing the Clan Quest boss timer.",
+            "requires": "GM, master, or timer role."
+        },
+        "boss in": {
+            "description": "Sets the boss timer to be in `x` time.",
+            "requires": "GM, master, or timer role.",
+            "usage": ".boss in <time...>",
+            "example": ".boss in 5h59m20s"
+        },
+        "boss ttk": {
+            "description": "Sets the boss timer by the time-to-kill of the last boss.",
+            "requires": "GM, master, or timer role.",
+            "usage": ".boss ttk <time...>",
+            "example": ".boss ttk 2m20s"
+        },
+        "restrict": {
+            "description": "Restricts a command to a specified role. More than one role can be set.",
+            "requires": "Owner, Moderator, Curator",
+            "usage": ".restrict <command> <role>",
+            "example": ".restrict moderator disable"
+        },
+        "loas": {
+            "description": "Displays a list of leave-of-absence messages set by members.",
+            "requires": "GM or Master role.",
+            "usage": ".loas",
+            "example": ""
+        },
+        "ping": {
+            "description": "Pings the bot.",
+            "requires": "",
+            "usage": ".ping",
+            "example": ""
+        },
+        "bug": {
+            "description": "Files a bug report with the bot.",
+            "requires": "more than 30 characters and no more than one bug an hour",
+            "usage": ".bug <description...>",
+            "example": ".bug So erm, there's this thing ... and, well, it's not working. HELP!!"
+        },
+        "support": {
+            "description": "Gets a link to the official bot server.",
+            "requires": "",
+            "usage": ".support",
+            "example": ""
+        }
+    }
 }
