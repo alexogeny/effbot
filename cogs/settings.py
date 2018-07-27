@@ -3,6 +3,7 @@ import discord
 import asyncio
 from discord.ext import commands
 from random import choice as rndchoice
+from math import floor
 
 def is_admin_or_owner():
     async def _is_admin_or_owner(ctx):
@@ -29,7 +30,7 @@ class SettingsCog():
     async def my(self, ctx):
         pass
 
-    @my.command(name="language")
+    @my.command(name="language", aliases=["locale", "lang"])
     async def _language(self, ctx, language_code=None):
         available_locales = '`{}`'.format('`, `'.join(
             self.bot.get_cog('Help').locales.locales.keys()
@@ -45,7 +46,33 @@ class SettingsCog():
         else:
             asyncio.ensure_future(ctx.send(
                 f'Sorry, but `{lc}` is not an available locale.\nAvailable locales: {available_locales}'))
-        # asyncio.ensure_future(ctx.send())
+    
+    @my.command(name='ms', aliases=['maxstage'])
+    async def _ms(self, ctx, ms="1"):
+        if not ms.isnumeric():
+            ms = ms.lower().strip()
+            k = ms.endswith('k') and 1000 or 1
+            try:
+                ms = float(ms.replace('k', ''))*k
+                asyncio.ensure_future(ctx.send(f'{ms} <- output'))
+            except TypeError:
+                asyncio.ensure_future(ctx.send('You must submit a whole number.'))
+                return
+        ms = floor(ms)
+        g = await self.helpers.get_record('user', ctx.author.id)
+        ms_cap = self.bot.config['MS']
+        if ms < g.tt.get('ms', 0):
+            asyncio.ensure_future(ctx.send(
+                'You can only ever set your MS higher than previous. If you'
+                ' need it reset, join the support server: `.support`'
+            ))
+        elif ms > ms_cap:
+            asyncio.ensure_future(ctx.send(
+                f'You cannot set your MS over the current cap: `{ms_cap:,}`'
+            ))
+        else:
+            g.tt['ms'] = ms
+            asyncio.ensure_future(ctx.send(f'Successfully updated MS to `{ms:,}`!'))
 
     @commands.group(pass_context=True, name="settings")
     async def settings(self, ctx):
