@@ -50,19 +50,17 @@ class SettingsCog():
     
     @my.command(name='ms', aliases=['maxstage'])
     async def _ms(self, ctx, ms="1"):
-        if not ms.isnumeric():
-            ms = ms.lower().strip()
-            k = ms.endswith('k') and 1000 or 1
-            try:
-                ms = float(ms.replace('k', ''))*k
-                asyncio.ensure_future(ctx.send(f'{ms} <- output'))
-            except TypeError:
-                asyncio.ensure_future(ctx.send('You must submit a whole number.'))
-                return
-        ms = floor(ms)
+        k = ms.endswith('k') and 1000 or 1
+        try:
+            float(ms[:-1])
+        except:
+            asyncio.ensure_future(ctx.send('You must submit a whole number.'))
+            return
+
+        ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
         g = await self.helpers.get_record('user', ctx.author.id)
         ms_cap = self.bot.config['MS']
-        if ms < g.tt.get('ms', 0):
+        if ms <= g.tt.get('ms', 0):
             asyncio.ensure_future(ctx.send(
                 'You can only ever set your MS higher than previous. If you'
                 ' need it reset, join the support server: `.support`'
