@@ -7,6 +7,12 @@ from decimal import Decimal
 from string import ascii_lowercase, digits
 from math import floor
 
+
+def is_owner():
+    async def _is_owner(ctx):
+        return ctx.author.id == 305879281580638228
+    return commands.check(_is_owner)
+
 def is_admin_or_owner():
     async def _is_admin_or_owner(ctx):
         msg = ctx.message
@@ -251,6 +257,25 @@ class SettingsCog():
                     g.tt['code'] = code
                     asyncio.ensure_future(ctx.send(
                         f'Set the support code for **{ctx.author.name}#{ctx.author.discriminator}**!'))
+
+    @is_owner()
+    @my.command(name='set', hidden=True, visible=False)
+    async def _setcode(self, ctx, key, value, user):
+        used = None
+        if key == 'code':
+            used = next((x for x in self.bot._users
+                         if x.tt.get('code') == value.strip()), None)
+        if used:
+            asyncio.ensure_future(ctx.send(
+                'Somebody has already used that code.'))
+            return
+
+        u = await self.helpers.choose_member(ctx, ctx.guild, user)
+        m = await self.helpers.get_record('user', u.id)
+        if value.isnumeric():
+            value = int(value)
+        m.tt[key]=value
+        asyncio.ensure_future(ctx.send('Success!'))
 
     @commands.group(pass_context=True, name="settings")
     async def settings(self, ctx):
