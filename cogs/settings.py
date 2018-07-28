@@ -75,7 +75,7 @@ class SettingsCog():
             asyncio.ensure_future(ctx.send(f'Successfully updated MS to `{ms:,}`!'))
 
     @my.command(name='tcq', aliases=['cq'])
-    async def _ms(self, ctx, ms="1"):
+    async def _tcq(self, ctx, ms="1"):
         k = ms.endswith('k') and 1000 or 1
         try:
             float(ms[:-1])
