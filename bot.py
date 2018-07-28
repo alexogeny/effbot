@@ -24,7 +24,8 @@ if Path('./config.json').exists():
 else:
     CONFIG = dict(PREFIXES=['e.', '.', 'effbot '],
                   COGS_DIR="cogs",
-                  TOKEN=os.getenv("TOKEN"))
+                  TOKEN=os.getenv("TOKEN"),
+                  MS=30000)
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']

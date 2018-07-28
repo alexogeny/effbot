@@ -750,44 +750,44 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(
             ':ideograph_advantage: Cleared the boss timer!'))
 
-    @commands.command(name='claim')
-    async def _claim(self, ctx, key, value):
-        """
-        Sets a support code tied to your discord ID.
-        - does not currently support DMs
-        - autodeletes when you do it
-        Example:
-        ```
-        e.claim supportcode abc123
-        ```
-        """
-        if not key in ['sc','supportcode','cc','clancode']:
-            return
-        a = ctx.message.author
-        g = ctx.message.guild
+    # @commands.command(name='claim')
+    # async def _claim(self, ctx, key, value):
+    #     """
+    #     Sets a support code tied to your discord ID.
+    #     - does not currently support DMs
+    #     - autodeletes when you do it
+    #     Example:
+    #     ```
+    #     e.claim supportcode abc123
+    #     ```
+    #     """
+    #     if not key in ['sc','supportcode','cc','clancode']:
+    #         return
+    #     a = ctx.message.author
+    #     g = ctx.message.guild
         
-        if key.startswith('s') and not a.bot:
-            if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
-                await ctx.message.delete()
-            if a:
-                used = next((x for x in self.bot._users
-                             if x.tt.get('code') == value.strip()), None)
-                # print(used)
-                if used:
-                    await ctx.send(
-                        'Sorry, somebody already used that code.\n'
-                        'If it was not you, do the verify command.\n'
-                        'Example: `e.verify supportcode abc123`')
-                    return 
-                g = await self.bot.cogs['Helpers'].get_record('user', a.id)
-                if not g.tt.get('code'):
-                    g.tt['code'] = value.strip()
-                    await ctx.send(f'Set the support code for the user {a.name}#'
-                                   f'{a.discriminator}.')
-                else:
-                    await ctx.send('You have already claimed a code. Please use'
-                                   ' `verify` if you would like to change it.\n'
-                                   'Example: `e.verify supportcode abc123')
+    #     if key.startswith('s') and not a.bot:
+    #         if not isinstance(ctx.message.channel, discord.abc.PrivateChannel):
+    #             await ctx.message.delete()
+    #         if a:
+    #             used = next((x for x in self.bot._users
+    #                          if x.tt.get('code') == value.strip()), None)
+    #             # print(used)
+    #             if used:
+    #                 await ctx.send(
+    #                     'Sorry, somebody already used that code.\n'
+    #                     'If it was not you, do the verify command.\n'
+    #                     'Example: `e.verify supportcode abc123`')
+    #                 return 
+    #             g = await self.bot.cogs['Helpers'].get_record('user', a.id)
+    #             if not g.tt.get('code'):
+    #                 g.tt['code'] = value.strip()
+    #                 await ctx.send(f'Set the support code for the user {a.name}#'
+    #                                f'{a.discriminator}.')
+    #             else:
+    #                 await ctx.send('You have already claimed a code. Please use'
+    #                                ' `verify` if you would like to change it.\n'
+    #                                'Example: `e.verify supportcode abc123')
 
 
     # @tt.command(pass_context=True, name='convert', alias=["notation"])

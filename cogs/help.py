@@ -111,7 +111,7 @@ class Help():
                 f"{module.lower().strip()} {command.lower().strip()}",
                 getattr(lc, "error"))
             name = f'{module} {command}'
-            if not help_.get(module.lower().strip()):
+            if not help_.get(f"{module.lower().strip()} {command.lower().strip()}"):
                 lc = self.locales.get_locale('eng')
                 help_ = getattr(lc, "help")
                 fields.update({keys_['error']: text})

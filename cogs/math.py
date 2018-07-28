@@ -2,9 +2,13 @@ import discord
 import random
 import time
 from discord.ext import commands
+from decimal import Decimal, getcontext
+getcontext().prec = 282822
+getcontext().Emax = 50505050
+getcontext().Emin = -50505050
 from random import choice
 import re
-from math import sqrt
+from math import sqrt, pow
 import operator as ops
 import asyncio
 
@@ -235,10 +239,10 @@ class Math():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    @commands.command(name='math', aliases=['='])
-    async def math(self, ctx, *math):
-        result = await do_math(' '.join(math))
-        asyncio.ensure_future(ctx.send(result))
+    # @commands.command(name='math', aliases=['='])
+    # async def math(self, ctx, *math):
+    #     result = await do_math(' '.join(math))
+    #     asyncio.ensure_future(ctx.send(result[0:1999]))
 
 def setup(bot):
     cog = Math(bot)
