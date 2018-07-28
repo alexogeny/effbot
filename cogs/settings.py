@@ -99,13 +99,32 @@ class SettingsCog():
         if not ign:
             return
         ign = ' '.join(ign)
+        if len(ign) > 16:
+            asyncio.ensure_future(ctx.send('IGNs are less than 17 characters long.'))
+            return
         g = await self.helpers.get_record('user', ctx.author.id)
         g.tt['ign'] = ign.strip()
         asyncio.ensure_future(ctx.send(
             f'Set the IGN for **{ctx.author.name}#{ctx.author.discriminator}** to **{ign}**'
         ))
 
+    @my.command(name='profile')
+    async def _profile(self, ctx):
+        g = await self.helpers.get_record('user', ctx.author.id)
+        data = g.tt
+        flags=dict(ger='https://i.imgur.com/Mkk1K1C.png')
 
+        avatar = await self.helpers.get_avatar(ctx.author)
+
+        ms = '`  •  `'.join([f'{g.tt[k]:,} {k.upper()}' for k in ['ms', 'tcq']])
+        e = await self.helpers.full_embed((
+            f'`{ms}`'
+        ),
+            thumbnail = avatar,
+            author=dict(name=f'{g.tt.get("ign", ctx.author.name)} ({ctx.author.name}#{ctx.author.discriminator})',
+                        image=flags[g.tt.get('locale', 'eng')])
+        )
+        asyncio.ensure_future(ctx.send(embed=e))
 
 
     @my.command(name='supportcode', aliases=['sc', 'code'])
