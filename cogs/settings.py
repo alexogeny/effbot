@@ -73,6 +73,41 @@ class SettingsCog():
             g.tt['ms'] = ms
             asyncio.ensure_future(ctx.send(f'Successfully updated MS to `{ms:,}`!'))
 
+    @my.command(name='tcq', aliases=['cq'])
+    async def _ms(self, ctx, ms="1"):
+        k = ms.endswith('k') and 1000 or 1
+        try:
+            float(ms[:-1])
+        except:
+            asyncio.ensure_future(ctx.send('You must submit a whole number.'))
+            return
+
+        ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
+        g = await self.helpers.get_record('user', ctx.author.id)
+        if ms <= g.tt.get('tcq', 0):
+            asyncio.ensure_future(ctx.send(
+                'You can only ever set your TCQ higher than previous. If you'
+                ' need it reset, join the support server: `.support`'
+            ))
+        else:
+            g.tt['tcq'] = ms
+            asyncio.ensure_future(ctx.send(f'Successfully updated TCQ to `{ms:,}`!'))
+
+
+    @my.command(name='ign')
+    async def _ign(self, ctx, *ign):
+        if not ign:
+            return
+        ign = ' '.join(ign)
+        g = await self.helpers.get_record('user', ctx.author.id)
+        g.tt['ign'] = ign.strip()
+        asyncio.ensure_future(ctx.send(
+            f'Set the IGN for **{ctx.author.name}#{ctx.author.discriminator}** to **{ign}**'
+        ))
+
+
+
+
     @my.command(name='supportcode', aliases=['sc', 'code'])
     async def _code(self, ctx, code=None):
         if not code or not isinstance(code, str):
