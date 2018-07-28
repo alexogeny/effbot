@@ -1,23 +1,27 @@
-import discord
-from discord.ext import commands
-from datetime import datetime
-import gzip
-from json import dumps, loads
-from uuid import uuid4
-from copy import deepcopy
-import asyncio
-from urllib.parse import urlparse
-import time
-from difflib import get_close_matches
 import os
+import re
+import gzip
+import time
+import asyncio
+import discord
+from copy import deepcopy
+from json import dumps, loads
+from math import log, log10, floor
+from uuid import uuid4
+from string import ascii_lowercase
+from difflib import get_close_matches
+from datetime import datetime
 from collections import defaultdict
+from discord.ext import commands
+from urllib.parse import urlparse
 from playhouse.shortcuts import dict_to_model, model_to_dict
 
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
         self.last_save = int(time.time())
-        self.prompts = {}
+        self.scifi = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
+        self.lifi = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
 
     async def build_embed(self, description, colour):
         embed = discord.Embed(
@@ -218,6 +222,43 @@ class Helpers():
             r = urlparse(user.avatar_url_as(format='gif'))
             avatar=str(f'{r.scheme}://{r.netloc}{r.path}')
         return avatar
+
+    async def choose_conversion(self, number):
+        if self.lifi.match(number):
+            return 0
+        elif self.scifi.match(number):
+            return 1
+        return 2
+
+    async def from_scientific(self, number):
+        number, notation = self.lifi.findall(number)[0]
+        notation = int(notation.replace(',',''))-15
+        modulo = notation % 3
+        exponent = notation / 3
+        output = []
+        while exponent > 26:
+            result, remainder = divmod(exponent, 26)
+            output.append(remainder)
+            exponent = result
+        output.append(exponent)
+        multiple = pow(10, modulo)
+        l = len(output)
+        if l > 2:
+            output = [x for x in output[:-(l-2)]]+[max(x-1, 0) for x in output[-(l-2):]]
+        last_result = ''.join([ascii_lowercase[int(last)] for last in output[::-1]])
+        if len(last_result) == 1:
+            last_result = 'a' + last_result
+        return '{}{}'.format(int(float(number)*multiple), last_result)
+    async def to_scientific(self, number):
+        number, letter = self.scifi.findall(number)[0]
+        map_to_alpha = [ascii_lowercase.index(x) for x in letter.lower()]
+        a_to_one = [x+1 for x in map_to_alpha[:-2]]+map_to_alpha[-2:]
+        dict_map = dict(enumerate(a_to_one))
+        map_to_alpha = [pow(26, x) for x in  list(dict_map.keys())[::-1]]
+        result = sum([x*a_to_one[i] for i, x in enumerate(map_to_alpha)])
+        magnitude = int(log10(float(number)))
+        number = float(number)/max((pow(10,magnitude)),1)
+        return '{}e{:,}'.format(number, result*3+15+magnitude)
 
     @staticmethod
     def human_format(num):

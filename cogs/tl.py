@@ -790,37 +790,21 @@ class TapTitans():
     #                                'Example: `e.verify supportcode abc123')
 
 
-    # @tt.command(pass_context=True, name='convert', alias=["notation"])
-    # async def _convert(self, ctx, kind: str='sci', val: str='1e+5000'):
-    #     if kind.startswith('l'):
-            
-    #         number, letter = SCIFI.findall(val.strip())[0]
-    #         map_to_alpha = [ascii_lowercase.index(x) for x in letter.lower()]
-    #         a_to_one = [x+1 for x in map_to_alpha[:-2]]+map_to_alpha[-2:]
-    #         dict_map = dict(enumerate(a_to_one))
-    #         map_to_alpha = [pow(26, x) for x in  list(dict_map.keys())[::-1]]
-    #         result = sum([x*a_to_one[i] for i, x in enumerate(map_to_alpha)])
-    #         result = '{}e{:,}'.format(number, result*3)
-    #     else:
-    #         number, notation = LIFI.findall(val.strip())[0]
-    #         notation = int(notation.replace(',',''))
-    #         modulo = notation % 3
-    #         exponent = notation / 3
-    #         output = []
-    #         while exponent > 26:
-    #             result, remainder = divmod(exponent, 26)
-    #             output.append(remainder)
-    #             exponent = result
-    #         output.append(exponent)
-    #         multiple = pow(10, modulo)
-    #         l = len(output)
-    #         if l > 2:
-    #             output = [x for x in output[:-(l-2)]]+[max(x-1, 0) for x in output[-(l-2):]]
-    #         last_result = ''.join([ascii_lowercase[int(last)] for last in output[::-1]])
-    #         result = '{}{}'.format(number*multiple, last_result)
-    #     flip = {'s': 'letter', 'l': 'scientific'}
-    #     await ctx.send(f'Conversion of {val} from {kind} to {flip[kind[0].lower()]} is **{result}**')
-    
+    @tt.command(pass_context=True, name='convert', alias=["notation"])
+    async def _convert(self, ctx, val: str='1e+5000'):
+        result = None
+        f, t = 'scientific', 'letter'
+        mode = await self.helpers.choose_conversion(val)
+        await ctx.send(f'convert mode {mode}')
+        if mode == 0:
+            result = await self.helpers.from_scientific(val)
+        elif mode == 1:
+            result = await self.helpers.to_scientific(val)
+            f, t = 'letter', 'scientific'
+        e = await self.helpers.full_embed(
+            f'Conversion of **{val}** from **{f}** to **{t}** is: **{result}**'
+        )
+        asyncio.ensure_future(ctx.send(embed=e))
 def setup(bot):
     cog = TapTitans(bot)
     loop = asyncio.get_event_loop()
