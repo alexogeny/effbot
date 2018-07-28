@@ -6,6 +6,7 @@ from json import dumps, loads
 from uuid import uuid4
 from copy import deepcopy
 import asyncio
+from urllib.parse import urlparse
 import time
 from difflib import get_close_matches
 import os
@@ -211,7 +212,12 @@ class Helpers():
             role = await self.choose_from(ctx, choices, choicetext)
             return role
 
-
+    async def get_avatar(self, user):
+        avatar=user.avatar_url_as(static_format='png')
+        if user.is_avatar_animated():
+            r = urlparse(user.avatar_url_as(format='gif'))
+            avatar=str(f'{r.scheme}://{r.netloc}{r.path}')
+        return avatar
 
     @staticmethod
     def human_format(num):
