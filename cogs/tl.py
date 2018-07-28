@@ -328,6 +328,19 @@ class TapTitans():
                 await ctx.send(f'Set the {kind} channel to {result.mention}!')
 
     @is_gm_or_master()
+    @tt.command(name='shortcode')
+    async def _shortcode(self, ctx, shortcode):
+        if not shortcode or not shortcode.isalnum() or not len(shortcode) < 6:
+            asynco.ensure_future(ctx.send(
+                'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
+            ))
+        else:
+            shortcodes = [s for s in self.bot._servers if s.tt.get('shortcode', 'None')==shortcode.upper()]
+            if any(shortcodes):
+                await ctx.send('That code is taken. Please use `verify` to claim it.')
+                return
+
+    @is_gm_or_master()
     @tt.command(name='settext', aliases=['setmessage', 'setmsg'])
     async def settext(self, ctx, kind):
         m = ctx.message

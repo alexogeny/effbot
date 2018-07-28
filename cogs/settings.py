@@ -165,43 +165,54 @@ class SettingsCog():
             f'Set {ctx.author.name}#{ctx.author.discriminator}\'s lifetime relics to {int(bos):,}'
         ))
 
+    @commands.command(name='tt2')
+    async def tt2(self, ctx, user=None):
+        a = ctx.author
+        if not user:
+            user = await self.helpers.get_record('user', a.id)
+        elif not user.isnumeric():
+            a = await self.helpers.choose_member(ctx, ctx.guild, user)
+            user = await self.helpers.get_record('user', a.id)
+        elif user.isnumeric():
+            return
+        e = await self.tt2_card(a, user)
+        asyncio.ensure_future(ctx.send(embed=e))
 
-
-    @my.command(name='profile')
-    async def _profile(self, ctx):
-        g = await self.helpers.get_record('user', ctx.author.id)
-        data = g.tt
-        flags=dict(ger='https://i.imgur.com/Mkk1K1C.png')
-
-        avatar = await self.helpers.get_avatar(ctx.author)
-
-        ms = '`  •  `'.join([f'{g.tt[k]:,} {k.upper()}' for k in ['ms', 'tcq']])
-        # relics = '` • `'.join([' '.join([
-            # Decimal(g.tt.get(k, 1)).to_eng_string(), k.upper()]) for k in ['bos', 'ltr']])
-        bos = str(Decimal(g.tt.get('bos', 1)))
+    async def humanize_decimal(self, decimal):
+        bos = str(Decimal(decimal))
         if len(bos) < 15:
             bos = self.helpers.human_format(bos)
         else:
-            x = bos[3:]
-            bos = bos[0:3]
-            bos = bos+ 'e' + str(len(x))
-        ltr = str(Decimal(g.tt.get('ltr', 1)))
-        if len(ltr) < 15:
-            ltr = self.helpers.human_format(ltr)
-        else:
-            x = ltr[3:]
-            ltr = ltr[0:3]
-            ltr = ltr+ 'e' + str(len(x))
-        
-        e = await self.helpers.full_embed((
-            '\n'.join(['`'+x+'`' for x in (ms,bos+' BoS` • `'+ltr+' LTR')])
-        ),
+            x = bos[1:]
+            dec = bos[1:3]
+            bos = bos[0]
+            bos = bos+'.'+dec+ 'e' + str(len(x))
+        return bos
+    async def tt2_card(self, a, u):
+        flags=dict(ger='https://i.imgur.com/Mkk1K1C.png')
+        avatar = await self.helpers.get_avatar(a)
+        # ms = '**  •  **'.join([f'{u.tt.get(k, 1):,} {k.upper()}' for k in ['ms', 'tcq']])
+        ms = u.tt.get('ms', 1)
+        tcq = u.tt.get('tcq', 1)
+        bos = await self.humanize_decimal(u.tt.get('bos', 1))
+        ltr = await self.humanize_decimal(u.tt.get('ltr', 1))
+        final = f"Max Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
+        e = await self.helpers.full_embed(final,
             thumbnail = avatar,
-            author=dict(name=f'{g.tt.get("ign", ctx.author.name)} ({ctx.author.name}#{ctx.author.discriminator})',
-                        image=flags[g.tt.get('locale', 'eng')])
+            author=dict(name=f'{u.tt.get("ign", a.name)} ({a.name}#{a.discriminator})',
+                        image=flags[u.tt.get('locale', 'ger')])
         )
-        asyncio.ensure_future(ctx.send(embed=e))
+        return e
 
+    @my.command(name='clan')
+    async def _clan(self, ctx, clan=None):
+        if not clan or not clan.isalnum() or not len(clan) < 6:
+            asynco.ensure_future(ctx.send(
+                'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
+            ))
+        else:
+            shortcodes = [s.tt.get('shortcode', 'None') for s in self.bot._servers]
+            await ctx.send(', '.join(shortcodes))
 
     @my.command(name='supportcode', aliases=['sc', 'code'])
     async def _code(self, ctx, code=None):
