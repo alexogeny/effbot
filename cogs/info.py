@@ -137,8 +137,10 @@ class Information():
         name = " ~ ".join((name, user.nick)) if user.nick else name
 
         if user.avatar_url:
-            data.set_author(name=name, url=user.avatar_url)
-            data.set_thumbnail(url=user.avatar_url)
+            avatar = await self.helpers.get_avatar(user)
+            data.set_author(name=name, url=avatar)
+
+            data.set_thumbnail(url=avatar)
         else:
             data.set_author(name=name)
 
@@ -146,6 +148,13 @@ class Information():
             await ctx.send(embed=data)
         except discord.HTTPException:
             await ctx.send("I need the `Embed links` permission to send this")
+
+    @info.command(name='roles', no_pm=True)
+    async def _roles(self, ctx):
+        roles = ', '.join([r.mention for r in ctx.guild.role_hierarchy])
+        e = await self.helpers.full_embed(roles)
+        await ctx.send(embed=e)
+
 
     @commands.command(pass_context=True, no_pm=True)
     async def avatar(self, ctx, user: str=None):
