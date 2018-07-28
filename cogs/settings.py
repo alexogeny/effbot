@@ -3,6 +3,7 @@ import discord
 import asyncio
 from discord.ext import commands
 from random import choice as rndchoice
+from decimal import Decimal
 from string import ascii_lowercase, digits
 from math import floor
 
@@ -108,6 +109,64 @@ class SettingsCog():
             f'Set the IGN for **{ctx.author.name}#{ctx.author.discriminator}** to **{ign}**'
         ))
 
+    @my.command(name='bos', aliases=['bookofshadows'])
+    async def _bos(self, ctx, bos):
+        g = await self.helpers.get_record('user', ctx.author.id)
+        if not bos.isnumeric():
+            valid = await self.helpers.choose_conversion(bos)
+            if valid == 2:
+                asyncio.ensure_future(ctx.send(
+                    'Hm, did you enter your bos level correctly? It should be a number'
+                    ', a scientific value, or a TT2 letter value. e.g. `1234`, `1e30`, '
+                    'or `1ab`'
+                ))
+            elif bos[-1].lower() in ['m','b','t','k'] and bos[-2].isnumeric():
+                try:
+                    float(bos[:-1])
+                except:
+                    return
+                else:
+                    bos = Decimal(float(bos[:-1])*pow(10,{'m':6,'k':3,'b':9,'t':12}[bos[-1].lower()]))
+            elif valid == 1:
+                b = await self.helpers.to_scientific(bos)
+                bos = Decimal(b.replace(',',''))
+            elif valid == 0:
+                bos = Decimal(bos)
+        g.tt['bos'] = int(bos)
+        asyncio.ensure_future(ctx.send(
+            f'Set {ctx.author.name}#{ctx.author.discriminator}\'s BoS level to {int(bos):,}'
+        ))
+
+    @my.command(name='ltr', aliases=['lifetimerelics'])
+    async def _ltr(self, ctx, bos):
+        g = await self.helpers.get_record('user', ctx.author.id)
+        if not bos.isnumeric():
+            valid = await self.helpers.choose_conversion(bos)
+            if valid == 2:
+                asyncio.ensure_future(ctx.send(
+                    'Hm, did you enter your LTR correctly? It should be a number'
+                    ', a scientific value, or a TT2 letter value. e.g. `1234`, `1e30`, '
+                    'or `1ab`'
+                ))
+            elif bos[-1].lower() in ['m','b','t','k'] and bos[-2].isnumeric():
+                try:
+                    float(bos[:-1])
+                except:
+                    return
+                else:
+                    bos = Decimal(float(bos[:-1])*pow(10,{'m':6,'k':3,'b':9,'t':12}[bos[-1].lower()]))
+            elif valid == 1:
+                b = await self.helpers.to_scientific(bos)
+                bos = Decimal(b.replace(',',''))
+            elif valid == 0:
+                bos = Decimal(bos)
+        g.tt['ltr'] = int(bos)
+        asyncio.ensure_future(ctx.send(
+            f'Set {ctx.author.name}#{ctx.author.discriminator}\'s lifetime relics to {int(bos):,}'
+        ))
+
+
+
     @my.command(name='profile')
     async def _profile(self, ctx):
         g = await self.helpers.get_record('user', ctx.author.id)
@@ -117,8 +176,25 @@ class SettingsCog():
         avatar = await self.helpers.get_avatar(ctx.author)
 
         ms = '`  •  `'.join([f'{g.tt[k]:,} {k.upper()}' for k in ['ms', 'tcq']])
+        # relics = '` • `'.join([' '.join([
+            # Decimal(g.tt.get(k, 1)).to_eng_string(), k.upper()]) for k in ['bos', 'ltr']])
+        bos = str(Decimal(g.tt.get('bos', 1)))
+        if len(bos) < 15:
+            bos = self.helpers.human_format(bos)
+        else:
+            x = bos[3:]
+            bos = bos[0:3]
+            bos = bos+ 'e' + str(len(x))
+        ltr = str(Decimal(g.tt.get('ltr', 1)))
+        if len(ltr) < 15:
+            ltr = self.helpers.human_format(ltr)
+        else:
+            x = ltr[3:]
+            ltr = ltr[0:3]
+            ltr = ltr+ 'e' + str(len(x))
+        
         e = await self.helpers.full_embed((
-            f'`{ms}`'
+            '\n'.join(['`'+x+'`' for x in (ms,bos+' BoS` • `'+ltr+' LTR')])
         ),
             thumbnail = avatar,
             author=dict(name=f'{g.tt.get("ign", ctx.author.name)} ({ctx.author.name}#{ctx.author.discriminator})',

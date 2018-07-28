@@ -790,7 +790,7 @@ class TapTitans():
     #                                'Example: `e.verify supportcode abc123')
 
 
-    @tt.command(pass_context=True, name='convert', alias=["notation"])
+    @commands.command(name='ttconvert', alias=["ttnotation"])
     async def _convert(self, ctx, val: str='1e+5000'):
         result = None
         f, t = 'scientific', 'letter'
