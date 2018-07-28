@@ -3,6 +3,7 @@ from discord.ext import commands
 from datetime import datetime
 import gzip
 from json import dumps, loads
+from uuid import uuid4
 from copy import deepcopy
 import asyncio
 import time
@@ -15,6 +16,7 @@ class Helpers():
     def __init__(self, bot):
         self.bot = bot
         self.last_save = int(time.time())
+        self.prompts = {}
 
     async def build_embed(self, description, colour):
         embed = discord.Embed(
@@ -107,10 +109,10 @@ class Helpers():
         result = [x for x in getattr(self.bot,f'_{model}s') if x.id==int(id)]
         if len(result) == 1:
             return result[0]
-        else:
+        elif len(result) == 0:
             valid = getattr(self.bot, f'_{model}s', None)
             if valid:
-                result = valid[0].__class__(id=int(id))
+                result = valid[0](id=int(id))
                 valid.append(result)
                 return result
 
@@ -126,28 +128,36 @@ class Helpers():
     async def search_for(self, items, term):
         return [items.index(x) for x in items if term in x]
 
-
-    async def choose_from(self, ctx, choices, text):
+    async def choose_from(self, ctx, choices, text, timeout=10):
+        counter = datetime.utcnow().timestamp()+timeout
         chooser = await ctx.send(text)
-        def check(m):
-            return m.content.isnumeric() or m.content.lower().strip() == 'c'
-        try:
-            msg = await self.bot.wait_for('message', check=check)
-        except asyncio.TimeoutError as e:
-            await chooser.delete()
-            await msg.channel.send('Query timed out.')
-            return
-        else:
-            await chooser.delete()
-            if not msg.content.isnumeric():
-                await msg.channel.send('Query cancelled.')
-                return
-            i = int(msg.content)-1
-            if i > -1 and i < len(choices):
-                return choices[i]
+        while True:
+            if datetime.utcnow().timestamp() >= counter:
+                break 
+
+            def check(m):
+                return m.content.isnumeric() or m.content.lower().strip() == 'c'
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
             else:
-                await msg.channel.send('Query cancelled.')
-                return
+                if not msg.author.id == ctx.author.id:
+                    continue
+                is_author = msg.author.id == ctx.author.id
+                if is_author:
+                    if msg.content == 'c':
+                        await chooser.delete()
+                        await msg.channel.send('Query cancelled.')
+                        return
+                    i = int(msg.content)-1
+                    if i > -1 and i < len(choices):
+                        return choices[i]
+                    else:
+                        await msg.channel.send('Query cancelled.')
+                        return
+        await chooser.delete()
+        await ctx.channel.send('Query timed out.')
 
     async def choose_member(self, ctx, server, user: str):
         members = server.members
