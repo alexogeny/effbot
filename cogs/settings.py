@@ -3,6 +3,7 @@ import discord
 import asyncio
 from discord.ext import commands
 from random import choice as rndchoice
+from string import ascii_lowercase, digits
 from math import floor
 
 def is_admin_or_owner():
@@ -73,6 +74,38 @@ class SettingsCog():
         else:
             g.tt['ms'] = ms
             asyncio.ensure_future(ctx.send(f'Successfully updated MS to `{ms:,}`!'))
+
+    @my.command(name='supportcode', aliases=['sc', 'code'])
+    async def _code(self, ctx, code=None):
+        if not code or not isinstance(code, str):
+            asyncio.ensure_future(ctx.send('You need to supply a code.'))
+        elif isinstance(code, str) and len(code) < 4 or len(code) > 10:
+            asyncio.ensure_future(ctx.send('Support codes are between 5 and 10 characters long.'))
+        elif isinstance(code, str) and not all([x in ascii_lowercase+digits for x in code]):
+            asyncio.ensure_future(ctx.send(f'Valid characters for support codes are: {ascii_lowercase+digits}'))
+        else:
+            used = next((x for x in self.bot._users
+                         if x.tt.get('code') == code.strip()), None)
+            if used:
+                asyncio.ensure_future(ctx.send(
+                    'Somebody has already used that code. If this was not you,'
+                    ' use the `verify` command.'
+                ))
+            else:
+                result = None
+                g = await self.helpers.get_record('user', ctx.author.id)
+                if not g.tt.get('code'):
+                    result = await self.helpers.choose_from(ctx, ['confirm'],
+                        f'This will set your code to {code}. Type 1 to confirm or `c` to cancel.')
+                else:
+                    c = g.tt['code']
+                    result = await self.helpers.choose_from(ctx, ['confirm'],
+                        f'This will override your code from `{c}` to `{code}`. Type 1 to confirm or `c` to cancel.')
+
+                if result:
+                    g.tt['code'] = code
+                    asyncio.ensure_future(ctx.send(
+                        f'Set the support code for **{ctx.author.name}#{ctx.author.discriminator}**!'))
 
     @commands.group(pass_context=True, name="settings")
     async def settings(self, ctx):
