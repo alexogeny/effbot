@@ -331,14 +331,51 @@ class TapTitans():
     @tt.command(name='shortcode')
     async def _shortcode(self, ctx, shortcode):
         if not shortcode or not shortcode.isalnum() or not len(shortcode) < 6:
-            asynco.ensure_future(ctx.send(
+            asyncio.ensure_future(ctx.send(
                 'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
             ))
         else:
-            shortcodes = [s for s in self.bot._servers if s.tt.get('shortcode', 'None')==shortcode.upper()]
+            shortcode = shortcode.upper()
+            shortcodes = [s for s in self.bot._servers if s.tt.get('shortcode')==shortcode]
             if any(shortcodes):
                 await ctx.send('That code is taken. Please use `verify` to claim it.')
                 return
+            result = None
+            g = await self.helpers.get_record('server', ctx.guild.id)
+            if not g.tt.get('shortcode'):
+                result = await self.helpers.choose_from(ctx, ['confirm'],
+                    f'This will set your clan shortcode to {shortcode}. Type 1 to confirm or `c` to cancel.')
+            else:
+                c = g.tt['shortcode']
+                result = await self.helpers.choose_from(ctx, ['confirm'],
+                    f'This will override your clan shortcode from `{c}` to `{shortcode}`. Type 1 to confirm or `c` to cancel.')
+
+            if result:
+                g.tt['shortcode'] = shortcode
+                asyncio.ensure_future(ctx.send(
+                    f'Set the shortcode for **{ctx.guild.name}**!'))
+
+    @is_gm_or_master()
+    @tt.command(name='name')
+    async def _name(self, ctx, *name):
+        if not name:
+            return
+        name = ' '.join(name)
+        if len(name)>20:
+            return
+        g = await self.helpers.get_record('server', ctx.guild.id)
+        if not g.tt.get('name'):
+            result = await self.helpers.choose_from(ctx, ['confirm'],
+                f'This will set your clan name to {name}. Type 1 to confirm or `c` to cancel.')
+        else:
+            c = g.tt['name']
+            result = await self.helpers.choose_from(ctx, ['confirm'],
+                f'This will override your clan name from `{c}` to `{name}`. Type 1 to confirm or `c` to cancel.')
+
+        if result:
+            g.tt['name'] = name
+            asyncio.ensure_future(ctx.send(
+                f'Set the TT2 clan name for **{ctx.guild.name}**!'))
 
     @is_gm_or_master()
     @tt.command(name='settext', aliases=['setmessage', 'setmsg'])

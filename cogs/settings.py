@@ -196,7 +196,9 @@ class SettingsCog():
         tcq = u.tt.get('tcq', 1)
         bos = await self.humanize_decimal(u.tt.get('bos', 1))
         ltr = await self.humanize_decimal(u.tt.get('ltr', 1))
-        final = f"Max Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
+        shr = u.tt.get('shortcode', '')
+        clan = next((s.tt.get('name') for s in self.bot._servers if s.tt.get('shortcode')==shr), 'no clan set')
+        final = f"Clan: **{clan}**\nMax Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
         e = await self.helpers.full_embed(final,
             thumbnail = avatar,
             author=dict(name=f'{u.tt.get("ign", a.name)} ({a.name}#{a.discriminator})',
@@ -207,12 +209,16 @@ class SettingsCog():
     @my.command(name='clan')
     async def _clan(self, ctx, clan=None):
         if not clan or not clan.isalnum() or not len(clan) < 6:
-            asynco.ensure_future(ctx.send(
+            asyncio.ensure_future(ctx.send(
                 'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
             ))
         else:
-            shortcodes = [s.tt.get('shortcode', 'None') for s in self.bot._servers]
-            await ctx.send(', '.join(shortcodes))
+            shortcodes = [s for s in self.bot._servers if s.tt.get('shortcode') == clan.upper()]
+            if any(shortcodes):
+                a = ctx.author
+                g = await self.helpers.get_record('user', a.id)
+                g.tt['shortcode'] = clan.upper()
+                asyncio.ensure_future(ctx.send(f'Set the shortcode for {a.name}#{a.discriminator} to: `{clan.upper()}`'))
 
     @my.command(name='supportcode', aliases=['sc', 'code'])
     async def _code(self, ctx, code=None):

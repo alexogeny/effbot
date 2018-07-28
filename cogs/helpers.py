@@ -115,10 +115,10 @@ class Helpers():
         if len(result) == 1:
             return result[0]
         elif len(result) == 0:
-            valid = getattr(self.bot, f'_{model}s', None)
-            if valid:
-                result = valid[0](id=int(id))
-                valid.append(result)
+            _model = self.bot._models.get(model)
+            if _model:
+                result, created = _model.get_or_create(id=int(id))
+                getattr(self.bot, f'_{model}s').append(result)
                 return result
 
     async def get_obj(self, server, kind, key, value):
