@@ -169,7 +169,7 @@ class TapTitans():
                 guild.tt['boss_message']=0
                 return
             g = self.bot.get_guild(int(guild.id))
-
+            c = None
             if g is not None:
                 c = g.get_channel(guild.tt.get('tl_channel'))
             if c is None:
