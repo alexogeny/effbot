@@ -33,10 +33,30 @@ class SettingsCog():
     def __init__(self, bot):
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
+        self.flags = self.helpers.flags
+        self.flagstr = self.helpers.flagstr
 
     @commands.group(name="my", pass_context=True)
     async def my(self, ctx):
         pass
+
+    @my.command(name='country')
+    async def _country(self, ctx, *country):
+        msg = None
+        if not country:
+            msg = 'Did you forget to supply a country?'
+        else:
+            country = '-'.join(country).lower()
+            countries = list(self.flags.keys())
+            c=next((c for c in countries if c.startswith(country.lower())), None)
+            if c:
+                g = await self.helpers.get_record('user', ctx.author.id)
+                g.tt['country'] = c
+                a = ctx.author
+                msg = f'Set the country for {a.name}#{a.discriminator} to {country}'
+            else:
+                msg = 'Could not find that country.'
+        asyncio.ensure_future(ctx.send(msg))
 
     @my.command(name="language", aliases=["locale", "lang"])
     async def _language(self, ctx, language_code=None):
@@ -67,18 +87,16 @@ class SettingsCog():
         ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
         g = await self.helpers.get_record('user', ctx.author.id)
         ms_cap = self.bot.config['MS']
+        msg = None
         if ms <= g.tt.get('ms', 0):
-            asyncio.ensure_future(ctx.send(
-                'You can only ever set your MS higher than previous. If you'
-                ' need it reset, join the support server: `.support`'
-            ))
+            msg = ('You cannot lower your MS. If you need it reset,'
+                ' join the support server: `.support`')
         elif ms > ms_cap:
-            asyncio.ensure_future(ctx.send(
-                f'You cannot set your MS over the current cap: `{ms_cap:,}`'
-            ))
+            msg = f'You cannot set your MS over the current cap: `{ms_cap:,}`'
         else:
             g.tt['ms'] = ms
-            asyncio.ensure_future(ctx.send(f'Successfully updated MS to `{ms:,}`!'))
+            msg = f'Successfully updated MS to `{ms:,}`!'
+        asyncio.ensure_future(ctx.send(msg))
 
     @my.command(name='tcq', aliases=['cq'])
     async def _tcq(self, ctx, ms="1"):
@@ -115,60 +133,51 @@ class SettingsCog():
             f'Set the IGN for **{ctx.author.name}#{ctx.author.discriminator}** to **{ign}**'
         ))
 
+    async def _normalize_number(self, ctx, number):
+        if not number.isnumeric():
+            mode = await self.helpers.choose_conversion(number)
+            if mode == 2:
+                asyncio.ensure_future(ctx.send(
+                    'I could not recognise your input as a number. :<'
+                ))
+                return None
+            elif number[-1].lower() in 'mbtk' and number[-2].isnumeric():
+                try:
+                    float(number[:-1])
+                except:
+                    return None
+                else:
+                    number = Decimal(float(number[:-1])*pow(
+                        10,{'m':6,'k':3,'b':9,'t':12}[number[-1].lower()]
+                    ))
+            elif mode == 1:
+                n = await self.helpers.to_scientific(number)
+                number = Decimal(b.replace(',', ''))
+            elif mode == 0:
+                number = Decimal(number)
+            return number
+
     @my.command(name='bos', aliases=['bookofshadows'])
     async def _bos(self, ctx, bos):
-        g = await self.helpers.get_record('user', ctx.author.id)
-        if not bos.isnumeric():
-            valid = await self.helpers.choose_conversion(bos)
-            if valid == 2:
-                asyncio.ensure_future(ctx.send(
-                    'Hm, did you enter your bos level correctly? It should be a number'
-                    ', a scientific value, or a TT2 letter value. e.g. `1234`, `1e30`, '
-                    'or `1ab`'
-                ))
-            elif bos[-1].lower() in ['m','b','t','k'] and bos[-2].isnumeric():
-                try:
-                    float(bos[:-1])
-                except:
-                    return
-                else:
-                    bos = Decimal(float(bos[:-1])*pow(10,{'m':6,'k':3,'b':9,'t':12}[bos[-1].lower()]))
-            elif valid == 1:
-                b = await self.helpers.to_scientific(bos)
-                bos = Decimal(b.replace(',',''))
-            elif valid == 0:
-                bos = Decimal(bos)
-        g.tt['bos'] = int(bos)
-        asyncio.ensure_future(ctx.send(
-            f'Set {ctx.author.name}#{ctx.author.discriminator}\'s BoS level to {int(bos):,}'
-        ))
+        o = bos
+        a = ctx.author
+        g = await self.helpers.get_record('user', a.id)
+        bos = await self._normalize_number(ctx, bos)
+        if bos:
+            g.tt['bos'] = int(bos)
+            asyncio.ensure_future(ctx.send(
+                f'Set {a.name}#{a.discriminator}\'s BoS level to {o}'
+            ))
 
     @my.command(name='ltr', aliases=['lifetimerelics'])
-    async def _ltr(self, ctx, bos):
+    async def _ltr(self, ctx, ltr):
+        o = ltr
         g = await self.helpers.get_record('user', ctx.author.id)
-        if not bos.isnumeric():
-            valid = await self.helpers.choose_conversion(bos)
-            if valid == 2:
-                asyncio.ensure_future(ctx.send(
-                    'Hm, did you enter your LTR correctly? It should be a number'
-                    ', a scientific value, or a TT2 letter value. e.g. `1234`, `1e30`, '
-                    'or `1ab`'
-                ))
-            elif bos[-1].lower() in ['m','b','t','k'] and bos[-2].isnumeric():
-                try:
-                    float(bos[:-1])
-                except:
-                    return
-                else:
-                    bos = Decimal(float(bos[:-1])*pow(10,{'m':6,'k':3,'b':9,'t':12}[bos[-1].lower()]))
-            elif valid == 1:
-                b = await self.helpers.to_scientific(bos)
-                bos = Decimal(b.replace(',',''))
-            elif valid == 0:
-                bos = Decimal(bos)
-        g.tt['ltr'] = int(bos)
+        ltr = await self._normalize_number(ctx, ltr)
+        a = ctx.author
+        g.tt['ltr'] = int(ltr)
         asyncio.ensure_future(ctx.send(
-            f'Set {ctx.author.name}#{ctx.author.discriminator}\'s lifetime relics to {int(bos):,}'
+            f'Set {a.name}#{a.discriminator}\'s lifetime relics to {o}'
         ))
 
     @commands.command(name='tt2')
@@ -195,7 +204,7 @@ class SettingsCog():
             bos = bos+'.'+dec+ 'e' + str(len(x))
         return bos
     async def tt2_card(self, a, u):
-        flags=dict(ger='https://i.imgur.com/Mkk1K1C.png')
+        
         avatar = await self.helpers.get_avatar(a)
         # ms = '**  •  **'.join([f'{u.tt.get(k, 1):,} {k.upper()}' for k in ['ms', 'tcq']])
         ms = u.tt.get('ms', 1)
@@ -206,9 +215,9 @@ class SettingsCog():
         clan = next((s.tt.get('name') for s in self.bot._servers if s.tt.get('shortcode')==shr), 'no clan set')
         final = f"Clan: **{clan}**\nMax Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
         e = await self.helpers.full_embed(final,
-            thumbnail = avatar,
+            thumbnail=avatar,
             author=dict(name=f'{u.tt.get("ign", a.name)} ({a.name}#{a.discriminator})',
-                        image=flags[u.tt.get('locale', 'ger')])
+                        image=self.flagstr.format(self.flags[u.tt.get('country', 'united-states')]))
         )
         return e
 
