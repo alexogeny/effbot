@@ -483,7 +483,7 @@ class TapTitans():
     @is_gm_or_admin()
     @tt_set.command(name='rank', no_pm=True)
     async def _setrank(self, ctx, rank, role):
-        ranks = 'master knight captain recruit guest vip alumni applicant timer vip'.split()
+        ranks = 'master knight captain recruit guest vip alumni applicant timer vip probation'.split()
         if rank not in ranks:
             asyncio.ensure_future(ctx.send('The rank must be a valid name of an in-game role'
                 ' or a tt2 related rank. You can choose from: `{}`'.format(
@@ -499,6 +499,7 @@ class TapTitans():
             result =await self.helpers.choose_role(ctx, ctx.guild, role)
             if result:
                 g['tt'][rank] = result.id
+                await self.helpers.sql_update_record('server', g)
                 asyncio.ensure_future(self.helpers.try_mention(ctx, f'{rank} role', result))
 
     @is_gm_or_master()
@@ -720,30 +721,45 @@ class TapTitans():
                for c, v
                in cqs.items()
                if c in range(int(start), int(end)+1)}
-
-        total = int(end) - int(start)
+        s = await self.helpers.get_record('server', ctx.guild.id)
+        roles = [
+            s['roles'].get('grandmaster', 0)
+        ] + [
+            s['tt'].get(k, 0) for k in ['probation', 'master', 'captain', 'knight', 'recruit']
+        ]
+        # print(roles)
+        total = int(end)+1 - int(start)
         missed = total - len(cqs)
-        hitter = defaultdict(lambda: dict(id='', name='', hit=0, dmg=0, atd=0))
+        hitter = defaultdict(lambda: dict(id='', name='', hit=0, dmg=0, atd=0, rank='-'))
         hitmap = [(100,0),(110,5),(125,25),(150,50),(175,75),(200,100),(250,125),(300,150)]
         min_hits = int(exists.get('hpcq_requirement') or 1)
         min_taps = int(exists.get('tpcq_requirement') or 100)
         top10 = int(exists.get('top10_min') or 4000)
-        # print(hitmap[0:3])
-        # return
+        ms = int(exists.get('ms_requirement') or 4000)
         min_helper_dmg = sum((b/100)*top10 for b,d in hitmap[0:min_hits])
         players = await self.helpers.sql_query_db('SELECT * FROM "user"')
         players = [p for p in players if ctx.guild.get_member(p['id'])]
+        # rank = '_'
 
         for hit in list(chain.from_iterable(v for k,v in cqs.items())):
             rank, name, id, damage = hit.values()
             if not hitter[id]['id']:
-                hitter[id].update({'id': id})
+                hitter[id].update({'id': id, 'hit': 0, 'rank': '-'})
             ms, d_id = 4000, 0
             player = next((p for p in players if p['tt'].get('code')==id), None)
             if player:
-                ms = int(player['tt'].get('ms') or exists.get('ms_requirement') or ms)
+                ms = int(player['tt'].get('ms') or ms)
                 d_id = int(player['id'] or d_id)
-            min_tap_dmg = sum((b/100)*ms for b,d in hitmap[0:min_hits])
+                dgg = ctx.guild.get_member(d_id)
+                if dgg and hitter[id]['rank']=='-':
+                    rl = next((
+                        ['G', 'P', 'M', 'C', 'K', 'R'][i]
+                        for i, r
+                        in enumerate(roles)
+                        if r in [dggr.id for dggr in dgg.roles]), '-')
+                    # print(rl)
+                    hitter[id]['rank']=rl
+            min_tap_dmg = sum((b/100)*ms*min_taps for b,d in hitmap[0:min_hits])
             if int(damage) >= min_tap_dmg+min_helper_dmg:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] += 1
@@ -753,7 +769,7 @@ class TapTitans():
                 })
         final = []
         for id, data in hitter.items():
-            hitter[id]['atd'] = round((hitter[id]['hit']+missed)/total*100)
+            hitter[id]['atd'] = (hitter[id]['hit']+missed)/total*100
             final.append(hitter[id])
 
         final = sorted(final, key=lambda x: x['atd'], reverse=True)
@@ -764,8 +780,8 @@ class TapTitans():
             for chunk in self.helpers.chunker(final, 21):
                 result = []
                 for i, r in enumerate(chunk):
-                    name = '`#{:02}`: `{:02}%` (`{:<7}`)'.format(
-                        started_at*18+i+1, r["atd"], self.helpers.human_format(r["dmg"]) 
+                    name = '`{} #{:02}`: `{:02}%` (`{:<7}`)'.format(
+                        r['rank'], started_at*21+i+1, floor(r["atd"]), self.helpers.human_format(r["dmg"]) 
                     )
                     result.append(f'{name} - {r["name"]}')
                 e = await self.helpers.build_embed(
