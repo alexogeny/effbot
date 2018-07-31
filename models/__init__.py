@@ -84,7 +84,13 @@ _titanlord = """CREATE TABLE IF NOT EXISTS Titanlord(
     paste_channel numeric,
     report_channel numeric,
     masters_channel numeric,
-    loa_channel numeric
+    loa_channel numeric,
+    ms_requirement numeric,
+    tcq_requirement numeric,
+    prestige_requirement numeric,
+    tpcq_requirement numeric,
+    hpcq_requirement numeric,
+    top10_min numeric
 );"""
 
 Server = defaultdict(lambda: dict(

@@ -6,6 +6,7 @@ from itertools import chain, zip_longest
 from random import choice
 from math import log, log10, floor
 from collections import defaultdict
+from csv import DictReader
 from pprint import pprint
 import os
 import asyncio
@@ -203,6 +204,14 @@ class TapTitans():
             fields = {}
             roles = {'Grandmaster': "<@&{}>".format(s['roles'].get('grandmaster', '0'))}
             roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit']})
+            rmap = dict(ms='Max Stage', tcq='Total Clan Quests',
+                        prestige='Prestige Count', tpcq='Taps Per Clan Quest',
+                        hpcq='Hits Per Clan Quest')
+            reqs = {rmap[r]: g[f'{r}_requirement'] or '`not set`' for r in 'ms tcq prestige tpcq hpcq'.split()}
+            fields.update({'requirements':
+                '\n'.join('{}: {}'.format(k, v) for k, v in reqs.items())
+            })
+
             fields.update({'channels':
                 '\n'.join('{}: {}'.format(
                     k.replace('_channel','').replace('channel', 'titanlord'), g[k] and f'<#{g[k]}>' or '`not set`'
@@ -404,6 +413,37 @@ class TapTitans():
             ), 0xffffff)
             asyncio.ensure_future(ctx.send(
                 f'Set the `{kind.lower()}` text for `{group}` to:', embed=e
+            ))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+
+    @is_gm_or_master()
+    @tt_set.command(name='requirement', aliases=['req'])
+    async def tt_set_requirement(self, ctx, kind, value, group="-default"):
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        group = group[1:]
+
+        kinds = 'ms tcq prestige tpcq hpcq'.split()
+
+        if kind not in kinds:
+            asyncio.ensure_future(ctx.send('Text type must be one of: `{}`'.format(
+                '`, `'.join(k for k in kinds)
+            )))
+            return
+        if not value.isnumeric():
+            asyncio.ensure_future(ctx.send('You need to supply a whole number for `{kind} requirement`'))
+
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if exists:
+            exists.update({f'{kind}_requirement': int(value)})
+            result = await self.helpers.sql_update_record('titanlord', exists)
+            asyncio.ensure_future(ctx.send(
+                f'Set the `{kind.lower()} requirement` for `{group}` to: `{int(value):,}`'
             ))
         else:
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
@@ -645,87 +685,96 @@ class TapTitans():
     
     @is_gm_or_master()
     @tt.command(name='report')
-    async def _report(self, ctx):
-        TD = dt.date.today()
-        TD = datetime(TD.year, TD.month, TD.day, 0, 0)
-        this_monday = TD + timedelta(days=-TD.weekday())
-        last_monday = TD + timedelta(days=-TD.weekday(), weeks=-1)
-        g = await self.helpers.get_record('server', ctx.message.guild.id)
-        c = g.tt.get('paste_channel')
-        print(c)
-        if c:
-            c = ctx.message.guild.get_channel(c)
-            messages = await c.history(limit=100).flatten()
-            result = [m for m in messages]
-            cqs = [int(re.match(r'```CQ (\d+)', r.content).group(1))
-                   for r in result
-                   if re.match(r'```CQ \d+', r.content)
-                   and r.created_at > last_monday
-                   and r.created_at < this_monday]
-            result = [r.content.split('\n')
-                      for r in result
-                      if r.content.startswith('```')
-                      and r.created_at > last_monday
-                      and r.created_at < this_monday]
-            result = [[
-                s.replace('```','').split(',') for s in r
-                if len(s.split(','))==4
-                and not s.startswith('```')
-                and s.split(',')[0].isnumeric()
-            ] for r in result]
+    async def _report(self, ctx, start, end, group="-default"):
+        # this_monday, last_monday = await self.helpers.get_last_two_mondays()
 
-            headers = ['rank', 'name', 'id', 'damage']
-            started, ended, total = min(cqs), max(cqs), len(result)
-            missed = ended - started - total
-            all_hits = list(chain.from_iterable(result))
-            #pprint(all_hits)
-            result = defaultdict(lambda: dict(
-                id='', name='', hit=0, dmg=0, atd=0
-            ))
-            for hit in all_hits:
-                id = hit[2]
-                if not result[id]['id']:
-                    result[id]['id']=id
-                if int(hit[3])>30000000:
-                    result[id]['hit'] += 1
-                    result[id]['dmg'] += int(hit[3])
-                if not result[id]['name']:
-                    u = next((x.id for x in self.bot._users
-                              if x.tt.get('code')==hit[2]), hit[1])
-                    
-                    if str(u).isnumeric():
-                        u = ctx.guild.get_member(int(u))
-                        if u:
-                            u = u.mention
-                        result[id]['name']=u
-                    else:
-                        result[id]['name']=hit[1]
-            final = []
-            for id, data in result.items():
-                result[id]['atd'] = round((result[id]['hit']+missed)/total*100)
-                final.append(result[id])
-            final = sorted(final, key=lambda x: x['atd'], reverse=True)
+        if not group.startswith('-') or not group:
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        msg = None
+        if not exists:
+            msg = f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'
+        elif not exists.get('paste_channel'):
+            msg = 'You need to set up a paste channel first (the channel you paste your CQ exports in)! `.tt set channel paste`'
+        elif not exists.get('report_channel'):
+            msg = 'You need to set the report output channel first. `.tt set channel report`'
+        if msg:
+            asyncio.ensure_future(ctx.send(msg))
+            return
 
-            colours = [0x146B3A, 0xF8B229, 0xEA4630, 0xBB2528]
+        c = exists['paste_channel']
+        c = ctx.guild.get_channel(c)
+        messages = await c.history(limit=300).flatten()
+        result = [m.content for m in messages]
+        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.split('```\n')[3].replace('\n```','')
+               for r in result
+               if r.startswith('```\nCQ')}
+        cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
+               for c, v
+               in cqs.items()
+               if c in range(int(start), int(end)+1)}
+
+        total = int(end) - int(start)
+        missed = total - len(cqs)
+        hitter = defaultdict(lambda: dict(id='', name='', hit=0, dmg=0, atd=0))
+        hitmap = [(100,0),(110,5),(125,25),(150,50),(175,75),(200,100),(250,125),(300,150)]
+        min_hits = int(exists.get('hpcq_requirement') or 1)
+        min_taps = int(exists.get('tpcq_requirement') or 100)
+        top10 = int(exists.get('top10_min') or 4000)
+        # print(hitmap[0:3])
+        # return
+        min_helper_dmg = sum((b/100)*top10 for b,d in hitmap[0:min_hits])
+        players = await self.helpers.sql_query_db('SELECT * FROM "user"')
+        players = [p for p in players if ctx.guild.get_member(p['id'])]
+
+        for hit in list(chain.from_iterable(v for k,v in cqs.items())):
+            rank, name, id, damage = hit.values()
+            if not hitter[id]['id']:
+                hitter[id].update({'id': id})
+            ms, d_id = 4000, 0
+            player = next((p for p in players if p['tt'].get('code')==id), None)
+            if player:
+                ms = int(player['tt'].get('ms') or exists.get('ms_requirement') or ms)
+                d_id = int(player['id'] or d_id)
+            min_tap_dmg = sum((b/100)*ms for b,d in hitmap[0:min_hits])
+            if int(damage) >= min_tap_dmg+min_helper_dmg:
+                hitter[id]['dmg'] += int(damage)
+                hitter[id]['hit'] += 1
+            if not hitter[id]['name']:
+                hitter[id].update({
+                    'name': d_id and f'<@!{d_id}>' or name
+                })
+        final = []
+        for id, data in hitter.items():
+            hitter[id]['atd'] = round((hitter[id]['hit']+missed)/total*100)
+            final.append(hitter[id])
+
+        final = sorted(final, key=lambda x: x['atd'], reverse=True)
+        colours = [0x146B3A, 0xF8B229, 0xEA4630, 0xBB2528]
+        report_to = ctx.guild.get_channel(exists['report_channel'])
+        if report_to:
             started_at = 0
-            report_to = c = g.tt.get('report_channel')
-            if report_to:
-                report_to = ctx.message.guild.get_channel(report_to)
-                for chunk in self.helpers.chunker(final, 21):
-                    result = []
-                    for i,r in enumerate(chunk):
-                        name = f'`#{started_at*18+i+1:02}`: `{r["atd"]:02}%` (`{self.helpers.human_format(r["dmg"]): <7}`)'
-                        # e3.add_field(
-                            # name=f'{name:<24}',
-                            # value=r['name'], inline=True)
-                        result.append(f'{name} - {r["name"]}')
-                    e3 = await self.helpers.build_embed(
-                        'Attendance report part {}.\n\n{}'.format(
-                            started_at+1, "\n".join(result)
-                        ), colours[started_at]
+            for chunk in self.helpers.chunker(final, 21):
+                result = []
+                for i, r in enumerate(chunk):
+                    name = '`#{:02}`: `{:02}%` (`{:<7}`)'.format(
+                        started_at*18+i+1, r["atd"], self.helpers.human_format(r["dmg"]) 
                     )
-                    asyncio.ensure_future(report_to.send(embed=e3))
-                    started_at+=1
+                    result.append(f'{name} - {r["name"]}')
+                e = await self.helpers.build_embed(
+                    'Attendance Report Part #{}:\n\n{}'.format(
+                        started_at+1, "\n".join(result)
+                    ), colours[started_at]
+                )
+                asyncio.ensure_future(report_to.send(embed=e))
+                started_at += 1
 
 
     

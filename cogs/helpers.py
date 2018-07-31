@@ -4,11 +4,12 @@ import gzip
 import time
 import asyncio
 import discord
-from pprint import pprint
+import datetime as dt
 from copy import deepcopy
 from json import dumps, loads
 from math import log, log10, floor
 from uuid import uuid4
+from pprint import pprint
 from string import ascii_lowercase
 from difflib import get_close_matches
 from datetime import datetime, timedelta
@@ -382,6 +383,13 @@ class Helpers():
             GROUP=tl.get('group', 'Clan'))
         text = tl.get(kind).format(**params)
         return text
+
+    # async def get_last_two_mondays(self):
+    #     TD = dt.date.today()
+    #     TD = datetime(TD.year, TD.month, TD.day, 0, 0)
+    #     this_monday = TD + timedelta(days=-TD.weekday(), weeks=1)#+ timedelta(days=-TD.weekday())
+    #     last_monday = TD #+ timedelta(days=-TD.weekday(), weeks=-1)
+    #     return this_monday, last_monday
 
     async def update_tl(self, tl):
         chan, msg = None, None
