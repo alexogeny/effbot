@@ -788,7 +788,7 @@ class TapTitans():
             for chunk in self.helpers.chunker(final, 21):
                 result = []
                 for i, r in enumerate(chunk):
-                    name = '`{} #{:02}`: `{:02}}` (`{:<7}`)'.format(
+                    name = '`{} #{:02}`: `{:02}` (`{:<7}`)'.format(
                         r['rank'], started_at*21+i+1, floor((r["hit"]/total)*100), self.helpers.human_format(r["dmg"]) 
                     )
                     result.append(f'{name} - {r["name"]}')
