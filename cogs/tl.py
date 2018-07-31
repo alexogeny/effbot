@@ -774,7 +774,7 @@ class TapTitans():
             if not hitter[id]['id']:
                 hitter[id].update({'id': id, 'hit': 0, 'rank': '-'})
             ms, d_id = 4000, 0
-            player = next((p for p in players if p['tt'].get('code')==id), None)
+            player = next((dict(p) for p in players if p['tt'].get('code')==id), None)
             if player:
                 ms = int(player['tt'].get('ms') or ms)
                 d_id = int(player['id'] or d_id)
@@ -797,7 +797,7 @@ class TapTitans():
                 })
         final = []
         for id, data in hitter.items():
-            hitter[id]['atd'] = (hitter[id]['hit']+missed)/total*100
+            hitter[id]['atd'] = (hitter[id]['hit']/total)*100
             final.append(hitter[id])
 
         final = sorted(final, key=lambda x: x['atd'], reverse=True)
