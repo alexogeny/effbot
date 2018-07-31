@@ -270,8 +270,10 @@ class TapTitans():
         group = cname[-1].startswith('-') and cname[-1] or group
         
         print(clanname)
+        if not clanname:
+            return
         
-        if not clanname or len(clanname) > 20:
+        if len(clanname) > 20:
             asyncio.ensure_future(ctx.send(
                 'Clan names must be less than 20 characters in length.'
             ))
@@ -281,11 +283,14 @@ class TapTitans():
             return
         else:
             group = group[1:]
+        print(group)
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
         exists = [dict(r) for r in exists]
+        print(exists)
         clanname_exists = next((r for r in exists if r['clanname'].lower()==clanname.lower()), None)
+        print(clanname_exists)
         if clanname_exists is not None:
             asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
             return
@@ -741,8 +746,8 @@ class TapTitans():
         players = await self.helpers.sql_query_db('SELECT * FROM "user"')
         players = [p for p in players if ctx.guild.get_member(p['id'])]
         # rank = '_'
-
-        for hit in list(chain.from_iterable(v for k,v in cqs.items())):
+        hit_tuples = [[tuple(x) for x in v] for k, v in cqs.items()]
+        for hit in list(chain.from_iterable(hit_tuples)):
             rank, name, id, damage = hit.values()
             if not hitter[id]['id']:
                 hitter[id].update({'id': id, 'hit': 0, 'rank': '-'})
@@ -761,7 +766,7 @@ class TapTitans():
                     # print(rl)
                     hitter[id]['rank']=rl
             min_tap_dmg = sum((b/100)*ms*min_taps for b,d in hitmap[0:min_hits])
-            if int(damage)+10000000 >= min_tap_dmg+min_helper_dmg:
+            if int(damage) >= min_tap_dmg+min_helper_dmg:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
