@@ -720,7 +720,7 @@ class TapTitans():
         c = ctx.guild.get_channel(c)
         messages = await c.history(limit=300).flatten()
         result = [m.content for m in messages]
-        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.split('```\n')[3].replace('\n```','')
+        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.replace('```\n','```').replace('\n```','```').split('```')[3].replace('```','')
                for r in result
                if r.startswith('```\nCQ')}
         cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
@@ -768,7 +768,7 @@ class TapTitans():
                     # print(rl)
                     hitter[id]['rank']=rl
             min_tap_dmg = sum((b/100)*ms*min_taps for b,d in hitmap[0:min_hits])
-            if int(damage)+30000000 >= min_tap_dmg+min_helper_dmg:
+            if int(damage) >= min_tap_dmg+min_helper_dmg:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
@@ -788,8 +788,8 @@ class TapTitans():
             for chunk in self.helpers.chunker(final, 21):
                 result = []
                 for i, r in enumerate(chunk):
-                    name = '`{} #{:02}`: `{:02}/{:02}` (`{:<7}`)'.format(
-                        r['rank'], started_at*21+i+1, r["hit"], total, self.helpers.human_format(r["dmg"]) 
+                    name = '`{} #{:02}`: `{:02}}` (`{:<7}`)'.format(
+                        r['rank'], started_at*21+i+1, flooar((r["hit"]/total)*100), self.helpers.human_format(r["dmg"]) 
                     )
                     result.append(f'{name} - {r["name"]}')
                 e = await self.helpers.build_embed(
