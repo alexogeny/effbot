@@ -768,7 +768,7 @@ class TapTitans():
                     # print(rl)
                     hitter[id]['rank']=rl
             min_tap_dmg = sum((b/100)*ms*min_taps for b,d in hitmap[0:min_hits])
-            if int(damage) >= min_tap_dmg+min_helper_dmg:
+            if int(damage)+30000000 >= min_tap_dmg+min_helper_dmg:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
