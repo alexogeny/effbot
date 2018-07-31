@@ -677,6 +677,34 @@ class TapTitans():
         modded_ = await self.helpers.mod_timedelta(_next)
         mapped_ = await self.helpers.map_timedelta(modded_)
 
+        if exists.get('next') and exists.get('next') < now:
+            cq_no = int(exists.get('cq_number') or 0)
+            # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
+            ttk = now-(now+_next)+timedelta(hours=6)
+            print(ttk)
+            ttk_mod = await self.helpers.mod_timedelta(ttk)
+            print(ttk_mod)
+            ttk_map = await self.helpers.map_timedelta(ttk_mod)
+            print(ttk_map)
+            ttk = ', '.join([f'**{x}** {y}' for x, y in ttk_map[1:]])
+            icon = 'https://i.imgur.com/{}.png'.format(choice([
+                '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
+                'eYtmbjg', 'Y6jfEhM']))
+            c_dmg = round_to_x(clan_damage(cq_no-1)*100,3)
+            c_adv = advance_start(cq_no-1)
+            c_hp = boss_hitpoints(cq_no-1)
+
+            field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
+            field2 = f'Spawns with **{c_hp:,}** hitpoints.'
+            
+            e = await self.helpers.full_embed(
+                "Killed in {}".format(ttk),
+                thumbnail=icon,
+                fields={'Bonuses':field1, 'Next Boss':field2},
+                author=dict(name=f'Boss #{cq_no-1}', image=icon)
+            )
+            asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
+
         exists.update({'next': now+_next, 'message': mx.id, 'pinged_at': 3600})
         result = await self.helpers.sql_update_record('titanlord', exists)
 
@@ -792,20 +820,6 @@ class TapTitans():
                 asyncio.ensure_future(report_to.send(embed=e))
                 started_at += 1
 
-
-    
-
-
-    # @is_gm_or_master()
-    # @tl_checks()
-    # @tl.command(name='clear', aliases=['wipe'])
-    # async def _clear(self, ctx):
-    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
-    #     g.tt['next_boss'] = 0
-    #     g.tt['boss_message'] = 0
-    #     g.tt['when_message'] = 0
-    #     asyncio.ensure_future(ctx.send(
-    #         ':ideograph_advantage: Cleared the boss timer!'))
 
     @commands.command(name='ttconvert', alias=["ttnotation"])
     async def _convert(self, ctx, val: str='1e+5000'):

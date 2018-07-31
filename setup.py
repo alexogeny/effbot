@@ -1,5 +1,5 @@
 from setuptools import setup
-from bot import bot
+# from bot import bot
 
 setup(
     setup_requires=["pytest-runner"],

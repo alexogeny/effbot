@@ -437,6 +437,7 @@ class Helpers():
             mx = await chan.send(text)
             tl['message'] = mx.id
         elif action == 'send' and text_type == 'now':
+            await asyncio.sleep(seconds_until_tl)
             asyncio.ensure_future(chan.send(text))
             tl.update({'message': 0})
         

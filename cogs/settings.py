@@ -269,20 +269,13 @@ class SettingsCog():
     @is_owner()
     @my.command(name='set', hidden=True, visible=False)
     async def _setcode(self, ctx, key, value, user):
-        used = None
-        if key == 'code':
-            used = next((x for x in self.bot._users
-                         if x.tt.get('code') == value.strip()), None)
-        if used:
-            asyncio.ensure_future(ctx.send(
-                'Somebody has already used that code.'))
-            return
 
         u = await self.helpers.choose_member(ctx, ctx.guild, user)
-        m = await self.helpers.get_record('user', u.id)
+        # m = await self.helpers.get_record('user', u.id)
         if value.isnumeric():
             value = int(value)
-        m.tt[key]=value
+        # m['tt'][key]=value
+        await self.helpers.sql_update_key('user', u.id, 'tt', key, value)
         asyncio.ensure_future(ctx.send('Success!'))
 
     @commands.group(pass_context=True, name="settings")
