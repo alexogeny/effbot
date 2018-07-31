@@ -715,18 +715,18 @@ class TapTitans():
         if msg:
             asyncio.ensure_future(ctx.send(msg))
             return
-
+        start, end = int(start), int(end)
         c = exists['paste_channel']
         c = ctx.guild.get_channel(c)
         messages = await c.history(limit=300).flatten()
-        result = [m.content for m in messages]
-        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.replace('```\n','```').replace('\n```','```').split('```')[3].replace('```','')
+        result = [m.content.replace('```\n','```').replace('\n```','```') for m in messages]
+        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.split('```')[3]
                for r in result
-               if r.startswith('```\nCQ')}
+               if int(re.match(r'```[^\d]+(\d+)', r.group(1)))}
         cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
                for c, v
                in cqs.items()
-               if c in range(int(start), int(end)+1)}
+               if c in range(start, end+1)}
         s = await self.helpers.get_record('server', ctx.guild.id)
         roles = [
             s['roles'].get('grandmaster', 0)
@@ -734,7 +734,7 @@ class TapTitans():
             s['tt'].get(k, 0) for k in ['probation', 'master', 'captain', 'knight', 'recruit']
         ]
         # print(roles)
-        total = int(end)+1 - int(start)
+        total = end+1-start
         missed = total - len(cqs)
         hitter = defaultdict(lambda: dict(id='', name='', hit=0, dmg=0, atd=0, rank='-'))
         hitmap = [(100,0),(110,5),(125,25),(150,50),(175,75),(200,100),(250,125),(300,150)]
