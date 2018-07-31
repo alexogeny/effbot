@@ -282,12 +282,14 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        clanname_exists = next((dict(r) for r in exists if r['clanname'].lower()==clanname.lower()), None)
+        exists = [dict(r) for r in exists]
+        clanname_exists = next((r for r in exists if r['clanname'].lower()==clanname.lower()), None)
         if clanname_exists:
             asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
         else:
-            valid = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
+            valid = next((r for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
             if valid:
+                print(clanname)
                 valid.update({'clanname': clanname})
                 result = await self.helpers.sql_update_record('titanlord', valid)
                 asyncio.ensure_future(ctx.send(f'Set the `clan name` for `{group}` to `{clanname}`!'))
