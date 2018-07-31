@@ -776,7 +776,7 @@ class TapTitans():
             ms, d_id = 4000, 0
             player = next((dict(p) for p in players if p['tt'].get('code')==id), None)
             if player:
-                ms = int(player['tt'].get('ms') or ms)
+                ms = int(player['tt'].get('ms', 0) or ms)
                 d_id = int(player['id'] or d_id)
                 dgg = ctx.guild.get_member(d_id)
                 if dgg and hitter[id]['rank']=='-':
@@ -797,7 +797,7 @@ class TapTitans():
                 })
         final = []
         for id, data in hitter.items():
-            hitter[id]['atd'] = (hitter[id]['hit']/total)*100
+            hitter[id]['atd'] = round((hitter[id]['hit']/total)*100)
             final.append(hitter[id])
 
         final = sorted(final, key=lambda x: x['atd'], reverse=True)
@@ -809,7 +809,7 @@ class TapTitans():
                 result = []
                 for i, r in enumerate(chunk):
                     name = '`{} #{:02}`: `{:02}%` (`{:<7}`)'.format(
-                        r['rank'], started_at*21+i+1, floor(r["atd"]), self.helpers.human_format(r["dmg"]) 
+                        r['rank'], started_at*21+i+1, r["atd"], self.helpers.human_format(r["dmg"]) 
                     )
                     result.append(f'{name} - {r["name"]}')
                 e = await self.helpers.build_embed(
