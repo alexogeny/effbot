@@ -114,7 +114,7 @@ class TapTitans():
         if not exists:
             asyncio.ensure_future(ctx.send('Could not find any groups. :<'))
             return
-        exists = ', '.join([f'`{r["name"]`' for r in exists])
+        exists = ', '.join([f'`{r["name"]}`' for r in exists])
         asynco.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
 
     @is_gm_or_master()
@@ -125,7 +125,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((r for r in exists if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((r for r in exists if r['name'].lower()==name.lower() and r['guild']==ctx.guild.id), None)
         if not exists:
             result = await self.helpers.sql_query_db(
                 """INSERT INTO titanlord (id, "create", guild, name) VALUES (DEFAULT, $1, $2, $3)""",
@@ -144,7 +144,7 @@ class TapTitans():
         new_exists = next((dict(r) for r in exists if r['name']==newname.lower() and r['guild']==ctx.guild.id), None)
         old_exists = next((dict(r) for r in exists if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
         if not new_exists and old_exists:
-            old_exists.update({'name': newname})
+            old_exists.update({'name': newname.lower()})
             result = await self.helpers.sql_update_record('titanlord', old_exists)
             asyncio.ensure_future(ctx.send(f'Renamed group `{name}` to `{newname}`!'))
         elif new_exists:
@@ -159,7 +159,7 @@ class TapTitans():
         g = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        g = next((dict(r) for r in g if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
+        g = next((dict(r) for r in g if r['name'].lower()==name.lower() and r['guild']==ctx.guild.id), None)
         s = await self.helpers.sql_query_db(
             'SELECT * FROM server'
         )
@@ -224,7 +224,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if exists:
 
             exists.update({kind: channel.id})
