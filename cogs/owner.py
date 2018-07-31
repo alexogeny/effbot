@@ -247,7 +247,7 @@ class Owner:
     @commands.command(name="shutdown")
     @is_owner()
     async def _shutdown(self, ctx):
-        await self.helpers.save_records()
+        # await self.helpers.save_records()
         await self.bot.logout()
 
     @commands.command(name="serverconfig")
@@ -267,15 +267,16 @@ class Owner:
     @is_owner()
     async def _userconfig(self, ctx, user: str = None, subtag: str = None):
         if not user:
-            user = await self.helpers.get_record('user', ctx.message.author.id)
-        else:
-            user = await self.helpers.choose_member(ctx, ctx.message.guild, user)
+            user = await self.helpers.get_record('user', ctx.author.id)
+        elif not user.isnumeric():
+            user = await self.helpers.choose_member(ctx, ctx.guild, user)
             user = await self.helpers.get_record('user', user.id)
         as_dict = {}
         if user and subtag:
-            as_dict = model_to_dict(user).get(subtag, {})
+            as_dict = user[subtag]
         elif user:
-            as_dict = model_to_dict(user)
+            as_dict = user
+            # as_dict = model_to_dict(user)
         if as_dict:
             for page in pagify(dumps(as_dict, indent=2, cls=DecimalEncoder), [" "], shorten_by=16):
                 await ctx.send(box("json", page.lstrip(" ")))

@@ -50,10 +50,9 @@ class SettingsCog():
             countries = list(self.flags.keys())
             c=next((c for c in countries if c.startswith(country.lower())), None)
             if c:
-                g = await self.helpers.get_record('user', ctx.author.id)
-                g.tt['country'] = c
                 a = ctx.author
-                msg = f'Set the country for {a.name}#{a.discriminator} to {country}'
+                await self.helpers.sql_update_key('user', a.id, 'tt', 'country', c)
+                msg = f'Set the country for {a.name}#{a.discriminator} to {c}'
             else:
                 msg = 'Could not find that country.'
         asyncio.ensure_future(ctx.send(msg))
@@ -68,8 +67,8 @@ class SettingsCog():
             return
         lc = language_code.lower().strip()
         if lc in available_locales:
-            g = await self.helpers.get_record('user', ctx.author.id)
-            g.tt['locale'] = lc
+            a = ctx.author
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'locale', lc)
             asyncio.ensure_future(ctx.send(f'Set your locale to: `{lc}`'))
         else:
             asyncio.ensure_future(ctx.send(
@@ -83,40 +82,40 @@ class SettingsCog():
         except:
             asyncio.ensure_future(ctx.send('You must submit a whole number.'))
             return
-
+        a = ctx.author
         ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
-        g = await self.helpers.get_record('user', ctx.author.id)
+        g = await self.helpers.get_record('user', a.id)
         ms_cap = self.bot.config['MS']
         msg = None
-        if ms <= g.tt.get('ms', 0):
+        if ms <= g['tt'].get('ms', 0):
             msg = ('You cannot lower your MS. If you need it reset,'
                 ' join the support server: `.support`')
         elif ms > ms_cap:
             msg = f'You cannot set your MS over the current cap: `{ms_cap:,}`'
         else:
-            g.tt['ms'] = ms
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'ms', ms)
             msg = f'Successfully updated MS to `{ms:,}`!'
         asyncio.ensure_future(ctx.send(msg))
 
     @my.command(name='tcq', aliases=['cq'])
-    async def _tcq(self, ctx, ms="1"):
-        k = ms.endswith('k') and 1000 or 1
+    async def _tcq(self, ctx, tcq="1"):
+        k = tcq.endswith('k') and 1000 or 1
         try:
-            float(ms[:-1])
+            float(tcq[:-1])
         except:
             asyncio.ensure_future(ctx.send('You must submit a whole number.'))
             return
-
-        ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
-        g = await self.helpers.get_record('user', ctx.author.id)
-        if ms <= g.tt.get('tcq', 0):
+        a = ctx.author
+        tcq = k == 1 and int(tcq) or int(float(tcq[:-1])*k)
+        g = await self.helpers.get_record('user', a.id)
+        if tcq <= g['tt'].get('tcq', 0):
             asyncio.ensure_future(ctx.send(
                 'You can only ever set your TCQ higher than previous. If you'
                 ' need it reset, join the support server: `.support`'
             ))
         else:
-            g.tt['tcq'] = ms
-            asyncio.ensure_future(ctx.send(f'Successfully updated TCQ to `{ms:,}`!'))
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'tcq', tcq)
+            asyncio.ensure_future(ctx.send(f'Successfully updated TCQ to `{tcq:,}`!'))
 
 
     @my.command(name='ign')
@@ -127,11 +126,12 @@ class SettingsCog():
         if len(ign) > 16:
             asyncio.ensure_future(ctx.send('IGNs are less than 17 characters long.'))
             return
-        g = await self.helpers.get_record('user', ctx.author.id)
-        g.tt['ign'] = ign.strip()
-        asyncio.ensure_future(ctx.send(
-            f'Set the IGN for **{ctx.author.name}#{ctx.author.discriminator}** to **{ign}**'
-        ))
+        if ign:
+            a = ctx.author
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'ign', ign.strip())
+            asyncio.ensure_future(ctx.send(
+                f'Set the IGN for **{a.name}#{a.discriminator}** to **{ign}**'
+            ))
 
     async def _normalize_number(self, ctx, number):
         if not number.isnumeric():
@@ -161,10 +161,9 @@ class SettingsCog():
     async def _bos(self, ctx, bos):
         o = bos
         a = ctx.author
-        g = await self.helpers.get_record('user', a.id)
         bos = await self._normalize_number(ctx, bos)
         if bos:
-            g.tt['bos'] = int(bos)
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'bos', int(bos))
             asyncio.ensure_future(ctx.send(
                 f'Set {a.name}#{a.discriminator}\'s BoS level to {o}'
             ))
@@ -172,13 +171,13 @@ class SettingsCog():
     @my.command(name='ltr', aliases=['lifetimerelics'])
     async def _ltr(self, ctx, ltr):
         o = ltr
-        g = await self.helpers.get_record('user', ctx.author.id)
         ltr = await self._normalize_number(ctx, ltr)
         a = ctx.author
-        g.tt['ltr'] = int(ltr)
-        asyncio.ensure_future(ctx.send(
-            f'Set {a.name}#{a.discriminator}\'s lifetime relics to {o}'
-        ))
+        if ltr:
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'ltr', int(ltr))
+            asyncio.ensure_future(ctx.send(
+                f'Set {a.name}#{a.discriminator}\'s lifetime relics to {o}'
+            ))
 
     @commands.command(name='tt2')
     async def tt2(self, ctx, user=None):
@@ -206,18 +205,19 @@ class SettingsCog():
     async def tt2_card(self, a, u):
         
         avatar = await self.helpers.get_avatar(a)
-        # ms = '**  •  **'.join([f'{u.tt.get(k, 1):,} {k.upper()}' for k in ['ms', 'tcq']])
-        ms = u.tt.get('ms', 1)
-        tcq = u.tt.get('tcq', 1)
-        bos = await self.humanize_decimal(u.tt.get('bos', 1))
-        ltr = await self.humanize_decimal(u.tt.get('ltr', 1))
-        shr = u.tt.get('shortcode', '')
-        clan = next((s.tt.get('name') for s in self.bot._servers if s.tt.get('shortcode')==shr), 'no clan set')
+        ms = u['tt'].get('ms', 1)
+        tcq = u['tt'].get('tcq', 1)
+        bos = await self.humanize_decimal(u['tt'].get('bos', 1))
+        ltr = await self.humanize_decimal(u['tt'].get('ltr', 1))
+        shr = u['tt'].get('shortcode', '')
+        clan = await self.helpers.sql_query_db("SELECT * FROM server")
+        clan = next((c['tt'].get('name') for c in clan if c['tt'].get('shortcode')==shr), 'no clan set')
+        # clan = next((s.tt.get('name') for s in self.bot._servers if s.tt.get('shortcode')==shr), 'no clan set')
         final = f"Clan: **{clan}**\nMax Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
         e = await self.helpers.full_embed(final,
             thumbnail=avatar,
-            author=dict(name=f'{u.tt.get("ign", a.name)} ({a.name}#{a.discriminator})',
-                        image=self.flagstr.format(self.flags[u.tt.get('country', 'united-states')]))
+            author=dict(name=f'{u["tt"].get("ign", a.name)} ({a.name}#{a.discriminator})',
+                        image=self.flagstr.format(self.flags[u['tt'].get('country', 'united-states')]))
         )
         return e
 
@@ -228,11 +228,10 @@ class SettingsCog():
                 'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
             ))
         else:
-            shortcodes = [s for s in self.bot._servers if s.tt.get('shortcode') == clan.upper()]
-            if any(shortcodes):
+            exists = await self.helpers.sql_filter_key('server', 'tt', 'shortcode', clan.upper())
+            if exists:
                 a = ctx.author
-                g = await self.helpers.get_record('user', a.id)
-                g.tt['shortcode'] = clan.upper()
+                await self.helpers.sql_update_key('user', a.id, 'tt', 'shortcode', clan.upper())
                 asyncio.ensure_future(ctx.send(f'Set the shortcode for {a.name}#{a.discriminator} to: `{clan.upper()}`'))
 
     @my.command(name='supportcode', aliases=['sc', 'code'])
@@ -244,28 +243,28 @@ class SettingsCog():
         elif isinstance(code, str) and not all([x in ascii_lowercase+digits for x in code]):
             asyncio.ensure_future(ctx.send(f'Valid characters for support codes are: {ascii_lowercase+digits}'))
         else:
-            used = next((x for x in self.bot._users
-                         if x.tt.get('code') == code.strip()), None)
+            used = await self.helpers.sql_filter_key('user', 'tt', 'code', code)
             if used:
                 asyncio.ensure_future(ctx.send(
                     'Somebody has already used that code. If this was not you,'
                     ' use the `verify` command.'
                 ))
             else:
+                a = ctx.author
                 result = None
-                g = await self.helpers.get_record('user', ctx.author.id)
-                if not g.tt.get('code'):
+                g = await self.helpers.get_record('user', a.id)
+                if not g['tt'].get('code'):
                     result = await self.helpers.choose_from(ctx, ['confirm'],
                         f'This will set your code to {code}. Type 1 to confirm or `c` to cancel.')
                 else:
-                    c = g.tt['code']
+                    c = g['tt']['code']
                     result = await self.helpers.choose_from(ctx, ['confirm'],
                         f'This will override your code from `{c}` to `{code}`. Type 1 to confirm or `c` to cancel.')
 
                 if result:
-                    g.tt['code'] = code
+                    await self.helpers.sql_update_key('user', a.id, 'tt', 'code', code)
                     asyncio.ensure_future(ctx.send(
-                        f'Set the support code for **{ctx.author.name}#{ctx.author.discriminator}**!'))
+                        f'Set the support code for **{a.name}#{a.discriminator}**!'))
 
     @is_owner()
     @my.command(name='set', hidden=True, visible=False)
@@ -375,21 +374,21 @@ class SettingsCog():
     async def auto_role(self, member):
         gid = member.guild.id
         g = await self.helpers.get_record('server', gid)
-        if g.roles.get('auto'):
-            role = next((r for r in member.guild.roles if r.id == g.roles['auto']), None)
+        if g['roles'].get('auto'):
+            role = next((r for r in member.guild.roles if r.id == g['roles']['auto']), None)
             if role:
                 asyncio.ensure_future(member.add_roles(role))
 
-    async def welcome_message(self, member):
-        gid = member.guild.id
+    async def welcome_message(self, m):
+        gid = m.guild.id
         g = await self.helpers.get_record('server', gid)
-        if g.texts.get('welcome') and g.channels.get('welcome'):
-            USERNUMBER = await self.helpers.member_number(member, member.guild)
-            asyncio.ensure_future(member.guild.get_channel(g.channels['welcome']).send(
-                g.texts['welcome'].format(
-                    **dict(USERNAME=member.name, USERID=member.id, SERVERID=gid,
-                           SERVERNAME=member.guild.name,
-                           USERDISCRIMINATOR=member.discriminator,
+        if g['texts'].get('welcome') and g['channels'].get('welcome'):
+            USERNUMBER = await self.helpers.member_number(m, m.guild)
+            asyncio.ensure_future(m.guild.get_channel(g['channels']['welcome']).send(
+                g['texts']['welcome'].format(
+                    **dict(USERNAME=m.name, USERID=m.id, SERVERID=gid,
+                           SERVERNAME=m.guild.name,
+                           USERDISCRIMINATOR=m.discriminator,
                            USERNUMBER=USERNUMBER)
                 )
             ))

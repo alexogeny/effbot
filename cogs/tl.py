@@ -49,12 +49,12 @@ def is_gm_or_admin():
         msg = ctx.message
         roles = [r.id for r in msg.author.roles]
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        is_admin = g.roles.get('admin') in roles
+        is_admin = g['roles'].get('admin') in roles
         is_owner = msg.author.id == msg.guild.owner_id
-        is_gm = g.roles.get('grandmaster') in roles
+        is_gm = g['roles'].get('grandmaster') in roles
         if is_admin or is_owner or is_gm:
             return True
-        elif not g.roles.get('grandmaster'):
+        elif not g['roles'].get('grandmaster'):
             await ctx.send('Ask your server admin to set the GM role')
         else:
             await ctx.send('Oof, you need to be a GM to do this.')
@@ -66,12 +66,11 @@ def has_any_clan_role():
         m = ctx.message
         roles = [r.id for r in m.author.roles]
         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        is_gm = g.roles.get('grandmaster') in roles
+        is_gm = g['roles'].get('grandmaster') in roles
         has_any = any([True
                        for r
                        in ['master','captain','knight','recruit','mercenary']
-                       if g.tt.get(r) in roles])
-        print(has_any)
+                       if g['tt'].get(r) in roles])
         if is_gm or has_any:
             return True
         asyncio.ensure_future(ctx.send('You must be in the clan to file a LoA.'))
@@ -83,68 +82,63 @@ def is_gm_or_master():
         m = ctx.message
         roles = [r.id for r in m.author.roles]
         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        is_gm = g.roles.get('grandmaster') in roles
-        is_master = g.tt.get('master') in roles
+        is_gm = g['roles'].get('grandmaster') in roles
+        is_master = g['tt'].get('master') in roles
         if is_gm or is_master:
             return True
-        elif not g.roles.get('grandmaster'):
+        elif not g['roles'].get('grandmaster'):
             await ctx.send('Ask your server admin to set the GM role')
         else:
             await ctx.send('Oof, you need to be a GM or master to do this.')
         return False
     return commands.check(_is_gm_or_master)
 
-def can_do_timers():
-    async def _can_do_timers(ctx):
-        m = ctx.message
-        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        roles = [a.id for a in m.author.roles]
-        is_gm = g.roles.get('grandmaster') in roles
-        is_master = g.tt.get('master') in roles
-        is_timer = g.tt.get('timer') in roles
-        if is_gm or is_master or is_timer:
-            return True
-        asyncio.ensure_future(ctx.send('You do not have the necessary permissions.'))
-        return False
-    return commands.check(_can_do_timers)
+# def can_do_timers():
+#     async def _can_do_timers(ctx):
+#         m = ctx.message
+#         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
+#         roles = [a.id for a in m.author.roles]
+#         is_gm = g['roles'].get('grandmaster') in roles
+#         is_master = g['tt'].get('master') in roles
+#         is_timer = g['tt'].get('timer') in roles
+#         if is_gm or is_master or is_timer:
+#             return True
+#         asyncio.ensure_future(ctx.send('You do not have the necessary permissions.'))
+#         return False
+#     return commands.check(_can_do_timers)
 
-def tl_checks():
-    async def _tl_checks(ctx):
-        m = ctx.message
-        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        if not g.tt.get('tl_channel'):
-            await ctx.send('The Gm or a master needs to set up a TL channel.\n'
-                           '`e.tt setchannel tl #abc123`')
-            return False
-        elif not g.tt.get('cq_number'):
-            await ctx.send('The Gm or a master should set the CQ number.\n'
-                           'This is the cq of the _next_ TL, not the one that\n'
-                           'was just killed.\n'
-                           '`e.tt setcq 1589`')
-            return False
-        elif not g.tt.get('timer_text') or not g.tt.get('ping_text') or not g.tt.get('now_text'):
-            await ctx.send(
-                'The Gm or a master should set the timer texts.\n'
-                'There are three separate texts to set. Alternatively,\n'
-                'you can just to `e.tt settexts default`.\n'
-                'The three commands are:\n'
-                '`e.tt settext timer {TIME} until boss #{CQ} ({SPAWN} UTC)`\n'
-                '`e.tt settext ping {TIME} until boss #{CQ} ({SPAWN} UTC) @everyone`\n'
-                '`e.tt settext now BOSS #{CQ} SPAWNED @everyone!!!`\n')
-            return False
-        return True
-    return commands.check(_tl_checks)
+# def tl_checks():
+#     async def _tl_checks(ctx):
+#         m = ctx.message
+#         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
+#         if not g['tt'].get('tl_channel'):
+#             asyncio.ensure_future(ctx.send('The Gm or a master needs to set up a TL channel.\n'
+#                            '`e.tt setchannel tl #abc123`'))
+#             return False
+#         elif not g['tt'].get('cq_number'):
+#             asyncio.ensure_future(ctx.send('The Gm or a master should set the CQ number.\n'
+#                            'This is the cq of the _next_ TL, not the one that\n'
+#                            'was just killed.\n'
+#                            '`e.tt setcq 1589`'))
+#             return False
+#         elif not g['tt'].get('timer_text') or not g.tt.get('ping_text') or not g.tt.get('now_text'):
+#             asyncio.ensure_future(ctx.send(
+#                 'The Gm or a master should set the timer texts.\n'
+#                 'There are three separate texts to set.'))
+#             return False
+#         return True
+#     return commands.check(_tl_checks)
 
-def when_check():
-    async def _when_check(ctx):
-        m = ctx.message
-        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        if not g.tt.get('when_channel'):
-            await ctx.send('GM or master needs to set up the when channel.\n'
-                           '`e.tt setchannel when #abc123`')
-            return False
-        return True
-    return commands.check(_when_check)
+# def when_check():
+#     async def _when_check(ctx):
+#         m = ctx.message
+#         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
+#         if not g.tt.get('when_channel'):
+#             await ctx.send('GM or master needs to set up the when channel.\n'
+#                            '`e.tt setchannel when #abc123`')
+#             return False
+#         return True
+#     return commands.check(_when_check)
 
 class TapTitans():
     """docstring for TapTitans"""
@@ -156,353 +150,349 @@ class TapTitans():
     async def timer_check(self):
         while self is self.bot.get_cog('TapTitans'):
             if int(time.time()) - self.last_check >= 9.999998:
-                asyncio.ensure_future(self.update_timers())
+                asyncio.ensure_future(self.helpers.update_tls())
             await asyncio.sleep(9.999999)
-    async def update_timers(self):
-        guilds = [s for s in self.bot._servers if s.tt.get('next_boss')]
-        await asyncio.gather(*[self.update_timer(guild) for guild in guilds])
-    async def update_timer(self, guild):
-        if isinstance(guild.tt.get('next_boss'), float) and guild.tt.get('boss_message'):
-            if not guild.tt.get('tl_channel'):
-                asyncio.ensure_future(ctx.send('Did you forget to set a boss channel? Cancelling.'))
-                guild.tt['next_boss']=0
-                guild.tt['boss_message']=0
-                return
-            g = self.bot.get_guild(int(guild.id))
-            c = None
-            if g is not None:
-                c = g.get_channel(guild.tt.get('tl_channel'))
-            if c is None:
-                return
-            _next = guild.tt['next_boss']
-            _now = datetime.utcnow().timestamp()
-            _m,_s = divmod(_next-_now, 60)
-            _h,_m = divmod(_m, 60)
-            try:
-                m = await c.get_message(guild.tt['boss_message'])
-            except discord.errors.NotFound:
-                await c.send('Oops, someone deleted the timer message. I am clearing the boss. RESET IT.')
-                guild.tt['next_boss']=0
-                guild.tt['boss_message']=0
-                return
-            final_ping = 0
-            last_ping = guild.tt['last_ping']
-            intervals = guild.tt.get('ping_intervals', [15,5,1])
-            not_final = _next-_now > 10
 
+    # @when_check()
+    # @commands.command(name='when')
+    # async def when(self, ctx):
+    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
+    #     when_channel = g.tt.get('when_channel')
+    #     if when_channel and not ctx.channel.id == when_channel:
+    #         asyncio.ensure_future(ctx.send(f'You can only do this in: <#{when_channel}>'))
+    #         return
+    #     if g.tt.get('boss_message') and when_channel:
+    #         c = ctx.message.guild.get_channel(when_channel)
+    #         _next = g.tt['next_boss']
+    #         _now = datetime.utcnow().timestamp()
+    #         _m,_s = divmod(_next-_now, 60)
+    #         _h,_m = divmod(_m, 60)
+    #         _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
 
-            c_offset = guild.tt.get('tz', 0)
-            c_spawn = datetime.fromtimestamp(_next+(c_offset*60*60))
-            if c_offset > 0:
-                c_offset = f'+{c_offset}'
-            c_spawn = c_spawn.strftime('%H:%M:%S UTC{}').format(c_offset or '')
+    #         when_msg = await c.send(
+    #             f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
+    #         )
+    #         g.tt['when_message'] = when_msg.id
+    #     else:
+    #         asyncio.ensure_future(ctx.send("Oops, there's no boss active rn."))
 
-
-            TIME, SPAWN, ROUND, CQ = (
-                f'**{floor(_h):02}:{floor(_m):02}:{floor(_s):02}**',
-                c_spawn,
-                0,
-                guild.tt['cq_number']
-            )
-            if _h >= 0 and last_ping < min([_next-i*60 for i in intervals]) and not_final:
-                result = guild.tt['timer_text'].format(
-                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                )
-            elif _h >= 0 and not_final:
-                result = guild.tt['ping_text'].format(
-                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                )
-            # elif not guild.tt['boss_message'] and _h < 0:
-            #     avgttk = guild.tt.get('avgttk', 65)
-            #     if _next + avgttk*60 < _now:
-            #         #do after ping
-            #     elif _now-last_ping >= 3600:
-            #         # do round ping
-            else:
-                final_ping = 1
-                result = guild.tt['now_text'].format(
-                    TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                )
-                guild.tt['cq_number'] += 1
-                guild.tt['last_ping'] = _now
-                if guild.tt.get('when_message'):
-                    c2 = g.get_channel(guild.tt['when_channel'])
-                    m2 = await c2.get_message(guild.tt['when_message'])
-                    guild.tt['when_message'] = 0
-                guild.tt['boss_message'] = 0
-                await asyncio.sleep(_next-_now-.2)
-                if guild.tt.get('when_message'):
-                    asyncio.ensure_future(m2.edit(content='Boss spawned!'))
-                asyncio.ensure_future(c.send(
-                    content=result
-                ))
-            # last_ping = guild.tt['last_ping']
-            current = round(((_next-_now)/60)+.5)
-            if guild.tt.get('when_channel') and guild.tt.get('when_message') and not_final:
-                c2 = g.get_channel(guild.tt['when_channel'])
-                try:
-                    m2 = await c2.get_message(guild.tt['when_message'])
-                except discord.errors.NotFound:
-                    del guild.tt['when_message']
-                else:
-                    asyncio.ensure_future(m2.edit(
-                        content=guild.tt['timer_text'].format(
-                            TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                        )
-                    ))
-                        
-            
-            did_ping = 0
-            if not final_ping and not did_ping:
-                for preping in intervals:
-                    in_window = _next-preping*60<_now
-                    passed_prev = last_ping < _next-preping*60
-
-                    if in_window and passed_prev and _h>=0 and not did_ping:
-                        guild.tt['last_ping'] = _now
-                        result = guild.tt['ping_text'].format(
-                            TIME=TIME, SPAWN=SPAWN, ROUND=ROUND, CQ=CQ
-                        )
-                        m = await c.send(result)
-                        guild.tt['boss_message'] = m.id
-                        did_ping = 1
-
-            if not did_ping and not final_ping:
-                asyncio.ensure_future(m.edit(
-                    content = result
-                ))
-
-    @when_check()
-    @commands.command(name='when')
-    async def when(self, ctx):
-        g = await self.helpers.get_record('server', ctx.message.guild.id)
-        when_channel = g.tt.get('when_channel')
-        if when_channel and not ctx.channel.id == when_channel:
-            asyncio.ensure_future(ctx.send(f'You can only do this in: <#{when_channel}>'))
-            return
-        if g.tt.get('boss_message') and when_channel:
-            c = ctx.message.guild.get_channel(when_channel)
-            _next = g.tt['next_boss']
-            _now = datetime.utcnow().timestamp()
-            _m,_s = divmod(_next-_now, 60)
-            _h,_m = divmod(_m, 60)
-            _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
-
-            when_msg = await c.send(
-                f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
-            )
-            g.tt['when_message'] = when_msg.id
-        else:
-            asyncio.ensure_future(ctx.send("Oops, there's no boss active rn."))
-
-    @commands.group(pass_context=True, invoke_without_command=True, name="tt")
+    @commands.group(pass_context=True, invoke_without_command=False, name="tt")
     async def tt(self, ctx):
-        await ctx.send('TT2 commands')
+        pass
+
+    @tt.group(name='group', invoke_without_command=False)
+    async def tt_group(self, ctx):
+        pass
 
     @is_gm_or_master()
-    @tt.command(name='setchannel')
-    async def _setchannel(self, ctx, kind, channel):
-        """
-        Allows you to set up a clan related channel for the bot.
-        - the bot must have permission to send+edit+delete+pin messages
-        Examples:
-        ```
-        e.tt setchannel tl #boss-timers
-        e.tt setchannel when #clan-lounge
-        e.tt setchannel paste #cq-exports
-        e.tt setchannel report #weekly-update
-        ```
-        """
-        if kind not in ['tl', 'when', 'paste', 'report', 'masters']:
-            await ctx.send('Channel kind must be one of: tl, when, paste, report')
-        guild = ctx.message.guild
-        if channel.startswith('#'):
-            channel = channel[1:]
-        if channel.isnumeric():
-            channel = next((c.name for c in guild.channels if c.id == int(channel)), None)
-        if channel:
-            g = await self.helpers.get_record('server', ctx.message.guild.id)
-            result = await self.helpers.choose_channel(ctx, ctx.message.guild, channel)
-            if result:
-                g.tt[f'{kind}_channel'] = result.id
-                await ctx.send(f'Set the {kind} channel to {result.mention}!')
+    @tt_group.command(name='add')
+    async def tt_group_add(self, ctx, name='default'):
+        if not name:
+            asyncio.ensure_future(ctx.send('You need to supply a name when creating a group.'))
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((r for r in exists if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
+        if not exists:
+            result = await self.helpers.sql_query_db(
+                """INSERT INTO titanlord (id, "create", guild, name) VALUES (DEFAULT, $1, $2, $3)""",
+                (datetime.utcnow(), ctx.guild.id, name.lower(),)
+            )
+            asyncio.ensure_future(ctx.send(f'Added new group with name: `{name}`!'))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` already exists on `{ctx.guild.name}`.'))
 
     @is_gm_or_master()
-    @tt.command(name='shortcode')
-    async def _shortcode(self, ctx, shortcode):
+    @tt_group.command(name='rename')
+    async def tt_group_rename(self, ctx, name='default', newname='notdefault'):
+        if not name or not newname:
+            asyncio.ensure_future(ctx.send('You need to supply the old name and new name, in that order.'))
+        exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
+        new_exists = next((dict(r) for r in exists if r['name']==newname.lower() and r['guild']==ctx.guild.id), None)
+        old_exists = next((dict(r) for r in exists if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
+        if not new_exists and old_exists:
+            old_exists.update({'name': newname})
+            result = await self.helpers.sql_update_record('titanlord', old_exists)
+            asyncio.ensure_future(ctx.send(f'Renamed group `{name}` to `{newname}`!'))
+        elif new_exists:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{newname}` already exists on `{ctx.guild.name}`.'))
+        elif not old_exists:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` does not exist on `{ctx.guild.name}`.'))
+
+
+    @is_gm_or_master()
+    @tt_group.command(name='get')
+    async def tt_group_get(self, ctx, name='default'):
+        g = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        g = next((dict(r) for r in g if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
+        s = await self.helpers.sql_query_db(
+            'SELECT * FROM server'
+        )
+        s = next((dict(r) for r in s if r['id']==ctx.guild.id), None)
+        if g and s:
+            short_code = g.get('shortcode', 'Clan')
+            clan_name = g.get('clanname', '`No clan name set`')
+            cq_no = g.get('cq_number', 1)
+            fields = {}
+            roles = {'Grandmaster': "<@&{}>".format(s['roles'].get('grandmaster', '0'))}
+            roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit']})
+            fields.update({f'{short_code} Roles': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
+            fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at', []))})
+            fields.update({f'{short_code} {k.title()} text': (g.get(k) or "None").format(
+                TIME="**04:32:22**", CQ=cq_no, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP=clan_name
+            ) for k in ['timer', 'ping', 'now', 'round', 'after']})
+
+            embed = await self.helpers.full_embed(
+                'TL Group: {} - {}'.format(
+                    short_code,
+                    clan_name
+                ),
+                fields=fields,
+                inline=False)
+            await ctx.send(embed=embed)
+
+    @tt.group(name='set', invoke_without_command=False)
+    async def tt_set(self, ctx):
+        pass
+
+    @is_gm_or_master()
+    @tt_set.command(name='channel')
+    async def tt_set_channel(self, ctx, kind, channel, group="-default"):
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        kinds = 'tl when paste report masters loa'.split()
+        if kind not in kinds:
+            asyncio.ensure_future(ctx.send('Channel type must be one of: `{}`'.format(
+                '`, `'.join(k for k in kinds)
+            )))
+            return
+        friendly_name=kind
+        if kind == 'when':
+            kind = 'when_channel'
+            friendly_name='when'
+        if kind == 'tl':
+            kind = 'channel'
+            friendly_name='tl'
+        channel = await self.helpers.choose_channel(ctx, ctx.guild, channel)
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if exists:
+
+            exists.update({kind: channel.id})
+            result = await self.helpers.sql_update_record('titanlord', exists)
+            asyncio.ensure_future(ctx.send(f'Set the `{friendly_name}` channel for `{group}` to {channel.mention}!'))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` does not exist. Please create one first using `.tt group add`'))
+
+    @is_gm_or_master()
+    @tt_set.command(name='shortcode')
+    async def tt_set_shortcode(self, ctx, shortcode, group="-default"):
         if not shortcode or not shortcode.isalnum() or not len(shortcode) < 6:
             asyncio.ensure_future(ctx.send(
                 'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
             ))
+            return
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
         else:
-            shortcode = shortcode.upper()
-            shortcodes = [s for s in self.bot._servers if s.tt.get('shortcode')==shortcode]
-            if any(shortcodes):
-                await ctx.send('That code is taken. Please use `verify` to claim it.')
-                return
-            result = None
-            g = await self.helpers.get_record('server', ctx.guild.id)
-            if not g.tt.get('shortcode'):
-                result = await self.helpers.choose_from(ctx, ['confirm'],
-                    f'This will set your clan shortcode to {shortcode}. Type 1 to confirm or `c` to cancel.')
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        short_code_exists = next((dict(r) for r in exists if r['shortcode']==shortcode.upper()), None)
+        if short_code_exists:
+            asyncio.ensure_future(ctx.send('A clan has already claimed that shortcode. Try another. If this is your clan shortcode and somebody has falsely claimed it, join the support server: `.support`'))
+        else:
+            valid = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+            if valid:
+                valid.update({'shortcode': shortcode.upper()})
+                result = await self.helpers.sql_update_record('titanlord', valid)
+                asyncio.ensure_future(ctx.send(f'Set the `shortcode` for `{group}` to `{shortcode.upper()}`!'))
             else:
-                c = g.tt['shortcode']
-                result = await self.helpers.choose_from(ctx, ['confirm'],
-                    f'This will override your clan shortcode from `{c}` to `{shortcode}`. Type 1 to confirm or `c` to cancel.')
-
-            if result:
-                g.tt['shortcode'] = shortcode
-                asyncio.ensure_future(ctx.send(
-                    f'Set the shortcode for **{ctx.guild.name}**!'))
+                asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @is_gm_or_master()
-    @tt.command(name='name')
-    async def _name(self, ctx, *name):
-        if not name:
-            return
-        name = ' '.join(name)
-        if len(name)>20:
-            return
-        g = await self.helpers.get_record('server', ctx.guild.id)
-        if not g.tt.get('name'):
-            result = await self.helpers.choose_from(ctx, ['confirm'],
-                f'This will set your clan name to {name}. Type 1 to confirm or `c` to cancel.')
-        else:
-            c = g.tt['name']
-            result = await self.helpers.choose_from(ctx, ['confirm'],
-                f'This will override your clan name from `{c}` to `{name}`. Type 1 to confirm or `c` to cancel.')
-
-        if result:
-            g.tt['name'] = name
+    @tt_set.command(name='name')
+    async def tt_set_name(self, ctx, *name, group="-default"):
+        clanname = ' '.join(name)
+        if name[-1].startswith('-'):
+            clanname=' '.join(name[:-1])
+        group = name[-1].startswith('-') and name[-1] or group
+        if not clanname or len(clanname) > 20:
             asyncio.ensure_future(ctx.send(
-                f'Set the TT2 clan name for **{ctx.guild.name}**!'))
+                'Clan names must be less than 20 characters in length.'
+            ))
+            return
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        clanname_exists = next((dict(r) for r in exists if r['clanname']==clanname), None)
+        if clanname_exists:
+            asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
+        else:
+            valid = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+            if valid:
+                valid.update({'clanname': clanname})
+                result = await self.helpers.sql_update_record('titanlord', valid)
+                asyncio.ensure_future(ctx.send(f'Set the `clan name` for `{group}` to `{clanname}`!'))
+            else:
+                asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @is_gm_or_master()
-    @tt.command(name='settext', aliases=['setmessage', 'setmsg'])
-    async def settext(self, ctx, kind):
-        m = ctx.message
-        a = m.author
-        if a.bot:
+    @tt_set.command(name='timezone', aliases=['tz'])
+    async def tt_set_timezone(self, ctx, timezone, group="-default"):
+        if not re.match(r'^[0-9-+]+$', timezone):
+            asyncio.ensure_future(ctx.send("Timezone must be a whole number (no decimals) between -12 and 15."))
             return
-        if kind.lower() not in ['ping', 'now', 'timer', 'round', 'after']:
-            await ctx.send('`kind` must be one of: `ping`, `now`, `timer`, `round`, `after`')
+        elif not 16 > int(timezone) > -13:
+            asyncio.ensure_future(ctx.send("Timezone must be a whole number (no decimals) between -12 and 15."))
+            return
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if exists:
+            exists.update({'timezone': int(timezone)})
+            if int(timezone) > -1:
+                timezone = f'+{int(timezone)}'
+            result = await self.helpers.sql_update_record('titanlord', exists)
+            asyncio.ensure_future(ctx.send(f'Set the `timezone` for `{group}` to `{timezone}`!'))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+
+    @is_gm_or_master()
+    @tt_set.command(name='cq')
+    async def tt_set_cq(self, ctx, cq, group="-default"):
+        if not cq.isnumeric() and not 0 < int(cq):
+            asyncio.ensure_future(ctx.send(
+                'You must supply a valid numerical value for the cq number.'))
             return
         
-        g = await self.helpers.get_record('server', m.guild.id)
-        c = g.tt
-        pfx = await self.bot.get_prefix(ctx.message)
-        mc = m.content
-        passed = 0
-        while not passed:
-            for p in pfx:
-                if mc.startswith(p):
-                    mc = mc[len(p):]
-                    passed = 1
-        mc = re.sub(r'^[^\s]+', '', mc).strip()
-        mc = re.sub(r'^[^\s]+', '', mc).strip()
-        mc = re.sub(r'^[^\s]+', '', mc).strip()
-        for unit in ['time', 'cq', 'round', 'spawn', 'timer']:
-            mc = mc.replace('{'+unit+'}', '{'+unit.upper()+'}')
-        g.tt[f'{kind.lower()}_text'] = mc
-        e = await self.helpers.build_embed(mc, 0xffffff)
-        asyncio.ensure_future(ctx.send(
-            f'Set the {kind.lower()} text to:',
-            embed=e))
-
-    @is_gm_or_master()
-    @tt.command(name='settz')
-    async def settz(self, ctx, tz):
-        """Sets the clan's timezone.\nCan be any **whole** digit, positive or negative,\n
-        between -12 and 15.
-        Examples:
-        ```\n.tt settz +7\n.tt settz -10\n```
-        """
-        m = ctx.message
-        g = await self.helpers.get_record('server', m.guild.id)
-        a = m.author
-        if a.bot:
-            return
-        if re.match(r'^[0-9-+]+$', tz):
-            tz = int(tz)
-            if 15 > round(tz-.5,0) > -13:
-                g.tt['tz'] = tz
-                if tz > 0:
-                    tz = f'+{tz}'
-                asyncio.ensure_future(ctx.send(f'Set the timezone to UTC{tz}.'))
-                return
-
-        asyncio.ensure_future(ctx.send('You did not supply a valid timezone setting.'))
-
-
-    @is_gm_or_master()
-    @tt.command(name='settexts')
-    async def settexts(self, ctx):
-        m = ctx.message
-        a = m.author
-        if a.bot:
-            return
-        chooser = await ctx.send(
-            'This command will override any set (or unset) texts with the '
-            'default values.\n'
-            'Please type `confirm` or `cancel`.'
-        )
-        def check(m):
-            return m.content.lower().strip() in ['confirm', 'cancel']
-        try:
-            msg = await self.bot.wait_for('message', check=check)
-        except asyncio.TimeoutError as e:
-            asyncio.ensure_future(chooser.delete())
-            asyncio.ensure_future(msg.channel.send('Query timed out.'))
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
         else:
-            asyncio.ensure_future(chooser.delete())
-            if 'onfir' in msg.content.lower():
-                g = await self.helpers.get_record('server', m.guild.id)
-                g.tt.update(dict(
-                    timer_text='{TIME} until boss #{CQ} ({SPAWN} UTC)',
-                    ping_text='{TIME} until boss #{CQ} ({SPAWN} UTC) @everyone',
-                    now_text='BOSS #{CQ} SPAWNED @everyone!!!',
-                    round_text='Ding! Time for round {ROUND}, @everyone',
-                    after_text='Hey {TIMER}, set the timer and export CQ data!'
-                ))
-                # g.tt['timer_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC)'
-                # g.tt['ping_text'] = '{TIME} until boss #{CQ} ({SPAWN} UTC) @everyone'
-                # g.tt['now_text'] = 'BOSS #{CQ} SPAWNED @everyone!!!'
-                # g.tt['round_text'] = 'Ding! Time for round {ROUND}, @everyone'
-                # g.tt['after_text'] = 'Hey {TIMER}, set the timer and export CQ data!'
-                asyncio.ensure_future(ctx.send(
-                    ':ideograph_advantage: Set the texts to the defaults.'))
-            elif 'ance' in msg.content.lower():
-                asyncio.ensure_future(ctx.send(
-                    'Action cancelled.'))
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if exists:
+            exists.update({'cq_number': int(cq)})
+            result = await self.helpers.sql_update_record('titanlord', exists)
+            asyncio.ensure_future(ctx.send(f'Set the `cq` for `{group}` to `{int(cq):,}`!'))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+
+    @is_gm_or_master()
+    @tt_set.command(name='text', aliases=['message'])
+    async def tt_set_text(self, ctx, kind, *text, group="-default"):
+        msg_text = ' '.join(text)
+        if text[-1].startswith('-'):
+            msg_text=' '.join(text[:-1])
+        group = text[-1].startswith('-') and text[-1] or group
+
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+
+        kinds = 'ping now timer round after'.split()
+        if kind not in kinds:
+            asyncio.ensure_future(ctx.send('Text type must be one of: `{}`'.format(
+                '`, `'.join(k for k in kinds)
+            )))
+            return
+        for unit in ['time', 'cq', 'round', 'spawn', 'timer', 'group']:
+            msg_text = msg_text.replace(f'%{unit}%', '{'+unit.upper()+'}')
+            msg_text = msg_text.replace(f'%{unit.upper()}%', '{'+unit.upper()+'}')
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if exists:
+            exists.update({kind: msg_text})
+            result = await self.helpers.sql_update_record('titanlord', exists)
+
+            e = await self.helpers.build_embed(msg_text.format(
+                TIME="**04:32:22**", CQ=822, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP='Full Metal Titan'
+            ), 0xffffff)
+            asyncio.ensure_future(ctx.send(
+                f'Set the `{kind.lower()}` text for `{group}` to:', embed=e
+            ))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+
+    @is_gm_or_master()
+    @tt_set.command(name='pings', aliases=['intervals'])
+    async def setinterval(self, ctx, *pings, group="-default"):
+
+        group = pings[-1].startswith('-') and pings[-1] or group
+        if pings[-1].startswith('-'):
+            pings=pings[:-1]
+
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+
+        if not all([x.isnumeric() for x in pings]):
+            asyncio.ensure_future(ctx.send('You must supply space-sparated whole numbers. e.g. `15 5 1`'))
+            return
+        pings = [int(p) for p in pings]
+        
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if exists:
+            exists.update({'ping_at': pings})
+            result = await self.helpers.sql_update_record('titanlord', exists)
+            pings = '`, `'.join(map(str, pings))
+            asyncio.ensure_future(ctx.send(f'Ping intervals for `{group}` set to: `{pings}`'))
+        else:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+
 
     @is_gm_or_admin()
-    @tt.command(name='setrank')
+    @tt_set.command(name='rank', no_pm=True)
     async def _setrank(self, ctx, rank, role):
-        """
-        Sets a discord role to an in-game clan rank.
-        - you can specify a role by name or ID
-        - emojis will be automatically converted to unicode
-        Example:
-        ```
-        e.tt setrank timer :bell:
-        ```
-        """
-        if rank not in ['master', 'knight', 'captain', 'recruit', 'guest',
-            'vip', 'applicant', 'alumni', 'timer']:
-            await ctx.send('The rank must be a valid name of an in-game role'
-                ' or a tt2 related rank. You can choose from:\n```\nmaster,'
-                ' knight, captain, recruit, guest, vip, applicant, alumni,'
-                ' timer\n```')
+        ranks = 'master knight captain recruit guest vip alumni applicant timer vip'.split()
+        if rank not in ranks:
+            asyncio.ensure_future(ctx.send('The rank must be a valid name of an in-game role'
+                ' or a tt2 related rank. You can choose from: `{}`'.format(
+                    '`, `'.join(r for r in ranks)
+                )
+            ))
             return
-        guild = ctx.message.guild
+        guild = ctx.guild
         if role:
             if role.startswith('#'):
                 role = role[1:]
-            g = await self.helpers.get_record('server', ctx.message.guild.id)
-            result =await self.helpers.choose_role(ctx, ctx.message.guild, role)
+            g = await self.helpers.get_record('server', ctx.guild.id)
+            result =await self.helpers.choose_role(ctx, ctx.guild, role)
             if result:
-                g.tt[rank] = result.id
+                g['tt'][rank] = result.id
                 asyncio.ensure_future(self.helpers.try_mention(ctx, f'{rank} role', result))
 
     @is_gm_or_master()
@@ -510,12 +500,12 @@ class TapTitans():
     async def _loas(self, ctx):
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
-        if not g.tt.get('loa'):
+        if not g['tt'].get('loa'):
             return
         result = []
         now = datetime.utcnow()
 
-        for user, loa in sorted(g.tt.get('loa').items(), key=lambda k: k[1]):
+        for user, loa in sorted(g['tt'].get('loa').items(), key=lambda k: k[1]):
 
             expires = datetime.utcfromtimestamp(loa)
             if loa-now.timestamp()>3600:
@@ -533,20 +523,20 @@ class TapTitans():
         m = ctx.message
         a = m.author
         g = await self.helpers.get_record('server', m.guild.id)
-        if not g.tt.get('loa'):
-            g.tt['loa']={}
+        if not g['tt'].get('loa'):
+            g['tt']['loa']={}
         _next, _units = await process_time(timeframe)
         if not _next or timeframe in 'clearstop':
-            g.tt['loa'][str(a.id)] = datetime.utcnow().timestamp()
+            g['tt']['loa'][str(a.id)] = datetime.utcnow().timestamp()
             asyncio.ensure_future(ctx.send(':ideograph_advantage: LoA cleared.'))
             return
-        g.tt['loa'][str(a.id)] = (datetime.utcnow()+_next).timestamp()
+        g['tt']['loa'][str(a.id)] = (datetime.utcnow()+_next).timestamp()
         units = ', '.join(f'{v} {k}' for k, v in _units.items())
         asyncio.ensure_future(ctx.send(
             f':ideograph_advantage: Leave of Absence filed for **{units}**'))
-        if g.tt.get('masters_channel'):
+        if g['tt'].get('masters_channel'):
             asyncio.ensure_future(m.guild.get_channel(
-                g.tt['masters_channel']
+                g['tt']['masters_channel']
             ).send(f':ideograph_advantage: {a.mention} just filed a leave of absence for {units}'))
 
     @commands.command(name='titancount', aliases=['ip'])
@@ -561,128 +551,82 @@ class TapTitans():
             )
             asyncio.ensure_future(ctx.send(embed=e))
 
-    @can_do_timers()
-    @tl_checks()
-    @commands.group(name='tl', aliases=['boss', 'titanlord', 'setboss'], invoke_without_command=True)
-    async def tl(self, ctx, *time):
-        """
-        Sets a timer running until the next titanlord spawn.
-        - accepts most timestam formats\n- requires master or higher, or timer role set
-        Examples:
-        ```\n.tl dead\n.tl in 5h30m\n.tl 3:22:20\n```
-        You can also set the boss by using the TTK, which is, IMO, much easier.
-        ```\n.tl ttk 2m20s\n```
-        """
-        set_by_ttk, next_boss = False, None
-        if time[0] == 'ttk':
-            set_by_ttk = True
-        if time[0] in ['in', 'now', 'dead', 'ttk']:
-            guild = ctx.message.guild
-            g = await self.helpers.get_record('server', ctx.message.guild.id)
-            if time[0] == 'dead':
-                time = '6h'
-            elif time[0] == 'now':
-                time='0s'
-                result = g.tt['now_text'].format(
-                    CQ=g.tt.get('cq_number',1)
-                )
-                c = guild.get_channel(g.tt['tl_channel'])
-                _now = datetime.utcnow().timestamp()
-                g.tt['next_boss'] = _now
-                g.tt['cq_number'] += 1
-                g.tt['last_ping'] = _now
-                asyncio.ensure_future(c.send(
-                    content=result
-                ))
-                g.tt['boss_message'] = 0
-                g.tt['when_message'] = 0
-                return
-            else:
-                time = ' '.join(time[1:]).strip()
-            _next, _units = await process_time(time)
-            now = datetime.utcnow()
-            g.tt['last_ping'] = now.timestamp()
-            # print(_next.total_seconds())
-            if not set_by_ttk:
-                next_boss = now.timestamp()+_next.total_seconds()
-                ttk = 21600-_next.total_seconds()
-                _m, _s = divmod(ttk, 60)
-                _h, _m = divmod(_m, 60)
-                _, ttk = await process_time('{_h}h{_m}m{_s}s')
-                res = ':ideograph_advantage: Set a timer running for **{}**'.format(
-                    ', '.join(f'{v} {k}' for k, v in _units.items())
-                )
-            elif g.tt.get('next_boss') and set_by_ttk:
-                next_boss = g.tt['next_boss']+_next.total_seconds()+21600
-                ts = next_boss-now.timestamp()
-                ttk = _units
-                _m,_s = divmod(ts, 60)
-                _h,_m = divmod(_m, 60)
-                res = ':ideograph_advantage: Set a timer for {:02} hours, {:02} minutes, {:02} seconds.'.format(
-                    round(_h), round(_m), round(_s)
-                )
-            elif set_by_ttk and not g.tt.get('next_boss'):
-                asyncio.ensure_future(ctx.send('Oops, you cannot set by TTK until'
-                    ' a boss has spawned beforehand.'))
-                return
-
-            if g.tt.get('next_boss'):
-                ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
-                icon = 'https://i.imgur.com/{}.png'.format(choice([
-                    '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
-                    'eYtmbjg', 'Y6jfEhM']))
-                c_dmg = round_to_x(clan_damage(g.tt['cq_number']-1)*100,3)
-                c_adv = advance_start(g.tt['cq_number']-1)
-                c_hp = boss_hitpoints(g.tt['cq_number']-1)
-
-                c_offset = g.tt.get('tz', 0)
-                c_spawn = datetime.fromtimestamp(next_boss+(c_offset*60*60))
-                # print(c_spawn)
-                if c_offset > 0:
-                    c_offset = f'+{c_offset}'
-                c_spawn = c_spawn.strftime('%H:%M:%S UTC{}').format(c_offset or '')
-                field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
-                field2 = f'Spawns at **{c_spawn}** with **{c_hp:,}** hitpoints.'
-                
-                e = await self.helpers.full_embed(
-                    "Killed in **{}**".format(ttk),
-                    thumbnail=icon,
-                    fields={
-                        'Bonuses':field1,
-                        'Next Boss':field2 
-                    },
-                    author=dict(name=f'Boss #{g.tt["cq_number"]-1}',
-                                image=icon)
-                )
-                asyncio.ensure_future(guild.get_channel(g.tt['tl_channel']).send(embed=e))
-
-            g.tt['next_boss'] = next_boss
-            await asyncio.sleep(1)
-            await guild.get_channel(g.tt['tl_channel']).send(res)
-            boss_msg = await guild.get_channel(g.tt['tl_channel']).send(
-                f'**{_next}** until boss arrives'
-            )
-            g.tt['boss_message'] = boss_msg.id
+    @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
+    async def tl(self, ctx):
+        pass
 
     @is_gm_or_master()
-    @tt.command(name='setcq')
-    async def setcq(self, ctx, cq):
-        """
-        Allows you to set the clan's current quest level _of the next boss_.
-        Requires: GM or Master ranks
-        Example:
-        ```
-        .tt setcq 1580
-        ```
-        """
-        if not cq.isnumeric():
-            asyncio.ensure_future(ctx.send(
-                'You must supply a valid numerical value for the cq number.'))
+    @tl.command(name='clear')
+    async def tl_clear(self, ctx, group="-default"):
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
         else:
-            g = await self.helpers.get_record('server', ctx.message.guild.id)
-            g.tt['cq_number'] = int(cq)
-            asyncio.ensure_future(ctx.send(
-                f':ideograph_advantage: Updated the CQ number to `{cq}`!'))
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        if not exists:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+            return
+        exists.update({'next': None, 'message': 0, 'when_message': 0})
+        await self.helpers.sql_update_record('titanlord', exists)
+        asyncio.ensure_future(ctx.send(f'Successfully cleared the `{group}` boss timer!'))
+
+    @is_gm_or_master()
+    @tl.command(name='in')
+    async def tl_in(self, ctx, *time, group="-default"):
+        time_text = ' '.join(time)
+        if time[-1].startswith('-'):
+            time_text=' '.join(time[:-1])
+        group = time[-1].startswith('-') and time[-1] or group
+
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        msg = None
+        if not exists:
+            msg = f'A TL group with name `{name}` does not exist. Please create one first using `.tt group add`'
+        elif not exists.get('channel'):
+            msg = 'You need to set up a titanlord channel first! `.tt set channel tl`'
+        elif not exists.get('cq_number'):
+            msg = 'You need to set the CQ number first. `.tt set cq`'
+        elif not exists.get('clanname'):
+            msg = 'You need to set the clan name. `.tt set name`'
+        elif not exists.get('ping_at'):
+            msg = 'You should set ping intervals with `.tt set pings`'
+        elif not exists.get('now'):
+            msg = 'You should set now text with `.tt set text now`'
+        elif not exists.get('ping'):
+            msg = 'You should set ping text with `.tt set text ping`'
+        elif not exists.get('timer'):
+            msg = 'You should set a generic (non-ping) timer message with `.tt set text timer`'
+        if msg:
+            asyncio.ensure_future(ctx.send(msg))
+            return
+
+        time = ''.join(time_text)
+
+        _next, _units = await self.helpers.process_time(time)
+        now = datetime.utcnow()
+        mx = await self.bot.get_channel(exists['channel']).send('Loading timer. If this takes a very long time, let <@!305879281580638228> know!')
+        modded_ = await self.helpers.mod_timedelta(_next)
+        mapped_ = await self.helpers.map_timedelta(modded_)
+
+        exists.update({'next': now+_next, 'message': mx.id, 'pinged_at': 3600})
+        result = await self.helpers.sql_update_record('titanlord', exists)
+
+        asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
+            '`, `'.join([f'{x} {y}' for x, y in mapped_[1:]])
+        )))
     
     @is_gm_or_master()
     @tt.command(name='report')
@@ -769,36 +713,19 @@ class TapTitans():
                     started_at+=1
 
 
-    @is_gm_or_master()
-    @tt.command(name='setinterval', aliases=['setintervals'])
-    async def setinterval(self, ctx):
-        pfx = await self.bot.get_prefix(ctx.message)
-        mc = ctx.message.clean_content
-        passed = 0
-        while not passed:
-            for p in pfx:
-                if mc.startswith(p):
-                    mc = mc[len(p):]
-                    passed = 1
-        mc = mc[len(ctx.command.name):].strip()
-        rs = [int(i) for i in re.findall(r'\d+', mc)]
-        g = await self.helpers.get_record('server', ctx.message.guild.id)
-        g.tt['ping_intervals'] = rs
-        await ctx.send(':ideograph_advantage: Ping intervals set to: {}'.format(
-            ', '.join([f'`{x}`' for x in rs])
-        ))
+    
 
 
-    @is_gm_or_master()
-    @tl_checks()
-    @tl.command(name='clear', aliases=['wipe'])
-    async def _clear(self, ctx):
-        g = await self.helpers.get_record('server', ctx.message.guild.id)
-        g.tt['next_boss'] = 0
-        g.tt['boss_message'] = 0
-        g.tt['when_message'] = 0
-        asyncio.ensure_future(ctx.send(
-            ':ideograph_advantage: Cleared the boss timer!'))
+    # @is_gm_or_master()
+    # @tl_checks()
+    # @tl.command(name='clear', aliases=['wipe'])
+    # async def _clear(self, ctx):
+    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
+    #     g.tt['next_boss'] = 0
+    #     g.tt['boss_message'] = 0
+    #     g.tt['when_message'] = 0
+    #     asyncio.ensure_future(ctx.send(
+    #         ':ideograph_advantage: Cleared the boss timer!'))
 
     @commands.command(name='ttconvert', alias=["ttnotation"])
     async def _convert(self, ctx, val: str='1e+5000'):

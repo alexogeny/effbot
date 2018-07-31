@@ -1,22 +1,25 @@
-import sys, traceback
-import discord
+import os
+import re
+import sys
 import json
-import subprocess
-import signal
 import time
+import signal
 import asyncio
+import asyncpg
+import discord
+import traceback
+import subprocess
+from os import listdir
+from models import get_db, Server, User, Titanlord
+# from models import Server, User, db
+from os.path import isfile, join
 from pathlib import Path
 from discord.ext import commands
-import os
-from os import listdir
-from os.path import isfile, join
-from models import Server, User, db
-import re
 from playhouse.shortcuts import dict_to_model
 
-class Struct(object):
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
+# class Struct(object):
+#     def __init__(self, **entries):
+#         self.__dict__.update(entries)
 
 if Path('./config.json').exists():
     with Path('./config.json').open('r') as fh:
@@ -39,14 +42,14 @@ class Effribot(commands.Bot):
         super().__init__(*args, **kwargs)
         self.remove_command('help')
         self.config = CONFIG
-        self.database = db
-        self.create_tables()
+        self.models = dict(server=Server, user=User, titanlord=Titanlord)
+        # self.create_tables()
         self.start_time = time.time()
         self._last_exception = None
         self.description = "effrill3's custom bot"
         self.load_extensions()
-        self._models = {}
-        self.cogs['Helpers'].load_records(dict(server=Server, user=User))
+        # self._models = {}
+        # self.cogs['Helpers'].load_records(dict(server=Server, user=User))
 
     def load_extensions(self):
         self.load_extension('cogs.helpers')
@@ -58,11 +61,6 @@ class Effribot(commands.Bot):
             except (discord.ClientException, ModuleNotFoundError) as e:
                 print(f'Failed to load extension {extension}.', file=sys.stderr)
                 traceback.print_exc()
-
-    def create_tables(self):
-        with self.database.atomic():
-            self.database.create_tables([Server, User])
-        return
 
 
     async def on_ready(self):
@@ -129,6 +127,18 @@ class Effribot(commands.Bot):
 def inline(text):
     return "```\n{}\n```".format(text)
 
-bot = Effribot(command_prefix=get_prefix)
+async def main():
+    pool = await get_db()
+    return pool
+# bot = Effribot(command_prefix=get_prefix)
 if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    pool = loop.run_until_complete(main())
+    bot = Effribot(command_prefix=get_prefix)
+    setattr(bot, 'pool', pool)
+    
+    @bot.check
+    async def globally_block_bots(ctx):
+        return not ctx.author.bot
+
     bot.run()

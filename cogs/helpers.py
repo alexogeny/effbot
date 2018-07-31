@@ -4,22 +4,25 @@ import gzip
 import time
 import asyncio
 import discord
+from pprint import pprint
 from copy import deepcopy
 from json import dumps, loads
 from math import log, log10, floor
 from uuid import uuid4
 from string import ascii_lowercase
 from difflib import get_close_matches
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 from discord.ext import commands
 from urllib.parse import urlparse
 from playhouse.shortcuts import dict_to_model, model_to_dict
-
+TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
+LETTERS = re.compile(r'^[wdhms]')
+MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
-        self.last_save = int(time.time())
+        # self.last_save = int(time.time())
         self.scifi = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
         self.lifi = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
         self.flagstr = 'https://s26.postimg.cc/{}.png'
@@ -324,75 +327,206 @@ class Helpers():
         except discord.Forbidden:
             await ctx.send(f'Set the `{key}` setting to `{role.name}`!')
 
-    async def timer_save(self):
-        while self is self.bot.get_cog('Helpers'):
-            if int(time.time()) - self.last_save >= 299:
-                asyncio.ensure_future(self.save_records())
-            await asyncio.sleep(300)
+    async def rotate(self, table, mod):
+        return table[int(max(0, table%mod))]
 
-    async def save_records(self):
-        for k in self.bot._models:
-            records = getattr(self.bot, f'_{k}s')
-            await self.upsert_records(records, self.bot._models[k])
-            print(f'finished {k}')
+    async def is_plural(self, number):
+        return floor(number) > 1 or floor(number) == 0 or floor(number) < -1
+    async def round_to_x(self, x, n):
+        return round(x, -int(floor(log10(x))) + (n - 1))
+    async def boss_hitpoints(self, level: int) -> int:
+        return round(100000*pow(level, pow(level, .028))+.5)
+    async def advance_start(self, level: int) -> float:
+        return round(100*min(.003*pow(log(level+4),2.741), .9), 2)
+    async def clan_damage(self, level: int) -> float:
+        return round(pow(1.0233, level) + pow(level, 1.05), 2)
 
-    async def upsert_records(self, records, model):
-        with self.bot.database.atomic():
-            # for record in records:
+    async def mod_timedelta(self, time):
+        current = time.total_seconds()
+        days, r = divmod(current, 86400)
+        hours, r = divmod(r, 3600)
+        minutes, seconds = divmod(r, 60)
+        return list(map(floor, (days, hours or 0, minutes or 0, seconds or 0)))
 
-            # #model.drop_table()
-            # #model.create_table()
-            # r=model.replace_many([model_to_dict(r) for r in records]).execute()
-            # print(len(list(r)))
+    async def map_timedelta(self, modded_time):
+        keys = ['day', 'hour', 'minute', 'second']
+        result = [
+            (x, '{}{}'.format(keys[i], (await self.is_plural(x) and 's') or ''))
+            for i, x in enumerate(modded_time)
+        ]
+        return result
 
-        # data_dicts = [r for r in records]
-            for record in records:
-                r=model_to_dict(record)
-                to_update = {getattr(model, k):v
-                    for k,v in r.items() 
-                    if k not in ['id','create_']}
-                # print(to_update.keys())
-                with self.bot.database.atomic():
-                    query = model.insert(**r).on_conflict(
-                        conflict_target=(model.id,),
-                        preserve=(model.id, model.create_),
-                        update=to_update
-                    ).execute()
-        # print(data_dicts[0])
-        # for record in data_dicts:
-        #     with self.bot.database.atomic():
-        #         model.insert(**record).on_conflict(
-        #             conflict_target=[model.id],
-        #             preserve=[model.id, model.create_],
-        #             update=record
-        #         )
+    async def channel_exists(self, channel):
+        return bool(self.bot.get_channel(channel))
 
-    def load_records(self, models):
-        self.bot._models.update(models)
-        print(self.bot._models)
-        for k, v in self.bot._models.items():
-            result = [i for i in list(v.select())]
-            setattr(self.bot, f'_{k}s', result)
+    async def tl_has_settings(self, tl, c=('next', 'message', 'channel')):
+        return all(tl.get(x) for x in c) and await self.channel_exists(tl.get(c[-1], 0))
+
+    async def update_tls(self):
+        titanlords = await self.sql_query_db(
+            "SELECT * FROM titanlord"
+        )
+        await asyncio.gather(*[self.update_tl(dict(tl))
+                               for tl
+                               in titanlords
+                               if await self.tl_has_settings(dict(tl))])
+
+    async def update_tl(self, tl):
+        chan, msg = None, None
+        chan = self.bot.get_channel(tl['channel'])
+        
+        now, next_boss = datetime.utcnow(), tl['next']
+        seconds_until_tl = (next_boss-now).total_seconds()
+        _, H, M, S = await self.mod_timedelta(next_boss-now)
+        is_not_final = seconds_until_tl > 10
+        
+        boss_spawn = await self.get_spawn_string(tl.get('tz', 0), next_boss)
+        
+        params = dict(
+            TIME='**{:02}:{:02}:{:02}**'.format(H, M, S),
+            SPAWN=boss_spawn, ROUND=0, CQ=tl.get('cq_number', 1),
+            GROUP=tl.get('group', 'Clan'))
+        
+        ping_intervals = [p*60 for p in tl.get('ping_at', [15,5,1])]
+        text_type, action, last_ping = 'timer', 'edit', tl.get('pinged_at')
+        if is_not_final and seconds_until_tl <= max(ping_intervals):
+            text_type = 'ping'
+        elif not is_not_final:
+            text_type = 'now'
+            action = 'send'
+        text = tl.get(text_type).format(**params)
+        
+        if text_type != 'now':
+            will_ping = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
+            if will_ping:
+                action, tl['pinged_at'] = 'send', seconds_until_tl
+        elif text_type == 'now':
+            tl['cq_number'] += 1
+            tl['pinged_at'] = 0
+        
+        if action == 'edit':
+            try:
+                mx = await chan.get_message(tl['message'])
+            except:
+                action = 'send'
+                mx = await chan.send(text)
+                tl['message'] = mx.id
+            finally:
+                asyncio.ensure_future(mx.edit(content=text))
+        elif action == 'send' and text_type != 'now':
+            mx = await chan.send(text)
+            tl['message'] = mx.id
+        elif action == 'send' and text_type == 'now':
+            asyncio.ensure_future(chan.send(text))
+            tl.update({'message': 0})
+        
+        if await self.tl_has_settings(tl, c=('when_message', 'when_channel')):
+            when_channel = self.bot.get_channel(tl['when_channel'])
+            try:
+                mx = await when_channel.get_message(tl['when_message'])
+            except:
+                tl.update({'when_message': 0})
+            else:
+                if is_not_final:
+                    text = tl['timer'].format(**params)
+                else:
+                    text = 'Boss spawned!'
+                    tl.update({'when_message': 0})
+                asyncio.ensure_future(mx.edit(content=text))
+
+        
+        if action == 'send':
+            asyncio.ensure_future(self.sql_update_record('titanlord', tl))
+
+    async def will_tl_ping(self, intervals, seconds_until_tl, last_ping):
+        filtered = next((p for p in intervals[::-1] if p > seconds_until_tl), 3600)
+        if last_ping > filtered:
+            return True
+        return False
+
+    async def process_time(self, input_time: str) -> timedelta:
+        match = TIME_SUCKER.findall(input_time)
+        units = [
+            MAP[getattr(LETTERS.match(m[1].strip()), 'string', None)
+            or 'hms'[i]]
+            for i, m
+            in enumerate(match)
+        ]
+        measures = [int(x[0]) or 0 for x in match]
+        return (timedelta(**{unit: measures[i] or 0 for i, unit in enumerate(units)}),
+            {unit: measures[i] or 0 for i, unit in enumerate(units)})
+
+    async def clear_tl(self, tl):
+        tl.update({'next': 0, 'message': 0, 'when_message': 0})
+        await self.sql_update_record('titanlord', tl)
+
+    async def get_spawn_string(self, timezone, next_boss):
+        boss_spawn = next_boss+timedelta(seconds=timezone*60*60)
+        if timezone > 0:
+            timezone = '+{}'.format(timezone)
+        return boss_spawn.strftime('%H:%M:%S UTC{}').format(timezone or '')
+
+    async def sql_query_db(self, statement, parameters=None):
+        result = None
+        async with self.bot.pool.acquire() as connection:
+            async with connection.transaction():
+                if parameters is not None:
+                    result = await connection.execute(statement, *parameters)
+                elif ' WHERE ' in statement:
+                    result = await connection.fetchrow(statement)
+                else:
+                    result = await connection.fetch(statement)
+        return result
 
     async def get_record(self, model, id):
-        result = [x for x in getattr(self.bot,f'_{model}s') if x.id==int(id)]
-        if len(result) == 1:
-            return result[0]
-        elif len(result) == 0:
-            _model = self.bot._models.get(model)
-            if _model:
-                result, created = _model.get_or_create(id=int(id))
-                getattr(self.bot, f'_{model}s').append(result)
-                return result
+        result = await self.sql_get_or_create_record(model, id)
+        return result
 
-    async def get_obj(self, server, kind, key, value):
-        result = [x for x in getattr(server, f'{kind}s')
-                  if getattr(x, key)==value
-                  or value.lower() in getattr(x, key).lower()]
-        if result:
-            return result[0].id
-        else:
-            return None
+    async def sql_update_key(self, kind, id, key, subkey, value):
+        g = await self.get_record(kind, id)
+        g[key][subkey] = value
+        await self.sql_update_record(kind, g)
+        return
+
+    async def sql_filter_key(self, kind, key, subkey, value):
+        collection = await self.sql_query_db(f'SELECT * FROM "{kind}"')
+        collection = [dict(c) for c in collection]
+        # print(collection[0:5])
+        return any(c for c in collection if c[key].get(subkey)==value)
+
+    async def sql_insert(self, table, data_dict):
+        keys = ', '.join(f'"{m}"' for m in data_dict.keys())
+        values = ', '.join(f'${i+1}' for i,x in enumerate(data_dict.values()))
+        await self.sql_query_db(
+            f'INSERT INTO "{table}" ({keys}) VALUES ({values}) ON CONFLICT (id) DO NOTHING',
+            parameters=tuple(data_dict.values())
+        )
+        return
+
+    async def sql_select(self, table, id):
+        result = await self.sql_query_db(f'SELECT * FROM "{table}" WHERE id = {id}')
+        return result
+
+    async def sql_get_or_create_record(self, kind, id):
+        model = self.bot.models.get(kind).default_factory()
+        model.update(id=id)
+        await self.sql_insert(kind, model)
+        record = await self.sql_select(kind, id)
+        return dict(record)
+
+    async def sql_update_record(self, kind, data):
+        id = data['id']
+        model = self.bot.models.get(kind).default_factory()
+        model.update(data)
+        model.update({'update': datetime.utcnow()})
+        keys = ', '.join(f'"{m}"' for m in model.keys())
+        values = ', '.join(f'${i+1}' for i,x in enumerate(model.values()))
+        result = await self.sql_query_db(
+            f'UPDATE "{kind}" SET({keys}) = ({values}) WHERE id = {id}',
+            parameters=tuple(model.values()),
+        )
+        return result
+
 
     async def search_for(self, items, term):
         return [items.index(x) for x in items if term in x]
@@ -421,6 +555,7 @@ class Helpers():
                         return
                     i = int(msg.content)-1
                     if i > -1 and i < len(choices):
+                        await chooser.delete()
                         return choices[i]
                     else:
                         await msg.channel.send('Query cancelled.')
@@ -544,6 +679,6 @@ class Helpers():
 
 def setup(bot):
     cog = Helpers(bot)
-    loop = asyncio.get_event_loop()
-    loop.create_task(cog.timer_save())
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(cog.timer_save())
     bot.add_cog(cog)

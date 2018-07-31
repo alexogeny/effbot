@@ -82,7 +82,7 @@ class Help():
     @commands.command(name='help', no_pm=True, aliases=['helpme'])
     async def _help(self, ctx, module: str=None, command: str=None):
         g = await self.helpers.get_record('user', ctx.author.id)
-        ulc = g.tt.get('locale', 'eng')
+        ulc = g['tt'].get('locale', 'eng')
         lc = self.locales.get_locale(ulc)
         keys_, help_ = getattr(lc, "keys"), getattr(lc, "help")
         error_ = getattr(lc, "error")

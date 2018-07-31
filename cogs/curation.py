@@ -351,7 +351,7 @@ class Curation():
 
 def setup(bot):
     cog = Curation(bot)
-    bot.add_listener(cog.curate_channels, "on_message")
-    bot.add_check(cog.check_restrictions, call_once=True)
-    bot.add_listener(cog.quote_react, "on_reaction_add")
+    # bot.add_listener(cog.curate_channels, "on_message")
+    # bot.add_check(cog.check_restrictions, call_once=True)
+    # bot.add_listener(cog.quote_react, "on_reaction_add")
     bot.add_cog(cog)

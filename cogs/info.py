@@ -81,16 +81,16 @@ class Information():
     @info.command(name='user', no_pm=True)
     async def _user(self, ctx, *, user: str=None):
         """Shows users's informations"""
-        author = ctx.author
-        server = ctx.guild
+        a = ctx.author
+        srv = ctx.guild
 
         if not user:
-            user = author
+            user = a
         elif not hasattr(user, 'roles'):
             try:
-                user = server.get_member(int(user[2:-1]))
+                user = srv.get_member(int(user[2:-1]))
             except:
-                user = await self.helpers.choose_member(ctx, server, user)
+                user = await self.helpers.choose_member(ctx, srv, user)
         if not user:
             return
         roles = [x.name for x in user.roles if x.name != "@everyone"]
@@ -100,7 +100,7 @@ class Information():
         since_joined = (ctx.message.created_at - user.joined_at).days
         user_joined = joined_at.strftime("%d %b %Y %H:%M")
         user_created = user.created_at.strftime("%d %b %Y %H:%M")
-        member_number = sorted(server.members,
+        member_number = sorted(srv.members,
                                key=lambda m: m.joined_at).index(user) + 1
 
         created_on = "{}\n({} days ago)".format(user_created, since_created)
@@ -120,7 +120,7 @@ class Information():
                                        # if x.name != "@everyone"].index)
             roles = ", ".join([r.mention
                                for r
-                               in server.role_hierarchy
+                               in srv.role_hierarchy
                                if r.name != "@everyone"
                                and r in user.roles])
         else:
