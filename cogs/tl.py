@@ -61,21 +61,7 @@ def is_gm_or_admin():
         return False
     return commands.check(_is_gm_or_admin)
 
-def has_any_clan_role():
-    async def _has_any_clan_role(ctx):
-        m = ctx.message
-        roles = [r.id for r in m.author.roles]
-        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-        is_gm = g['roles'].get('grandmaster') in roles
-        has_any = any([True
-                       for r
-                       in ['master','captain','knight','recruit','mercenary']
-                       if g['tt'].get(r) in roles])
-        if is_gm or has_any:
-            return True
-        asyncio.ensure_future(ctx.send('You must be in the clan to file a LoA.'))
-        return False
-    return commands.check(_has_any_clan_role)
+
 
 def is_gm_or_master():
     async def _is_gm_or_master(ctx):
@@ -153,28 +139,7 @@ class TapTitans():
                 asyncio.ensure_future(self.helpers.update_tls())
             await asyncio.sleep(9.999999)
 
-    # @when_check()
-    # @commands.command(name='when')
-    # async def when(self, ctx):
-    #     g = await self.helpers.get_record('server', ctx.message.guild.id)
-    #     when_channel = g.tt.get('when_channel')
-    #     if when_channel and not ctx.channel.id == when_channel:
-    #         asyncio.ensure_future(ctx.send(f'You can only do this in: <#{when_channel}>'))
-    #         return
-    #     if g.tt.get('boss_message') and when_channel:
-    #         c = ctx.message.guild.get_channel(when_channel)
-    #         _next = g.tt['next_boss']
-    #         _now = datetime.utcnow().timestamp()
-    #         _m,_s = divmod(_next-_now, 60)
-    #         _h,_m = divmod(_m, 60)
-    #         _h, _m, _s = [max(0, round(x)) for x in (_h,_m,_s)]
-
-    #         when_msg = await c.send(
-    #             f'Titanlord arrives in **{_h:02}:{_m:02}:{_s:02}**'
-    #         )
-    #         g.tt['when_message'] = when_msg.id
-    #     else:
-    #         asyncio.ensure_future(ctx.send("Oops, there's no boss active rn."))
+    
 
     @commands.group(pass_context=True, invoke_without_command=False, name="tt")
     async def tt(self, ctx):
@@ -232,26 +197,27 @@ class TapTitans():
         )
         s = next((dict(r) for r in s if r['id']==ctx.guild.id), None)
         if g and s:
-            short_code = g.get('shortcode', 'Clan')
-            clan_name = g.get('clanname', '`No clan name set`')
-            cq_no = g.get('cq_number', 1)
+            short_code = g.get('shortcode') or 'Clan'
+            clan_name = g.get('clanname') or '`No clan name set`'
+            cq_no = g.get('cq_number') or 1
             fields = {}
             roles = {'Grandmaster': "<@&{}>".format(s['roles'].get('grandmaster', '0'))}
             roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit']})
+            fields.update({'channels':
+                '\n'.join('{}: {}'.format(
+                    k.replace('_channel','').replace('channel', 'titanlord'), g[k] and f'<#{g[k]}>' or '`not set`'
+                ) for k in g if k.endswith('channel'))
+            })
             fields.update({f'{short_code} Roles': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
-            fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at', []))})
+            fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at')) or '`not set`'})
             fields.update({f'{short_code} {k.title()} text': (g.get(k) or "None").format(
                 TIME="**04:32:22**", CQ=cq_no, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP=clan_name
             ) for k in ['timer', 'ping', 'now', 'round', 'after']})
-
             embed = await self.helpers.full_embed(
-                'TL Group: {} - {}'.format(
-                    short_code,
-                    clan_name
-                ),
+                f'TL Group: {short_code} - {clan_name}',
                 fields=fields,
                 inline=False)
-            await ctx.send(embed=embed)
+            await ctx.send('',embed=embed)
 
     @tt.group(name='set', invoke_without_command=False)
     async def tt_set(self, ctx):
@@ -272,9 +238,9 @@ class TapTitans():
             )))
             return
         friendly_name=kind
-        if kind == 'when':
-            kind = 'when_channel'
-            friendly_name='when'
+        if kind in [k for k in kinds if k != 'tl']:
+            friendly_name=kind
+            kind = f'{kind}_channel'
         if kind == 'tl':
             kind = 'channel'
             friendly_name='tl'
@@ -517,9 +483,26 @@ class TapTitans():
         ), 0xffffff)
         asyncio.ensure_future(ctx.send(embed=e))
 
-    @has_any_clan_role()
+    # @has_any_clan_role()
     @commands.command(name='loa', aliases=['absent'])
-    async def _loa(self, ctx, timeframe):
+    async def _loa(self, ctx, timeframe, group="-default"):
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        msg = None
+        if not exists:
+            msg = f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'
+        elif not await self.helpers.tl_has_settings(exists, c=('when_channel')):
+            msg = f'The TL group `{group}` does not have a `when_channel` set up. Ask a master to do `.tt set channel when`'
+        if msg:
+            asyncio.ensure_future(ctx.send(msg))
+            return
         m = ctx.message
         a = m.author
         g = await self.helpers.get_record('server', m.guild.id)
@@ -573,6 +556,38 @@ class TapTitans():
         exists.update({'next': None, 'message': 0, 'when_message': 0})
         await self.helpers.sql_update_record('titanlord', exists)
         asyncio.ensure_future(ctx.send(f'Successfully cleared the `{group}` boss timer!'))
+
+    @tl.command(name='when')
+    async def tl_when(self, ctx, group="-default"):
+        if not group.startswith('-'):
+            asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
+            return
+        else:
+            group = group[1:]
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        msg = None
+        when_channel, clan = exists.get('when_channel'), exists.get('clanname') or 'Clan'
+        boss_message = exists.get('message') or 0
+        if not exists:
+            msg = f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'
+        elif not when_channel or None:
+            msg = f'The TL group `{group}` does not have a `when_channel` set up. Ask a master to do `.tt set channel when`'
+        elif ctx.channel.id != when_channel:
+            msg = f'The `{clan}` `when` channel is: <#{when_channel}>'
+        elif not boss_message:
+            msg = f'There does not seem to be a {clan} boss active right now. :/'
+        if msg:
+            asyncio.ensure_future(ctx.send(msg))
+            return
+
+        timer = await self.helpers.get_tl_time_string(exists)
+        mx = await self.bot.get_channel(exists['when_channel']).send(timer)
+        exists.update({'when_message': mx.id})
+        result = await self.helpers.sql_update_record('titanlord', exists)
+
 
     @is_gm_or_master()
     @tl.command(name='in')

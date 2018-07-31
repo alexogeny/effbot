@@ -80,7 +80,11 @@ _titanlord = """CREATE TABLE IF NOT EXISTS Titanlord(
     after text,
     when_message numeric,
     when_channel numeric,
-    channel numeric
+    channel numeric,
+    paste_channel numeric,
+    report_channel numeric,
+    masters_channel numeric,
+    loa_channel numeric
 );"""
 
 Server = defaultdict(lambda: dict(
@@ -99,5 +103,6 @@ Titanlord = defaultdict(lambda: dict(
     ping='BOSS #{CQ} SPAWNED @everyone!!!',
     round='Ding! Time for round {ROUND}, @everyone',
     after='Hey {TIMER}, set the timer and export CQ data!',
-    when_message=0, when_channel=0, channel=0 
+    when_message=0, when_channel=0, channel=0, paste_channel=0, report_channel=0,
+    masters_channel=0, loa_channel=0
 ))
