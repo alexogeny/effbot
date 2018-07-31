@@ -263,13 +263,11 @@ class TapTitans():
 
     @is_gm_or_master()
     @tt_set.command(name='name')
-    async def tt_set_name(self, ctx, *name, group="-default"):
-        group = name[-1].startswith('-') and name[-1] or group
-        
-        if name[-1].startswith('-'):
-            clanname=' '.join(name[:-1])
-        else:
-            clanname=' '.join(name)
+    async def tt_set_name(self, ctx, *cname, group="-default"):
+        clanname = ' '.join(cname)
+        if cname[-1].startswith('-'):
+            clanname=' '.join(cname[:-1])
+        group = cname[-1].startswith('-') and cname[-1] or group
         
         print(clanname)
         
@@ -764,7 +762,7 @@ class TapTitans():
             min_tap_dmg = sum((b/100)*ms*min_taps for b,d in hitmap[0:min_hits])
             if int(damage) >= min_tap_dmg+min_helper_dmg:
                 hitter[id]['dmg'] += int(damage)
-                hitter[id]['hit'] += 1
+                hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
                 hitter[id].update({
                     'name': d_id and f'<@!{d_id}>' or name
