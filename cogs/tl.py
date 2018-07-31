@@ -80,53 +80,6 @@ def is_gm_or_master():
         return False
     return commands.check(_is_gm_or_master)
 
-# def can_do_timers():
-#     async def _can_do_timers(ctx):
-#         m = ctx.message
-#         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-#         roles = [a.id for a in m.author.roles]
-#         is_gm = g['roles'].get('grandmaster') in roles
-#         is_master = g['tt'].get('master') in roles
-#         is_timer = g['tt'].get('timer') in roles
-#         if is_gm or is_master or is_timer:
-#             return True
-#         asyncio.ensure_future(ctx.send('You do not have the necessary permissions.'))
-#         return False
-#     return commands.check(_can_do_timers)
-
-# def tl_checks():
-#     async def _tl_checks(ctx):
-#         m = ctx.message
-#         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-#         if not g['tt'].get('tl_channel'):
-#             asyncio.ensure_future(ctx.send('The Gm or a master needs to set up a TL channel.\n'
-#                            '`e.tt setchannel tl #abc123`'))
-#             return False
-#         elif not g['tt'].get('cq_number'):
-#             asyncio.ensure_future(ctx.send('The Gm or a master should set the CQ number.\n'
-#                            'This is the cq of the _next_ TL, not the one that\n'
-#                            'was just killed.\n'
-#                            '`e.tt setcq 1589`'))
-#             return False
-#         elif not g['tt'].get('timer_text') or not g.tt.get('ping_text') or not g.tt.get('now_text'):
-#             asyncio.ensure_future(ctx.send(
-#                 'The Gm or a master should set the timer texts.\n'
-#                 'There are three separate texts to set.'))
-#             return False
-#         return True
-#     return commands.check(_tl_checks)
-
-# def when_check():
-#     async def _when_check(ctx):
-#         m = ctx.message
-#         g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
-#         if not g.tt.get('when_channel'):
-#             await ctx.send('GM or master needs to set up the when channel.\n'
-#                            '`e.tt setchannel when #abc123`')
-#             return False
-#         return True
-#     return commands.check(_when_check)
-
 class TapTitans():
     """docstring for TapTitans"""
     def __init__(self, bot):
@@ -680,12 +633,12 @@ class TapTitans():
         if exists.get('next') and exists.get('next') < now:
             cq_no = int(exists.get('cq_number') or 0)
             # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
-            ttk = now-(now+_next)+timedelta(hours=6)
-            print(ttk)
+            ttk = (now+_next)-now-timedelta(hours=6)
+            # print(ttk)
             ttk_mod = await self.helpers.mod_timedelta(ttk)
-            print(ttk_mod)
+            # print(ttk_mod)
             ttk_map = await self.helpers.map_timedelta(ttk_mod)
-            print(ttk_map)
+            # print(ttk_map)
             ttk = ', '.join([f'**{x}** {y}' for x, y in ttk_map[1:]])
             icon = 'https://i.imgur.com/{}.png'.format(choice([
                 '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
@@ -808,8 +761,8 @@ class TapTitans():
             for chunk in self.helpers.chunker(final, 21):
                 result = []
                 for i, r in enumerate(chunk):
-                    name = '`{} #{:02}`: `{:02}%` (`{:<7}`)'.format(
-                        r['rank'], started_at*21+i+1, r["atd"], self.helpers.human_format(r["dmg"]) 
+                    name = '`{} #{:02}`: `{:02}/{:02}` (`{:<7}`)'.format(
+                        r['rank'], started_at*21+i+1, r["hit"], total, self.helpers.human_format(r["dmg"]) 
                     )
                     result.append(f'{name} - {r["name"]}')
                 e = await self.helpers.build_embed(
