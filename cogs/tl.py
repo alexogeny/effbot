@@ -141,8 +141,8 @@ class TapTitans():
         if not name or not newname:
             asyncio.ensure_future(ctx.send('You need to supply the old name and new name, in that order.'))
         exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
-        new_exists = next((dict(r) for r in exists if r['name']==newname.lower() and r['guild']==ctx.guild.id), None)
-        old_exists = next((dict(r) for r in exists if r['name']==name.lower() and r['guild']==ctx.guild.id), None)
+        new_exists = next((dict(r) for r in exists if r['name'].lower()==newname.lower() and r['guild']==ctx.guild.id), None)
+        old_exists = next((dict(r) for r in exists if r['name'].lower()==name.lower() and r['guild']==ctx.guild.id), None)
         if not new_exists and old_exists:
             old_exists.update({'name': newname.lower()})
             result = await self.helpers.sql_update_record('titanlord', old_exists)
@@ -281,11 +281,11 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        clanname_exists = next((dict(r) for r in exists if r['clanname']==clanname), None)
+        clanname_exists = next((dict(r) for r in exists if r['clanname'].lower()==clanname.lower()), None)
         if clanname_exists:
             asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
         else:
-            valid = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+            valid = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
             if valid:
                 valid.update({'clanname': clanname})
                 result = await self.helpers.sql_update_record('titanlord', valid)
@@ -310,7 +310,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if exists:
             exists.update({'timezone': int(timezone)})
             if int(timezone) > -1:
@@ -336,7 +336,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if exists:
             exists.update({'cq_number': int(cq)})
             result = await self.helpers.sql_update_record('titanlord', exists)
@@ -370,7 +370,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if exists:
             exists.update({kind: msg_text})
             result = await self.helpers.sql_update_record('titanlord', exists)
@@ -405,7 +405,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if exists:
             exists.update({f'{kind}_requirement': int(value)})
             result = await self.helpers.sql_update_record('titanlord', exists)
@@ -437,7 +437,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if exists:
             exists.update({'ping_at': pings})
             result = await self.helpers.sql_update_record('titanlord', exists)
@@ -502,7 +502,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         msg = None
         if not exists:
             msg = f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'
@@ -557,7 +557,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if not exists:
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
             return
@@ -575,7 +575,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         msg = None
         when_channel, clan = exists.get('when_channel'), exists.get('clanname') or 'Clan'
         boss_message = exists.get('message') or 0
@@ -614,7 +614,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         msg = None
         if not exists:
             msg = f'A TL group with name `{name}` does not exist. Please create one first using `.tt group add`'
@@ -693,7 +693,7 @@ class TapTitans():
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
-        exists = next((dict(r) for r in exists if r['name']==group.lower() and r['guild']==ctx.guild.id), None)
+        exists = next((dict(r) for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
         msg = None
         if not exists:
             msg = f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'
