@@ -286,17 +286,18 @@ class TapTitans():
         )
         exists = [dict(r) for r in exists]
         clanname_exists = next((r for r in exists if r['clanname'].lower()==clanname.lower()), None)
-        if clanname_exists:
+        if clanname_exists is not None:
             asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
-        else:
-            valid = next((r for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
-            if valid:
-                print(clanname)
-                valid.update({'clanname': clanname})
-                result = await self.helpers.sql_update_record('titanlord', valid)
-                asyncio.ensure_future(ctx.send(f'Set the `clan name` for `{group}` to `{clanname}`!'))
-            else:
-                asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+            return
+        print(group)
+        valid = next((r for r in exists if r['name'].lower()==group.lower() and r['guild']==ctx.guild.id), None)
+        if valid:
+            print(clanname)
+            valid.update({'clanname': clanname})
+            result = await self.helpers.sql_update_record('titanlord', valid)
+            asyncio.ensure_future(ctx.send(f'Set the `clan name` for `{group}` to `{clanname}`!'))
+            return
+        asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @is_gm_or_master()
     @tt_set.command(name='timezone', aliases=['tz'])
@@ -760,7 +761,7 @@ class TapTitans():
                     # print(rl)
                     hitter[id]['rank']=rl
             min_tap_dmg = sum((b/100)*ms*min_taps for b,d in hitmap[0:min_hits])
-            if int(damage) >= min_tap_dmg+min_helper_dmg:
+            if int(damage)+10000000 >= min_tap_dmg+min_helper_dmg:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
