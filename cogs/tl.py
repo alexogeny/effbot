@@ -268,6 +268,10 @@ class TapTitans():
         
         if name[-1].startswith('-'):
             clanname=' '.join(name[:-1])
+        else:
+            clanname=' '.join(name)
+        
+        print(clanname)
         
         if not clanname or len(clanname) > 20:
             asyncio.ensure_future(ctx.send(
