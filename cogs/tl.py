@@ -102,6 +102,20 @@ class TapTitans():
     @tt.group(name='group', invoke_without_command=False)
     async def tt_group(self, ctx):
         pass
+    
+    @is_gm_or_master()
+    @tt_group.command(name='list')
+    async def tt_group_list(self, ctx):
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = [dict(r) for r in exists if r['guild']==ctx.guild.id]
+        
+        if not exists:
+            asyncio.ensure_future(ctx.send('Could not find any groups. :<'))
+            return
+        exists = ', '.join([f'`{r["name"]`' for r in exists])
+        asynco.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
 
     @is_gm_or_master()
     @tt_group.command(name='add')
