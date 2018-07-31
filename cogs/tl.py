@@ -264,10 +264,11 @@ class TapTitans():
     @is_gm_or_master()
     @tt_set.command(name='name')
     async def tt_set_name(self, ctx, *name, group="-default"):
-        clanname = ' '.join(name)
+        group = name[-1].startswith('-') and name[-1] or group
+        
         if name[-1].startswith('-'):
             clanname=' '.join(name[:-1])
-        group = name[-1].startswith('-') and name[-1] or group
+        
         if not clanname or len(clanname) > 20:
             asyncio.ensure_future(ctx.send(
                 'Clan names must be less than 20 characters in length.'
