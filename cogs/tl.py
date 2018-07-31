@@ -746,7 +746,7 @@ class TapTitans():
         players = await self.helpers.sql_query_db('SELECT * FROM "user"')
         players = [p for p in players if ctx.guild.get_member(p['id'])]
         # rank = '_'
-        hit_tuples = [[tuple(x) for x in v] for k, v in cqs.items()]
+        hit_tuples = [x for x in v] for k, v in cqs.items()]
         for hit in list(chain.from_iterable(hit_tuples)):
             rank, name, id, damage = hit.values()
             if not hitter[id]['id']:
