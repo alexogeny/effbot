@@ -749,8 +749,10 @@ class TapTitans():
         hit_tuples = [[x for x in v] for k, v in cqs.items()]
         for hit in list(chain.from_iterable(hit_tuples)):
             rank, name, id, damage = hit.values()
-            if not hitter[id]['id']:
-                hitter[id].update({'id': id, 'hit': 0, 'rank': '-'})
+            if not hitter[id]:
+                hitter[id]['id'] = id
+                hitter[id]['hit'] = 0
+                hitter[id]['rank'] = '-'
             ms, d_id = 4000, 0
             player = next((dict(p) for p in players if p['tt'].get('code')==id), None)
             if player:
