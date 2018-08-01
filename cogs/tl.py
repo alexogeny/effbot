@@ -611,6 +611,7 @@ class TapTitans():
     @is_gm_or_master()
     @tl.command(name='in')
     async def tl_in(self, ctx, *time, group="-default"):
+        delay = datetime.utcnow()
         time_text = ' '.join(time)
         if time[-1].startswith('-'):
             time_text=' '.join(time[:-1])
@@ -651,11 +652,10 @@ class TapTitans():
 
         _next, _units = await self.helpers.process_time(time)
         now = datetime.utcnow()
-        mx = await self.bot.get_channel(exists['channel']).send('Loading timer. If this takes a very long time, let <@!305879281580638228> know!')
         modded_ = await self.helpers.mod_timedelta(_next)
         mapped_ = await self.helpers.map_timedelta(modded_)
 
-        if exists.get('next') and exists.get('next') < now:
+        if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
             # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
             ttk = (now+_next)-now-timedelta(hours=6)
@@ -682,13 +682,16 @@ class TapTitans():
                 author=dict(name=f'Boss #{cq_no-1}', image=icon)
             )
             asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
-
-        exists.update({'next': now+_next, 'message': mx.id, 'pinged_at': 3600})
-        result = await self.helpers.sql_update_record('titanlord', exists)
-
+        
         asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
             '`, `'.join([f'{x} {y}' for x, y in mapped_[1:]])
         )))
+        full_delay = datetime.utcnow()-delay
+        mx = await self.bot.get_channel(exists['channel']).send('Loading timer. If this takes a very long time, let <@!305879281580638228> know!')
+        exists.update({'next': (now+_next)-full_delay, 'message': mx.id, 'pinged_at': 3600})
+        result = await self.helpers.sql_update_record('titanlord', exists)
+
+        
     
     @is_gm_or_master()
     @tt.command(name='report')
@@ -722,7 +725,7 @@ class TapTitans():
         result = [m.content.replace('```\n','```').replace('\n```','```') for m in messages]
         cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.split('```')[3]
                for r in result
-               if int(re.match(r'```[^\d]+(\d+)', r.group(1)))}
+               if int(re.match(r'```[^\d]+(\d+)', r).group(1))}
         cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
                for c, v
                in cqs.items()
