@@ -115,7 +115,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send('Could not find any groups. :<'))
             return
         exists = ', '.join([f'`{r["name"]}`' for r in exists])
-        asynco.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
+        asyncio.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
 
     @is_gm_or_master()
     @tt_group.command(name='add')
