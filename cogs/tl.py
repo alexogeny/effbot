@@ -720,9 +720,11 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(msg))
             return
         start, end = int(start), int(end)
+        total = end+1-start
         c = exists['paste_channel']
         c = ctx.guild.get_channel(c)
-        messages = await c.history(limit=300).flatten()
+        cq_no = int(exists['cq_number'] or 0)
+        messages = await c.history(limit=total+(cq_no-end)).flatten()
         result = [m for m in messages]
         cqs = {}
         for r in result:
@@ -745,7 +747,7 @@ class TapTitans():
             s['tt'].get(k, 0) for k in ['probation', 'master', 'captain', 'knight', 'recruit']
         ]
         # print(roles)
-        total = end+1-start
+        
         missed = total - len(cqs)
         hitter = defaultdict(lambda: dict(id='', name='', hit=0, dmg=0, atd=0, rank='-'))
         hitmap = [(100,0),(110,5),(125,25),(150,50),(175,75),(200,100),(250,125),(300,150)]
