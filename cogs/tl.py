@@ -723,7 +723,7 @@ class TapTitans():
         c = ctx.guild.get_channel(c)
         messages = await c.history(limit=300).flatten()
         result = [m.content.replace('```\n','```').replace('\n```','```') for m in messages]
-        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): r.split('```')[3]
+        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): [x for x in r.split('```') if x.strip()][1]
                for r in result
                if int(re.match(r'```[^\d]+(\d+)', r).group(1))}
         cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
