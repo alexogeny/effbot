@@ -722,14 +722,21 @@ class TapTitans():
         c = exists['paste_channel']
         c = ctx.guild.get_channel(c)
         messages = await c.history(limit=300).flatten()
-        result = [m.content.replace('```\n','```').replace('\n```','```') for m in messages]
-        cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): [x for x in r.split('```') if x.strip()][1]
-               for r in result
-               if int(re.match(r'```[^\d]+(\d+)', r).group(1))}
-        cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
-               for c, v
-               in cqs.items()
-               if c in range(start, end+1)}
+        result = [m for m in messages]
+        cqs = {}
+        for r in result:
+            cq_header, cq_data = (x for x in r.content.replace('```\n','```').replace('\n```','```').split('```') if x.strip())
+            cq_number = int(re.match(r'```[^\d]+(\d+)', cq_header).group(1))
+            if start <= cq_number <= end+1:
+                cq_rows = [dict(row) for row in DictReader(cq_data.splitlines(), delimiter=",", quotechar='"')]
+                cqs[cq_number] = cq_rows
+        #cqs = {int(re.match(r'```[^\d]+(\d+)', r).group(1)): [1]
+        #       for r in result
+        #       if int(re.match(r'```[^\d]+(\d+)', r).group(1))}
+        #cqs = {c: [dict(r) for r in DictReader(v.splitlines(), delimiter=",", quotechar='"')]
+        #       for c, v
+        #       in cqs.items()
+        #       if c in range(start, end+1)}
         s = await self.helpers.get_record('server', ctx.guild.id)
         roles = [
             s['roles'].get('grandmaster', 0)
