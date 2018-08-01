@@ -726,7 +726,7 @@ class TapTitans():
         cqs = {}
         for r in result:
             cq_header, cq_data = (x for x in r.content.replace('```\n','```').replace('\n```','```').split('```') if x.strip())
-            cq_number = int(re.match(r'```[^\d]+(\d+)', cq_header).group(1))
+            cq_number = int(re.match(r[^\d]+(\d+)', cq_header).group(1))
             if start <= cq_number <= end+1:
                 cq_rows = [dict(row) for row in DictReader(cq_data.splitlines(), delimiter=",", quotechar='"')]
                 cqs[cq_number] = cq_rows
