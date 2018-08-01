@@ -658,8 +658,8 @@ class TapTitans():
         if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
             # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
-            ttk = (now+_next)-now
-            print(ttk.total_seconds())
+            ttk = timedelta(hours=6)-_next
+            # print(ttk.total_seconds())
             # print(ttk)
             ttk_mod = await self.helpers.mod_timedelta(ttk)
             # print(ttk_mod)
@@ -683,7 +683,7 @@ class TapTitans():
                 author=dict(name=f'Boss #{cq_no-1}', image=icon)
             )
             asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
-        
+        await asyncio.sleep(1)
         asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
             '`, `'.join([f'{x} {y}' for x, y in mapped_[1:]])
         )))
