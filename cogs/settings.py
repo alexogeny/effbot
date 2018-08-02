@@ -17,13 +17,13 @@ def is_admin_or_owner():
     async def _is_admin_or_owner(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        if g.roles.get('admin') in [a.id for a in msg.author.roles]:
+        if g['roles'].get('admin') in [a.id for a in msg.author.roles]:
             return True
         elif ctx.author.id == 305879281580638228:
             return True
         elif msg.author.id == msg.guild.owner_id:
             return True
-        elif g.roles.get('admin') not in [a.id for a in msg.author.roles]:
+        elif g['roles'].get('admin') not in [a.id for a in msg.author.roles]:
             await ctx.send('You need to be a server admin to do that.')
             return False
     return commands.check(_is_admin_or_owner)
@@ -297,7 +297,8 @@ class SettingsCog():
             if not result:
                 asyncio.ensure_future(ctx.send('No roles found!'))
                 return
-            g.roles[key]=result.id
+            g['roles'][key]=result.id
+            await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
             
         elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto', 'dj']:
@@ -306,7 +307,8 @@ class SettingsCog():
             if not result:
                 asyncio.ensure_future(ctx.send('No roles found!'))
                 return
-            g.roles[key]=result.id
+            g['roles'][key]=result.id
+            await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(self.helpers.try_mention(ctx, f'{key} role', result))
             return
 
@@ -320,13 +322,14 @@ class SettingsCog():
                         mc = mc[len(p):].strip()
                         passed = 1
             mc = mc.replace('settings set '+key, '')
-            g.texts['welcome'] = mc
+            g['texts']['welcome'] = mc
             USERNUMBER = await self.helpers.member_number(ctx.message.author, ctx.message.guild)
             e = await self.helpers.build_embed(mc.format(
                 USERID=ctx.message.author.id, USERNAME=ctx.message.author.name,
                 USERDISCRIMINATOR=ctx.message.author.discriminator,
                 USERNUMBER=USERNUMBER, SERVERNAME=ctx.guild.name
             ), 0xffffff)
+            await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(ctx.send(
                 f'Set the {key.replace("text", "")} text to:',
                 embed=e))
@@ -335,31 +338,31 @@ class SettingsCog():
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             if result or value=="0":
                 if value == "0":
-                    g.logs[key[3:]] = 0
+                    g['logs'][key[3:]] = 0
                     await ctx.send(f'Unset the {key} setting.')
                 else:
-                    g.logs[key[3:]] = result.id
-                # print(g.logs)
+                    g['logs'][key[3:]] = result.id
+                # print(g['logs'])
                     await ctx.send(f'Set the {key} setting to {result.mention}')
 
 
         elif key.replace('channel', '') in ['quotes', 'updates', 'curated', 'welcome']:
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             key = key.replace('channel', '')
-            if not g.channels.get(key):
-                g.channels[key] = []
-            if result and key == 'curated' and result not in g.channels[key]:
-                g.channels[key].append(result.id)
+            if not g['channels'].get(key):
+                g['channels'][key] = []
+            if result and key == 'curated' and result not in g['channels'][key]:
+                g['channels'][key].append(result.id)
                 asyncio.ensure_future(ctx.send(
                     f'Added {result.mention} to curated channels.'
                 ))
-            elif result and key == 'curated' and result in g.channels[key]:
-                g.channels[key] = [c for c in g.channels[key] if c!=result.id]
+            elif result and key == 'curated' and result in g['channels'][key]:
+                g['channels'][key] = [c for c in g['channels'][key] if c!=result.id]
                 asyncio.ensure_future(ctx.send(
                     f'Removed {result.mention} from curated channels.'
                 ))
             elif result:
-                g.channels[key] = result.id
+                g['channels'][key] = result.id
                 asyncio.ensure_future(ctx.send(
                     f'Set the {key} setting to {result.mention}'
                 ))

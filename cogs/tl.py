@@ -108,7 +108,7 @@ class TapTitans():
     async def tt_group_add(self, ctx, name='default'):
         if not name:
             asyncio.ensure_future(ctx.send('You need to supply a name when creating a group.'))
-        exists = await self.get_tl_from_db(ctx, group)
+        exists = await self.get_tl_from_db(ctx, name)
         if not exists:
             result = await self.helpers.sql_query_db(
                 """INSERT INTO titanlord (id, "create", guild, name) VALUES (DEFAULT, $1, $2, $3)""",

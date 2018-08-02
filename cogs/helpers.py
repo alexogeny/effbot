@@ -424,14 +424,19 @@ class Helpers():
             tl['pinged_at'] = 0
         
         if action == 'edit':
-            try:
-                mx = await chan.get_message(tl['message'])
-            except:
-                action = 'send'
+            mx, count = None, 0
+            while not mx or count < 5:
+                count += 1
+                try:
+                    mx = await chan.get_message(tl['message'])
+                except:
+                    continue
+                await asyncio.sleep(1)
+            if not mx:
                 mx = await chan.send(text)
                 tl['message'] = mx.id
-            finally:
-                asyncio.ensure_future(mx.edit(content=text))
+                action = 'send'    
+            asyncio.ensure_future(mx.edit(content=text))
         elif action == 'send' and text_type != 'now':
             mx = await chan.send(text)
             tl['message'] = mx.id
