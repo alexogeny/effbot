@@ -87,11 +87,11 @@ class TapTitans():
         pass
 
     @tt.group(name='group', invoke_without_command=False)
-    @has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_group(self, ctx):
         pass
 
     @tt_group.command(name='list')
+    @has_clan_roles('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
     async def tt_group_list(self, ctx):
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
@@ -105,6 +105,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
 
     @tt_group.command(name='add')
+    @has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_group_add(self, ctx, name='default'):
         if not name:
             asyncio.ensure_future(ctx.send('You need to supply a name when creating a group.'))
@@ -119,6 +120,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` already exists on `{ctx.guild.name}`.'))
 
     @tt_group.command(name='rename')
+    @has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_group_rename(self, ctx, name='default', newname='notdefault'):
         if not name or not newname:
             asyncio.ensure_future(ctx.send('You need to supply the old name and new name, in that order.'))
@@ -135,6 +137,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` does not exist on `{ctx.guild.name}`.'))
 
     @tt_group.command(name='get')
+    @has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_group_get(self, ctx, name='default'):
         g = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'

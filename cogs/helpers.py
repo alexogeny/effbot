@@ -374,7 +374,7 @@ class Helpers():
     async def get_tl_time_string(self, tl, kind='timer'):
         now, next_boss = datetime.utcnow(), tl['next']
         seconds_until_tl = (next_boss-now).total_seconds()
-        _, H, M, S = await self.mod_timedelta(next_boss-now)
+        H, M, S = await self.mod_timedelta(next_boss-now)
         boss_spawn = await self.get_spawn_string(tl.get('tz', 0), next_boss)
         params = dict(
             TIME='**{:02}:{:02}:{:02}**'.format(H, M, S),
