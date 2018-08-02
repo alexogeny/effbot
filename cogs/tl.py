@@ -47,18 +47,18 @@ async def process_time(input_time: str) -> timedelta:
 
 def is_gm_or_admin():
     async def _is_gm_or_admin(ctx):
-        msg = ctx.message
-        roles = [r.id for r in msg.author.roles]
-        g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
+        m, a, g = ctx.message, ctx.author, ctx.guild
+        roles = [r.id for r in a.roles]
+        g = await ctx.bot.cogs['Helpers'].get_record('server', g.id)
         is_admin = g['roles'].get('admin') in roles
-        is_owner = msg.author.id == msg.guild.owner_id
+        is_owner = a.id == g.owner_id
         is_gm = g['roles'].get('grandmaster') in roles
         if is_admin or is_owner or is_gm:
             return True
-        elif not g['roles'].get('grandmaster'):
-            await ctx.send('Ask your server admin to set the GM role')
-        else:
-            await ctx.send('Oof, you need to be a GM to do this.')
+        msg = 'Oof, you need to be a GM to do this.'
+        if not g['roles'].get('grandmaster'):
+            msg = 'Ask your server admin to set the GM role')
+        asyncio.ensure_future(ctx.send(msg))
         return False
     return commands.check(_is_gm_or_admin)
 
@@ -658,7 +658,7 @@ class TapTitans():
         if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
             # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
-            ttk = timedelta(hours=6)-_next
+            ttk = (_next+now)-(exists.get('next')+timedelta(hours=6))
             # print(ttk.total_seconds())
             # print(ttk)
             ttk_mod = await self.helpers.mod_timedelta(ttk)
