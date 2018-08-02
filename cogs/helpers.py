@@ -344,6 +344,7 @@ class Helpers():
 
     async def mod_timedelta(self, time):
         current = time.total_seconds()
+        print(current)
         days, r = divmod(current, 86400)
         hours, r = divmod(r, 3600)
         minutes, seconds = divmod(r, 60)
