@@ -383,12 +383,6 @@ class Helpers():
         text = tl.get(kind).format(**params)
         return text
 
-    # async def get_last_two_mondays(self):
-    #     TD = dt.date.today()
-    #     TD = datetime(TD.year, TD.month, TD.day, 0, 0)
-    #     this_monday = TD + timedelta(days=-TD.weekday(), weeks=1)#+ timedelta(days=-TD.weekday())
-    #     last_monday = TD #+ timedelta(days=-TD.weekday(), weeks=-1)
-    #     return this_monday, last_monday
 
     async def update_tl(self, tl):
         chan, msg = None, None
@@ -399,7 +393,7 @@ class Helpers():
         H, M, S = await self.mod_timedelta(next_boss-now)
         is_not_final = seconds_until_tl > 10
         
-        boss_spawn = await self.get_spawn_string(tl.get('tz', 0), next_boss)
+        boss_spawn = await self.get_spawn_string(tl.get('tz') or 0, next_boss)
         
         params = dict(
             TIME='**{:02}:{:02}:{:02}**'.format(H, M, S),
@@ -424,22 +418,18 @@ class Helpers():
             tl['pinged_at'] = 0
         
         if action == 'edit':
-            mx, count = None, 0
-            while not mx or count < 5:
-                count += 1
-                try:
-                    mx = await chan.get_message(tl['message'])
-                except:
-                    await asyncio.sleep(1)
-                    continue
-            if not mx:
-                mx = await chan.send(text)
-                tl['message'] = mx.id
-                action = 'send'    
-            asyncio.ensure_future(mx.edit(content=text))
+            mx = None
+            try:
+                mx = await chan.get_message(tl['message'])
+            except:
+                mx = await chan.send(txt)
+                action = 'send'
+                tl.update({'message': mx.id})
+            else:   
+                asyncio.ensure_future(mx.edit(content=text))
         elif action == 'send' and text_type != 'now':
             mx = await chan.send(text)
-            tl['message'] = mx.id
+            tl.update({'message': mx.id})
         elif action == 'send' and text_type == 'now':
             await asyncio.sleep(seconds_until_tl)
             asyncio.ensure_future(chan.send(text))
@@ -459,7 +449,6 @@ class Helpers():
                     tl.update({'when_message': 0})
                 asyncio.ensure_future(mx.edit(content=text))
 
-        
         if action == 'send':
             asyncio.ensure_future(self.sql_update_record('titanlord', tl))
 
