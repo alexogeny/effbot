@@ -430,8 +430,8 @@ class Helpers():
                 try:
                     mx = await chan.get_message(tl['message'])
                 except:
+                    await asyncio.sleep(1)
                     continue
-                await asyncio.sleep(1)
             if not mx:
                 mx = await chan.send(text)
                 tl['message'] = mx.id
