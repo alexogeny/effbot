@@ -678,7 +678,7 @@ class TapTitans():
             cq_no = int(exists.get('cq_number') or 0)
             ttk = str(timedelta(hours=6)-((_next+now)-exists.get('next')))[:-7].split(':')
             try:
-                ttk = ':'.join([f'**{:02}**' for t in map(int, ttk)])
+                ttk = ':'.join([f'**{t:02}**' for t in map(int, ttk)])
             except:
                 ttk = 'a really, really long time'
             icon = 'https://i.imgur.com/{}.png'.format(choice([
