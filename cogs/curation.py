@@ -13,7 +13,7 @@ def is_curator_or_higher():
     async def _is_moderator_or_higher(ctx):
         msg = ctx.message
         g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        g_roles = [g['roles'].get(x) for x in ROLES[0:3]
+        g_roles = [g['roles'].get(x) for x in ROLES[0:3]]
         if next((r for r in ctx.author.roles if r.id in g_roles), None):
             return True
         asyncio.ensure_future(ctx.send('You need to be curator+ in order to use this command.'))
