@@ -57,7 +57,7 @@ def is_gm_or_admin():
             return True
         msg = 'Oof, you need to be a GM to do this.'
         if not g['roles'].get('grandmaster'):
-            msg = 'Ask your server admin to set the GM role')
+            msg = 'Ask your server admin to set the GM role'
         asyncio.ensure_future(ctx.send(msg))
         return False
     return commands.check(_is_gm_or_admin)
@@ -66,9 +66,9 @@ def is_gm_or_admin():
 
 def is_gm_or_master():
     async def _is_gm_or_master(ctx):
-        m = ctx.message
-        roles = [r.id for r in m.author.roles]
-        g = await ctx.bot.cogs['Helpers'].get_record('server', m.guild.id)
+        m, a, g = ctx.message, ctx.author, ctx.guild
+        roles = [r.id for r in a.roles]
+        g = await ctx.bot.cogs['Helpers'].get_record('server', g.id)
         is_gm = g['roles'].get('grandmaster') in roles
         is_master = g['tt'].get('master') in roles
         if is_gm or is_master:
@@ -116,6 +116,25 @@ class TapTitans():
             return
         exists = ', '.join([f'`{r["name"]}`' for r in exists])
         asyncio.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
+    
+    @is_gm_or_master()
+    @tt_group.command(name='timelord')
+    async def tt_group_timelord(self, ctx):
+        exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
+        exists = [dict(r) for r in exists if r['guild'] == ctx.guild.id]
+        if not exists:
+            asyncio.ensure_future(ctx.send('No groups on this server. :<'))
+            return
+        fields = {}
+        now = datetime.utcnow()
+        for e in exists:
+            n = e.get('clanname') or 'Clan #{}'.format(exists.index(e))
+            fields[n] = '**{}** until boss'.format((exists.get('next') or now) - now)
+        embed = self.helpers.full_embed(
+            f'List of TLs for server: `{ctx.guild.name}`',
+            fields=fields
+        )
+        asyncio.ensure_future(ctx.send(embed=embed))
 
     @is_gm_or_master()
     @tt_group.command(name='add')
@@ -269,7 +288,7 @@ class TapTitans():
             clanname=' '.join(cname[:-1])
         group = cname[-1].startswith('-') and cname[-1] or group
         
-        print(clanname)
+        #print(clanname)
         if not clanname:
             return
         
@@ -283,21 +302,21 @@ class TapTitans():
             return
         else:
             group = group[1:]
-        print(group)
+        #print(group)
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
         exists = [dict(r) for r in exists]
-        print(exists)
+        #print(exists)
         clanname_exists = next((r for r in exists if (r['clanname'] or '').lower()==clanname.lower()), None)
-        print(clanname_exists)
+        #print(clanname_exists)
         if clanname_exists is not None:
             asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
             return
-        print(group)
+        #print(group)
         valid = next((r for r in exists if (r['name'] or '').lower()==group.lower() and r['guild']==ctx.guild.id), None)
         if valid:
-            print(clanname)
+            #print(clanname)
             valid.update({'clanname': clanname})
             result = await self.helpers.sql_update_record('titanlord', valid)
             asyncio.ensure_future(ctx.send(f'Set the `clan name` for `{group}` to `{clanname}`!'))
