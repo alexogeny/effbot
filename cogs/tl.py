@@ -614,21 +614,19 @@ class TapTitans():
         next_spawn = now+_next
         if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
-            #killed_at = timedelta(hours=6)-_next
             spawned_at = exists.get('next')
-            ttk = next_spawn-_next-spawned_at
-
+            ttk = next_spawn-spawned_at-_next
             ttk_ = await self.helpers.mod_timedelta(ttk)
             ttk__ = await self.helpers.map_timedelta(ttk_)
 
-            ttk = ', '.join([f'{x} {y}' for x, y in ttk__[1:]])
+            ttk = ', '.join([f'{x} {y}' for x, y in ttk__])
 
             e = await self.tl_embed_builder(exists, ttk)
 
             asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
         await asyncio.sleep(1)
         asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
-            '`, `'.join([f'{x} {y}' for x, y in mapped_[1:]])
+            '`, `'.join([f'{x} {y}' for x, y in mapped_])
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay
@@ -659,14 +657,14 @@ class TapTitans():
             asyncio.ensure_future(ctx.send('You cannot set boss by TTK until a previous boss has spawned.'))
             return
 
-        ttk_str = ', '.join([f'{x} {y}' for x, y in _ttk])
+        ttk_str = ', '.join([f'{x} {y}' for x, y in mapped_])
 
         e = await self.tl_embed_builder(exists, ttk_str)
         asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
         
         await asyncio.sleep(1)
-        asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
-            '`, `'.join([f'{x} {y}' for x, y in mapped_[1:]])
+        asyncio.ensure_future(ctx.send('Timer set for TTK: `{}`'.format(
+            '`, `'.join([f'{x} {y}' for x, y in mapped_])
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay

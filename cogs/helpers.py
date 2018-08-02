@@ -344,14 +344,12 @@ class Helpers():
 
     async def mod_timedelta(self, time):
         current = time.total_seconds()
-        print(current)
-        days, r = divmod(current, 86400)
-        hours, r = divmod(r, 3600)
+        hours, r = divmod(current, 3600)
         minutes, seconds = divmod(r, 60)
-        return list(map(floor, (days, hours or 0, minutes or 0, seconds or 0)))
+        return list(map(floor, (hours or 0, minutes or 0, seconds or 0)))
 
     async def map_timedelta(self, modded_time):
-        keys = ['day', 'hour', 'minute', 'second']
+        keys = ['hour', 'minute', 'second']
         result = [
             (x, '{}{}'.format(keys[i], (await self.is_plural(x) and 's') or ''))
             for i, x in enumerate(modded_time)
@@ -398,7 +396,7 @@ class Helpers():
         
         now, next_boss = datetime.utcnow(), tl['next']
         seconds_until_tl = (next_boss-now).total_seconds()
-        _, H, M, S = await self.mod_timedelta(next_boss-now)
+        H, M, S = await self.mod_timedelta(next_boss-now)
         is_not_final = seconds_until_tl > 10
         
         boss_spawn = await self.get_spawn_string(tl.get('tz', 0), next_boss)
@@ -467,16 +465,10 @@ class Helpers():
         return False
 
     async def process_time(self, input_time: str) -> timedelta:
-        match = TIME_SUCKER.findall(input_time)
-        units = [
-            MAP[getattr(LETTERS.match(m[1].strip()), 'string', None)
-            or 'hms'[i]]
-            for i, m
-            in enumerate(match)
-        ]
-        measures = [int(x[0]) or 0 for x in match]
-        return (timedelta(**{unit: measures[i] or 0 for i, unit in enumerate(units)}),
-            {unit: measures[i] or 0 for i, unit in enumerate(units)})
+        matches = re.match(r'(?:(?:(?P<hours>\d{1,2})[:.h])?(?P<minutes>\d{1,2})[:.m])?(?P<seconds>\d{1,2})', input_time)
+        mgroups = {k: v and int(v) or 0 for k, v in matches.groupdict().items()}
+        return (timedelta(**mgroups), {unit: value or 0 for unit, value in mgroups.items()})
+
 
     async def clear_tl(self, tl):
         tl.update({'next': 0, 'message': 0, 'when_message': 0})
