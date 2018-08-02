@@ -116,25 +116,6 @@ class TapTitans():
             return
         exists = ', '.join([f'`{r["name"]}`' for r in exists])
         asyncio.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
-    
-    @is_gm_or_master()
-    @tt_group.command(name='timelord')
-    async def tt_group_timelord(self, ctx):
-        exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
-        exists = [dict(r) for r in exists if r['guild'] == ctx.guild.id]
-        if not exists:
-            asyncio.ensure_future(ctx.send('No groups on this server. :<'))
-            return
-        fields = {}
-        now = datetime.utcnow()
-        for e in exists:
-            n = e.get('clanname') or 'Clan #{}'.format(exists.index(e))
-            fields[n] = '**{}** until boss'.format((exists.get('next') or now) - now)
-        embed = self.helpers.full_embed(
-            f'List of TLs for server: `{ctx.guild.name}`',
-            fields=fields
-        )
-        asyncio.ensure_future(ctx.send(embed=embed))
 
     @is_gm_or_master()
     @tt_group.command(name='add')
@@ -575,6 +556,25 @@ class TapTitans():
     @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
     async def tl(self, ctx):
         pass
+    
+    @is_gm_or_master()
+    @tl.command(name='list', aliases=['timelord'])
+    async def tl_timelord(self, ctx):
+        exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
+        exists = [dict(r) for r in exists if r['guild'] == ctx.guild.id]
+        if not exists:
+            asyncio.ensure_future(ctx.send('No groups on this server. :<'))
+            return
+        fields = {}
+        now = datetime.utcnow()
+        for e in exists:
+            n = e.get('clanname') or 'Clan #{}'.format(exists.index(e))
+            fields[n] = '**{}** until boss'.format((e.get('next') or now) - now)
+        embed = self.helpers.full_embed(
+            f'List of TLs for server: `{ctx.guild.name}`',
+            fields=fields
+        )
+        asyncio.ensure_future(ctx.send(embed=embed))
 
     @is_gm_or_master()
     @tl.command(name='clear')
