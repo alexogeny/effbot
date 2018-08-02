@@ -259,7 +259,7 @@ class Curation():
                 g['extra']['quotes'].append(message.id)
                 embed = await self.helpers.build_embed(message.content, a.color)
                 embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-                embed.add_field(name=f'Quote #{len(g['extra']["quotes"])}', value=f'in {c.mention}')
+                embed.add_field(name=f'Quote #{len(g["extra"]["quotes"])}', value=f'in {c.mention}')
                 embed.add_field(name=f'Quoted by {a.name}#{a.discriminator}',
                             value=f'{m.jump_url}')
                 await self.bot.get_channel(q).send(embed=embed)
@@ -314,7 +314,7 @@ class Curation():
             # print(m.content)
             e = await self.helpers.build_embed(m.content, a.color)
             e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-            e.add_field(name=f'Quote #{len(g['extra']["quotes"])}', value=f'in {c.mention}')
+            e.add_field(name=f'Quote #{len(g["extra"]["quotes"])}', value=f'in {c.mention}')
             e.add_field(name=f'Quoted by {user.name}#{user.discriminator}',
                         value=f'{m.jump_url}')
             asyncio.ensure_future(self.bot.get_channel(q).send(embed=e))
