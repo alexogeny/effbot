@@ -677,14 +677,18 @@ class TapTitans():
         if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
             # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
-            ttk = (_next+now)-(exists.get('next')+timedelta(hours=6))
+            ttk = str(timedelta(hours=6)-((_next+now)-exists.get('next')))[:-7].split(':')
+            #ttk = (_next+now)-(exists.get('next')+timedelta(hours=6))
             # print(ttk.total_seconds())
             # print(ttk)
-            ttk_mod = await self.helpers.mod_timedelta(ttk)
+            #ttk_mod = await self.helpers.mod_timedelta(ttk)
             # print(ttk_mod)
-            ttk_map = await self.helpers.map_timedelta(ttk_mod)
+            #ttk_map = await self.helpers.map_timedelta(ttk_mod)
             # print(ttk_map)
-            ttk = ', '.join([f'**{x}** {y}' for x, y in ttk_map[1:]])
+            try:
+                ttk = ':'.join([f'**{int(t):02}**' for t in ttk])
+            except:
+                ttk = 'a really, really long time'
             icon = 'https://i.imgur.com/{}.png'.format(choice([
                 '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
                 'eYtmbjg', 'Y6jfEhM']))
