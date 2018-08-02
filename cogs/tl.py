@@ -676,11 +676,17 @@ class TapTitans():
 
         if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
-            ttk = str(timedelta(hours=6)-((_next+now)-exists.get('next')))[:-7].split(':')
-            try:
-                ttk = ':'.join([f'**{t:02}**' for t in map(int, ttk)])
-            except:
-                ttk = 'a really, really long time'
+            killed_at = timedelta(hours=6)-_next
+            spawned_at = exists.get('next')
+            ttk = (spawned_at+killed_at)-spawned_at
+            #ttk = str(timedelta(hours=6)-((_next+now)-exists.get('next')))[:-7].split(':')
+            #print(ttk)
+            ttk_ = await self.helpers.mod_timedelta(ttk)
+            ttk__ = await self.helpers.map_timedelta(ttk_)
+            #try:
+            ttk = ', '.join([f'{x} {y}' for x, y in ttk__])
+            #except:
+            #    ttk = 'a really, really long time'
             icon = 'https://i.imgur.com/{}.png'.format(choice([
                 '2Zep8pE', 'Y8OWqXd', 'r7i7rlR', 'VLjcRBe', 'TBZAL4A',
                 'eYtmbjg', 'Y6jfEhM']))
@@ -692,7 +698,7 @@ class TapTitans():
             field2 = f'Spawns with **{c_hp:,}** hitpoints.'
             
             e = await self.helpers.full_embed(
-                "Killed in {}".format(ttk),
+                "Killed in: {}".format(ttk),
                 thumbnail=icon,
                 fields={'Bonuses':field1, 'Next Boss':field2},
                 author=dict(name=f'Boss #{cq_no-1}', image=icon)
