@@ -570,7 +570,7 @@ class TapTitans():
         for e in exists:
             n = e.get('clanname') or 'Clan #{}'.format(exists.index(e))
             fields[n] = '**{}** until boss'.format((e.get('next') or now) - now)
-        embed = self.helpers.full_embed(
+        embed = await self.helpers.full_embed(
             f'List of TLs for server: `{ctx.guild.name}`',
             fields=fields
         )
@@ -676,17 +676,9 @@ class TapTitans():
 
         if exists.get('next') and exists.get('next') < delay:
             cq_no = int(exists.get('cq_number') or 0)
-            # ttk = ', '.join([f'{v} {k}'for k,v in ttk.items() if v])
             ttk = str(timedelta(hours=6)-((_next+now)-exists.get('next')))[:-7].split(':')
-            #ttk = (_next+now)-(exists.get('next')+timedelta(hours=6))
-            # print(ttk.total_seconds())
-            # print(ttk)
-            #ttk_mod = await self.helpers.mod_timedelta(ttk)
-            # print(ttk_mod)
-            #ttk_map = await self.helpers.map_timedelta(ttk_mod)
-            # print(ttk_map)
             try:
-                ttk = ':'.join([f'**{int(t):02}**' for t in ttk])
+                ttk = ':'.join([f'**{:02}**' for t in map(int, ttk)])
             except:
                 ttk = 'a really, really long time'
             icon = 'https://i.imgur.com/{}.png'.format(choice([
