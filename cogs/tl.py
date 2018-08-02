@@ -375,10 +375,10 @@ class TapTitans():
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
 
-        if not all([x.isnumeric() for x in pings]):
+        if not all([x.isnumeric() for x in pings.split()]):
             asyncio.ensure_future(ctx.send('You must supply space-sparated whole numbers. e.g. `15 5 1`'))
             return
-        pings = [int(p) for p in pings]
+        pings = [int(p) for p in pings.split()]
         
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
