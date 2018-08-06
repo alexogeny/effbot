@@ -307,7 +307,7 @@ class Curation():
         avatar = await self.helpers.get_avatar(a)
         e = await self.helpers.full_embed(
             m.content,
-            author={'name': fq_an, 'icon_url': avatar},
+            author={'name': fq_an, 'image': avatar},
             thumbnail=avatar,
             fields={
                 f'Quote #{len(g["extra"]["quotes"])}': f'in {c.mention}',
