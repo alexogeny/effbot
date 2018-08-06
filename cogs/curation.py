@@ -290,10 +290,15 @@ class Curation():
             return
         u, a, c = user, m.author, m.channel
 
-        admin_roles = [g['roles'].get(x) for x in ('admin','moderator','curator')]
-        no_permission = not any([r.id for r in u.roles if r.id in admin_roles])
-        if no_permission:
+        
+        user_roles = [r.id for r in u.roles]
+        has_permission = False
+        for role in ('admin','moderator','curator'):
+            if g['roles'].get(role) in user_roles:
+                has_permission = True
+        if not has_permission:
             return
+        
         if not g['extra'].get('quotes'):
             g['extra']['quotes']=[]
         g['extra']['quotes'].append(m.id)
