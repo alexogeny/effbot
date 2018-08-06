@@ -74,7 +74,7 @@ async def tournament_time_remains():
     remaining = '`, `'.join(map_timedelta(units))
     #remaining = str(due-time)
     
-return '{} {} `{}`'.format(weekday, classifier, remaining)
+    return '{} {} `{}`'.format(weekday, classifier, remaining)
 
 async def role_in_list(role, role_list):
     return any([role_ for role_ in role_list if role_ == role])
