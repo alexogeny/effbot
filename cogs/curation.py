@@ -72,7 +72,7 @@ class Curation():
         m = ctx.message
         a = m.author
         if not a.bot and state.lower() in ['on','off']:
-            print('Changing setting for user')
+            # print('Changing setting for user')
             g = await self.helpers.get_record('server', a.guild.id)
             if g and g['roles'].get('updates'):
                 role = next((r for r in a.guild.roles if r.id == g['roles'].get('updates')), None)
@@ -87,71 +87,96 @@ class Curation():
 
     @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="whitelist", aliases=["wl"])
-    async def whitelist(self, ctx, command: str, channels: str=''):
-        chans = channels.split(',')
+    async def whitelist(self, ctx, command: str, *channels):
+        chans = [c.strip().lower().replace(',','') for c in channels]
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
-        if command.strip().lower() in self.bot.all_commands:
-            chans = [await self.helpers.get_obj(
-                m.guild, 'channel', 'name', c
-            ) for c in chans if not c.isdigit()] + [
-                int(c) for c in chans if c.isdigit()
-            ]
-        
-            command = self.bot.all_commands[command.strip().lower()].name
-            if not g['restrictions'].get(command):
-                g['restrictions'][command] = dict(wl=[], bl=[], disable=False,
-                                               restrict=[])
-            if chans:
-                for c in chans:
-                    if c not in g['restrictions'][command]['wl']:
-                        g['restrictions'][command]['wl'].append(c)
-            else:
-                g['restrictions'][command]['wl']=[]
+        if command not in self.bot.all_commands:
+            asyncio.ensure_future(ctx.send(
+                f'Hmm, are you sure the command `{command}` exists?'
+            ))
+            return
+        print(chans)
+        if any(chans):
+            chans = [
+                await self.helpers.choose_channel(ctx, ctx.guild, c)
+                for c in chans if not c.isnumeric()
+            ] + [int(c) for c in chans if c.isnumeric()]
+
+        command = self.bot.all_commands[command.strip().lower()].name
+        if not g['restrictions'].get(command):
+            g['restrictions'][command] = dict(wl=[], bl=[], disable=False,
+                                           restrict=[])
+        if any(chans):
+            g['restrictions'][command]['wl'] = [c.id or c for c in chans]
+        else:
+            g['restrictions'][command]['wl']=[]
         await self.helpers.sql_update_record('server', g)
+        msg = None
+        if any(chans):
+            msg = '`{}` command was whitelisted to: {}'.format(
+                command, ', '.join([f'`{c.name}`' for c in chans])
+            )
+        else:
+            msg = f'`{command}` whitelist was cleared.'
+
+        asyncio.ensure_future(ctx.send(msg))
 
     @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="blacklist", aliases=["bl"])
-    async def blacklist(self, ctx, command: str, channels: str=''):
-        chans = channels.split(',')
+    async def blacklist(self, ctx, command: str, *channels):
+        chans = [c.strip().lower().replace(',','') for c in channels]
         m = ctx.message
-        g = await self.helpers.get_record('server', ctx.guild.id)
-        if command.strip().lower() in self.bot.all_commands:
-            chans = [await self.helpers.get_obj(
-                m.guild, 'channel', 'name', c
-            ) for c in chans if not c.isdigit()] + [
-                int(c) for c in chans if c.isdigit()
-            ]
-        
-            command = self.bot.all_commands[command.strip().lower()].name
-            if command not in g['restrictions']:
-                g['restrictions'][command] = dict(wl=[], bl=[], disable=False,
-                                               restrict=[])
-            if chans:
-                for c in chans:
-                    if c not in g['restrictions'][command]['bl']:
-                        g['restrictions'][command]['bl'].append(c)
-            else:
-                g['restrictions'][command]['bl']=[]
+        g = await self.helpers.get_record('server', m.guild.id)
+        if command not in self.bot.all_commands:
+            asyncio.ensure_future(ctx.send(
+                f'Hmm, are you sure the command `{command}` exists?'
+            ))
+            return
+        print(chans)
+        if any(chans):
+            chans = [
+                await self.helpers.choose_channel(ctx, ctx.guild, c)
+                for c in chans if not c.isnumeric()
+            ] + [int(c) for c in chans if c.isnumeric()]
+
+        command = self.bot.all_commands[command.strip().lower()].name
+        if not g['restrictions'].get(command):
+            g['restrictions'][command] = dict(wl=[], bl=[], disable=False,
+                                           restrict=[])
+        if any(chans):
+            g['restrictions'][command]['bl'] = [c.id or c for c in chans]
+        else:
+            g['restrictions'][command]['bl']=[]
         await self.helpers.sql_update_record('server', g)
+        msg = None
+        if any(chans):
+            msg = '`{}` command was blacklisted from: {}'.format(
+                command, ', '.join([f'`{c.name}`' for c in chans])
+            )
+        else:
+            msg = f'`{command}` blacklist was cleared.'
+
+        asyncio.ensure_future(ctx.send(msg))
 
     @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="toggle", no_pm=True)
     async def toggle(self, ctx, command: str):
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
-        if command.strip().lower() in self.bot.all_commands:
-            command = self.bot.all_commands[command.strip().lower()].name
-            if command == 'disable':
-                return
-            restricted = g['restrictions']
-            if command not in restricted:
-                restricted[command] = dict(wl=[], bl=[], disable=False, restrict=[])
-            toggle = restricted[command]['disable'] and False or True
-            action = toggle and 'dis' or 'en'
-            restricted[command]['disabled']=toggle
-            await self.helpers.sql_update_record('server', g)
-            asyncio.ensure_future(ctx.send(f'Command `{command}` was {toggle}abled.'))
+        if not command.strip().lower() in self.bot.all_commands:
+            return
+        command = self.bot.all_commands[command.strip().lower()].name
+        if command == 'disable':
+            return
+        restricted = g['restrictions']
+        if command not in restricted:
+            restricted[command] = dict(wl=[], bl=[], disable=False, restrict=[])
+        toggle = not restricted[command]['disable'] and True or False
+        action = toggle and 'dis' or 'en'
+        restricted[command]['disable']=toggle
+        await self.helpers.sql_update_record('server', g)
+        asyncio.ensure_future(ctx.send(f'Command `{command}` was {action}abled.'))
 
     @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(name='restrict', aliases=["unrestrict"], no_pm=True)
@@ -301,6 +326,7 @@ class Curation():
                 r = g['restrictions'][c]
                 # print(r)
                 # print([i for i in m.author.roles])
+                msg = None
                 if r['disable']==True:
                     msg = 'That command is disabled in this server.'
                 elif bool(r['restrict']) and not set([i.id for i in m.author.roles]).intersection(r['restrict']):
@@ -310,12 +336,11 @@ class Curation():
                     msg = 'That command can only be used in: {}'.format(
                         ', '.join([f'<#{c}>' for c in r['wl']])
                     )
-                elif bool(r['bl']) and chan in r['bl']:
+                elif bool(r['bl']) and chan.id in r['bl']:
                     msg = 'That command is disabled in this channel.'
-                else:
-                    return True
-                asyncio.ensure_future(ctx.send(msg))
-                return False
+                if msg:
+                    asyncio.ensure_future(ctx.send(msg))
+                    return False
             return True
 
 def setup(bot):
