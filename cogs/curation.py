@@ -250,7 +250,7 @@ class Curation():
                 embed.set_author(name=f'{a2.name}#{a2.discriminator}', icon_url=a2.avatar_url_as(format='jpeg'))
                 embed.add_field(name=f'Quote #{len(g["extra"]["quotes"])}', value=f'in {c.mention}')
                 embed.add_field(name=f'Quoted by {a.name}#{a.discriminator}',
-                            value=f'{m.jump_url}')
+                            value=f'{message.jump_url}')
                 await self.bot.get_channel(q).send(embed=embed)
                 await ctx.send('Quote added successfully!')
                 await self.helpers.sql_update_record('server', g)
@@ -282,36 +282,35 @@ class Curation():
 
     async def quote_react(self, reaction, user):
         m = reaction.message
-        if not isinstance(reaction.message.channel, discord.abc.PrivateChannel) and reaction.emoji == "⭐":
-            g = await self.helpers.get_record('server', m.guild.id)
-            q = g['channels'].get('quotes')
-            if not q or m.id in g['extra'].get('quotes',[]):
-                return
-            u, a, c = user, m.author, m.channel
+        if isinstance(reaction.message.channel, discord.abc.PrivateChannel) or not reaction.emoji == "⭐":
+            return
+        g = await self.helpers.get_record('server', m.guild.id)
+        q = g['channels'].get('quotes')
+        if not q or m.id in g['extra'].get('quotes',[]):
+            return
+        u, a, c = user, m.author, m.channel
 
-            no_permission = not any(await self.helpers.any_roles_in_list(
-                [a.id for a in u.roles],
-                [g['roles'].get(x) for x in ('admin','moderator','curator')] 
-            ))
-            if no_permission:
-                return
-            if not g['extra'].get('quotes'):
-                g['extra']['quotes']=[]
-            g['extra']['quotes'].append(m.id)
-            fq_an = f'{a.name}#{a.discriminator}'
-            fq_un = f'{user.name}#{user.discriminator}'
-            avatar = await self.helpers.get_avatar(a)
-            e = await self.helpers.full_embed(
-                m.content,
-                author={'name': fq_an, 'icon_url': avatar},
-                thumbnail=avatar,
-                fields={
-                    f'Quote #{len(g["extra"]["quotes"])}': f'in {c.mention}',
-                    f'Quoted by {fq_un}': f'{m.jump_url}'
-                }
-            )
-            await self.helpers.sql_update_record('server', g)
-            asyncio.ensure_future(self.bot.get_channel(q).send(embed=e))
+        admin_roles = [g['roles'].get(x) for x in ('admin','moderator','curator')]
+        no_permission = not any([r.id for r in u.roles if r.id in admin_roles])
+        if no_permission:
+            return
+        if not g['extra'].get('quotes'):
+            g['extra']['quotes']=[]
+        g['extra']['quotes'].append(m.id)
+        fq_an = f'{a.name}#{a.discriminator}'
+        fq_un = f'{user.name}#{user.discriminator}'
+        avatar = await self.helpers.get_avatar(a)
+        e = await self.helpers.full_embed(
+            m.content,
+            author={'name': fq_an, 'icon_url': avatar},
+            thumbnail=avatar,
+            fields={
+                f'Quote #{len(g["extra"]["quotes"])}': f'in {c.mention}',
+                f'Quoted by {fq_un}': f'{m.jump_url}'
+            }
+        )
+        await self.helpers.sql_update_record('server', g)
+        asyncio.ensure_future(self.bot.get_channel(q).send(embed=e))
 
     
     async def check_restrictions(self, ctx):

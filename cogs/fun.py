@@ -27,8 +27,6 @@ class Fun():
         try:
             await ctx.message.delete()
         except Forbidden as e:
-            # print('died')
-            # print(e)
             asyncio.ensure_future(ctx.send('Oops, I cannot manage messages in this channel.'))
             return
         msgbuff = ""
@@ -104,7 +102,11 @@ class Fun():
             'My sources say no, {}.',
             'Outlook not so good, {}.',
             'Doubtful, {}.',
-            'Not a chance, {}.'
+            'Not a chance, {}.',
+            'Not on this earth, {}.',
+            'When pigs fly, {}.',
+            'When evo reaches MS cap, {}.',
+            'When Bara finishes pumping his CoC, {}.'
         ]
         embed = discord.Embed(
             description=choice(answers).format(f"**{ctx.author.name}**"),
