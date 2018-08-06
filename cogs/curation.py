@@ -244,10 +244,10 @@ class Curation():
             c = result
             message = await c.get_message(message_id)
             if message and message.id not in g['extra'].get('quotes'):
-                a = message.author
+                a2 = message.author
                 g['extra']['quotes'].append(message.id)
-                embed = await self.helpers.build_embed(message.content, a.color)
-                embed.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
+                embed = await self.helpers.build_embed(message.content, a2.color)
+                embed.set_author(name=f'{a2.name}#{a2.discriminator}', icon_url=a2.avatar_url_as(format='jpeg'))
                 embed.add_field(name=f'Quote #{len(g["extra"]["quotes"])}', value=f'in {c.mention}')
                 embed.add_field(name=f'Quoted by {a.name}#{a.discriminator}',
                             value=f'{m.jump_url}')

@@ -1,8 +1,10 @@
 import discord
 import random
 import time
+import asyncio
 from discord.ext import commands
-from random import choice
+from discord.errors import Forbidden
+from random import choice, random
 import re
 
 emoji_exp = re.compile(r'<:[A-z0-9_]+:([0-9]+)>')
@@ -18,6 +20,43 @@ class Fun():
     @commands.group(pass_context=True, invoke_without_command=False)
     async def fun(self, ctx):
         pass
+
+    @commands.command(name='mock')
+    async def _mock(self, ctx, *, message):
+        
+        try:
+            await ctx.message.delete()
+        except Forbidden as e:
+            # print('died')
+            # print(e)
+            asyncio.ensure_future(ctx.send('Oops, I cannot manage messages in this channel.'))
+            return
+        msgbuff = ""
+        uppercount = 0
+        lowercount = 0
+        for c in message:
+            if c.isalpha():
+                if uppercount == 2:
+                    uppercount = 0
+                    upper = False
+                    lowercount += 1
+                elif lowercount == 2:
+                    lowercount = 0
+                    upper = True
+                    uppercount += 1
+                else:
+                    upper = random() > 0.5
+                    uppercount = uppercount + 1 if upper else 0
+                    lowercount = lowercount + 1 if not upper else 0
+
+                msgbuff += c.upper() if upper else c.lower()
+            else:
+                msgbuff += c
+
+        asyncio.ensure_future(ctx.send(
+            f'<:sponge_left:475979172372807680> {msgbuff} <:sponge_right:475979143964524544>'
+        ))
+
 
     @commands.command(name='bae')
     async def _bae(self, ctx):

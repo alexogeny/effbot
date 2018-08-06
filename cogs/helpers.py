@@ -20,7 +20,61 @@ from playhouse.shortcuts import dict_to_model, model_to_dict
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
 LETTERS = re.compile(r'^[wdhms]')
 MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
+PRIZE_ROTATOR = [
+    ('Fortune weapon', 'Hero weapon'),
+    ('Skill point', 'Perk'), 
+    ('Crafting shard', 'Pet egg')
+]
 
+BONUS_ROTATOR = [
+    '5x all hero damage',
+    '8x melee damage',
+    '8x ranged damage',
+    '8x spell damage',
+    '5x tap damage',
+    '+4 mana regen',
+    '+200 mana pool',
+    '+100% double fairy chance',
+    '+40% critical chance',
+    'None'
+]
+
+async def get_next_prize(days=1):
+    now = datetime.utcnow()+timedelta(days=days)
+    origin_date = datetime.utcfromtimestamp(1532242116.705826)
+    weeks, remainder = divmod((now-origin_date).days, 3.5)
+    tourneys = (0 - now.weekday()/2) % 3.5 <= remainder and weeks+1 or weeks
+    prize = await rotatle(prize_rotator, 3)
+    bonus = await rotatle(prize_rotator, 10)
+    return prize, bonus
+
+async def rotate(table, mod):
+    return table[int(max(0, table%mod))]
+
+
+async def tournament_time_remains():
+    time, classifier = datetime.utcnow(), 'for another'
+    date = datetime(time.year, time.month, time.day)
+    due = date+timedelta(hours=23, minutes=55)
+    if time.weekday() in [6,2] and time < due:
+        weekday = time.strftime('%A')[0:3]
+    else:
+        classifier = 'in'
+        today = date
+        wkd = today.weekday()
+        if wkd < 2:
+            weekday, t = 'Wed', 2
+        elif wkd < 6:
+            weekday, t = 'Sun', 6
+        due = today+timedelta((t-wkd) % 7)
+    units = mod_timedelta(due-time)
+    print(units)
+    # h, m, s = map(lambda x: int(float(x)+.5), str(due-time).split(':'))
+        
+    remaining = '`, `'.join(map_timedelta(units))
+    #remaining = str(due-time)
+    
+return '{} {} `{}`'.format(weekday, classifier, remaining)
 
 async def role_in_list(role, role_list):
     return any([role_ for role_ in role_list if role_ == role])

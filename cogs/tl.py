@@ -74,6 +74,9 @@ class TapTitans():
             'ping': 'No ping text set. `.tt set text ping <text...>`',
             'timer': 'No timer text set. `.tt set text timer <text...>`'
         }
+        self.game_version = 2.9
+        self.csv_path = 'https://s3.amazonaws.com/tt2-static/info_files/{game_version}/{file_name}.csv'
+        
 
     async def timer_check(self):
         while self is self.bot.get_cog('TapTitans'):
