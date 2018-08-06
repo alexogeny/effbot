@@ -6,7 +6,7 @@ from random import choice as rndchoice
 from decimal import Decimal
 from string import ascii_lowercase, digits
 from math import floor
-
+from .helpers import has_any_role
 
 def is_owner():
     async def _is_owner(ctx):
@@ -156,6 +156,42 @@ class SettingsCog():
             elif mode == 0:
                 number = Decimal(number)
             return number
+
+    @my.command(name='craftingpower', aliases=['craft', 'craftpower'])
+    async def _craftpower(self, ctx, craftpower):
+        v, a = craftpower, ctx.author
+        if not v.isnumeric():
+            return
+        if not 0<=int(v)<100:
+            return
+        await self.helpers.sql_update_key('user', a.id, 'tt', 'cp', int(v))
+        asyncio.ensure_future(ctx.send(
+            f'Set **{a.name}#{a.discriminator}**\'s crafting power to **{v}**!'
+        ))
+
+    @my.command(name='mythicsets', aliases=['sets'])
+    async def _mythicsets(self, ctx, mythicsets):
+        v, a = mythicsets, ctx.author
+        if not v.isnumeric():
+            return
+        if not 0<=int(v)<=6:
+            return
+        await self.helpers.sql_update_key('user', a.id, 'tt', 'cp', int(v))
+        asyncio.ensure_future(ctx.send(
+            f'Set **{a.name}#{a.discriminator}**\'s mythic sets to **{v}**!'
+        ))
+
+    @my.command(name='skillpoints', aliases=['sp'])
+    async def _skillpoints(self, ctx, skillpoints):
+        v, a = skillpoints, ctx.author
+        if not v.isnumeric():
+            return
+        if not 0<=int(v)<=10000:
+            return
+        await self.helpers.sql_update_key('user', a.id, 'tt', 'cp', int(v))
+        asyncio.ensure_future(ctx.send(
+            f'Set **{a.name}#{a.discriminator}**\'s skillpoints to **{v}**!'
+        ))
 
     @my.command(name='bos', aliases=['bookofshadows'])
     async def _bos(self, ctx, bos):

@@ -12,6 +12,7 @@ import asyncio
 import re
 import datetime as dt
 import time
+from .helpers import has_any_role
 UOT = 60
 SCIFI = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
 LIFI = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
@@ -50,7 +51,7 @@ def has_clan_roles(*roles):
         a_roles = [r.id for r in a.roles]
         _roles = [r.split('.') for r in roles]
         for key, role in _roles:
-            if g[key].get(role) in a_roles:
+            if g[key].get(role) or None in a_roles:
                 return True
         asyncio.ensure_future(ctx.send('Sorry, you do not have permission.'))
         return False
@@ -91,7 +92,7 @@ class TapTitans():
         pass
 
     @tt_group.command(name='list')
-    @has_clan_roles('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
     async def tt_group_list(self, ctx):
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
@@ -105,7 +106,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(f'The following TL groups exist in this server: {exists}'))
 
     @tt_group.command(name='add')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_group_add(self, ctx, name='default'):
         if not name:
             asyncio.ensure_future(ctx.send('You need to supply a name when creating a group.'))
@@ -120,7 +121,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` already exists on `{ctx.guild.name}`.'))
 
     @tt_group.command(name='rename')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_group_rename(self, ctx, name='default', newname='notdefault'):
         if not name or not newname:
             asyncio.ensure_future(ctx.send('You need to supply the old name and new name, in that order.'))
@@ -137,7 +138,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` does not exist on `{ctx.guild.name}`.'))
 
     @tt_group.command(name='get')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_group_get(self, ctx, name='default'):
         g = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
@@ -179,11 +180,12 @@ class TapTitans():
             await ctx.send('',embed=embed)
 
     @tt.group(name='set', invoke_without_command=False)
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    #@has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_set(self, ctx):
         pass
 
     @tt_set.command(name='channel')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_channel(self, ctx, kind, channel, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
@@ -212,6 +214,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='shortcode')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_shortcode(self, ctx, shortcode, group="-default"):
         if not shortcode or not shortcode.isalnum() or not len(shortcode) < 6:
             asyncio.ensure_future(ctx.send(
@@ -237,6 +240,7 @@ class TapTitans():
                 asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='name')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_name(self, ctx, *cname, group="-default"):
         clanname, group = await self.munge_group(cname, group)
         if not clanname:
@@ -267,6 +271,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='timezone', aliases=['tz'])
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_timezone(self, ctx, timezone, group="-default"):
         if not re.match(r'^[0-9-+]+$', timezone):
             asyncio.ensure_future(ctx.send("Timezone must be a whole number (no decimals) between -12 and 15."))
@@ -290,6 +295,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='cq')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_cq(self, ctx, cq, group="-default"):
         if not cq.isnumeric() and not 0 < int(cq):
             asyncio.ensure_future(ctx.send(
@@ -310,6 +316,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='text', aliases=['message'])
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_text(self, ctx, kind, *text, group="-default"):
         msg_text, group = await self.munge_group(text, group)
 
@@ -341,6 +348,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='requirement', aliases=['req'])
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_requirement(self, ctx, kind, value, group="-default"):
         if not group.startswith('-'):
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
@@ -368,6 +376,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='pings', aliases=['intervals'])
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def setinterval(self, ctx, *pings, group="-default"):
         pings, group = await self.munge_group(pings, group)
 
@@ -391,6 +400,7 @@ class TapTitans():
 
 
     @tt_set.command(name='rank', no_pm=True)
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def _setrank(self, ctx, rank, role):
         ranks = 'master knight captain recruit guest vip alumni applicant timer vip probation'.split()
         if rank not in ranks:
@@ -412,6 +422,7 @@ class TapTitans():
                 asyncio.ensure_future(self.helpers.try_mention(ctx, f'{rank} role', result))
 
     @commands.command(name='loas', aliases=['absences'])
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def _loas(self, ctx):
         m = ctx.message
         g = await self.helpers.get_record('server', m.guild.id)
@@ -433,7 +444,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(embed=e))
 
     @commands.command(name='loa', aliases=['absent'])
-    @has_clan_roles('tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
+    @has_any_role('tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
     async def _loa(self, ctx, timeframe, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
@@ -479,11 +490,35 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(embed=e))
 
     @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
     async def tl(self, ctx):
-        pass
+        pfx = await self.bot.get_prefix(ctx.message)
+        mc = ctx.message.clean_content
+        passed = 0
+        while not passed:
+            for p in pfx:
+                if mc.startswith(p):
+                    mc = mc[len(p):]
+                    passed = 1
+        if mc.strip() in ['tl', 'boss', 'titanlord']:
+            exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
+            exists = [dict(r) for r in exists if r['guild'] == ctx.guild.id]
+            if not exists:
+                asyncio.ensure_future(ctx.send('No groups on this server. :<'))
+                return
+            fields = {}
+            now = datetime.utcnow()
+            for e in exists:
+                n = e.get('clanname') or 'Clan #{}'.format(exists.index(e))
+                fields[n] = '**{}** until boss'.format((e.get('next') or now) - now)
+            embed = await self.helpers.full_embed(
+                f'List of TLs for server: `{ctx.guild.name}`',
+                fields=fields
+            )
+            asyncio.ensure_future(ctx.send(embed=embed))
     
     @tl.command(name='list', aliases=['timelord'])
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tl_timelord(self, ctx):
         exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
         exists = [dict(r) for r in exists if r['guild'] == ctx.guild.id]
@@ -502,7 +537,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(embed=embed))
 
     @tl.command(name='clear')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tl_clear(self, ctx, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
@@ -516,7 +551,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(f'Successfully cleared the `{group}` boss timer!'))
 
     @tl.command(name='when')
-    @has_clan_roles('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
     async def tl_when(self, ctx, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
@@ -594,7 +629,7 @@ class TapTitans():
         return multi_text, group
 
     @tl.command(name='in')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tl_in(self, ctx, *time, group="-default"):
         delay = datetime.utcnow()
         time_text, group = await self.munge_group(time, group)
@@ -637,7 +672,7 @@ class TapTitans():
         result = await self.helpers.sql_update_record('titanlord', exists)
     
     @tl.command(name='ttk')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tl_ttk(self, ctx, *time, group="-default"):
         delay = datetime.utcnow()
         time_text, group = await self.munge_group(time, group)
@@ -656,7 +691,7 @@ class TapTitans():
         modded_ = await self.helpers.mod_timedelta(_ttk)
         mapped_ = await self.helpers.map_timedelta(modded_)
         
-        if not exists.get('next'):
+        if not exists.get('next') or exists.get('next') > delay:
             asyncio.ensure_future(ctx.send('You cannot set boss by TTK until a previous boss has spawned.'))
             return
 
@@ -675,14 +710,14 @@ class TapTitans():
         exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3600})
         result = await self.helpers.sql_update_record('titanlord', exists)
     
-    async def map_hits_to_damage(ms, taps, hits):
+    async def map_hits_to_damage(self, ms, taps, hits):
         return sum(b*ms*taps for b in [1,1.1,1.25,1.5,1.75,2,2.5,3][0:hits])
     
-    async def map_hits_to_diamonds(hits):
+    async def map_hits_to_diamonds(self, hits):
         return sum(d*5 for d in [0,1,5,10,15,20,25,50][0:hits])
     
     @tt.command(name='report')
-    @has_clan_roles('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def _report(self, ctx, start, end, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:

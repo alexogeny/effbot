@@ -6,44 +6,11 @@ from discord.ext import commands
 from random import choice as rndchoice
 from urllib.parse import urlparse
 from discord.ext.commands import DisabledCommand
+from .helpers import has_any_role, role_exists
+
 
 ROLES = 'admin moderator curator updates dj'.split() 
 
-def is_curator_or_higher():
-    async def _is_moderator_or_higher(ctx):
-        msg = ctx.message
-        g = await ctx.bot.cogs['Helpers'].get_record('server', msg.guild.id)
-        g_roles = [g['roles'].get(x) for x in ROLES[0:3]]
-        if next((r for r in ctx.author.roles if r.id in g_roles), None):
-            return True
-        asyncio.ensure_future(ctx.send('You need to be curator+ in order to use this command.'))
-        return False
-
-    return commands.check(_is_moderator_or_higher)
-
-def has_update():
-    async def _has_update(ctx):
-        #msg = ctx.message
-        g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.guild.id)
-        if g['roles'].get('updates'):
-            return True
-        asyncio.ensure_future(ctx.send(
-            'This server needs to have an `update` role setup.\n'
-            '`.settings set updatesrole rolename`'))
-        return False
-    return commands.check(_has_update)
-
-def has_dj():
-    async def _has_dj(ctx):
-        #msg = ctx.message
-        g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.guild.id)
-        if g['roles'].get('dj'):
-            return True
-        asyncio.ensure_future(ctx.send(
-            'This server needs to have a `DJ` role setup.\n'
-            '`.settings set djrole rolename`'))
-        return False
-    return commands.check(_has_dj)
 
 class Curation():
     """
@@ -53,8 +20,8 @@ class Curation():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    @has_update()
-    @is_curator_or_higher()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
+    @role_exists('roles.updates')
     @commands.command(name='update')
     async def update(self, ctx, channel):
         """Posts an update to the updates channel and mentions the updates role."""
@@ -99,7 +66,7 @@ class Curation():
                     '\nI would suggest placing my role above `{role.name}`'))
             
 
-    @has_update()
+    @role_exists('roles.update')
     @commands.command(name='updates')
     async def _updates(self, ctx, state):
         m = ctx.message
@@ -118,7 +85,7 @@ class Curation():
                     await ctx.send(f'Successfully removed the updates role'
                         f' from {a.name}#{a.discriminator}!')
 
-    @is_curator_or_higher()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="whitelist", aliases=["wl"])
     async def whitelist(self, ctx, command: str, channels: str=''):
         chans = channels.split(',')
@@ -141,8 +108,9 @@ class Curation():
                         g['restrictions'][command]['wl'].append(c)
             else:
                 g['restrictions'][command]['wl']=[]
+        await self.helpers.sql_update_record('server', g)
 
-    @is_curator_or_higher()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="blacklist", aliases=["bl"])
     async def blacklist(self, ctx, command: str, channels: str=''):
         chans = channels.split(',')
@@ -165,8 +133,9 @@ class Curation():
                         g['restrictions'][command]['bl'].append(c)
             else:
                 g['restrictions'][command]['bl']=[]
+        await self.helpers.sql_update_record('server', g)
 
-    @is_curator_or_higher()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="toggle", no_pm=True)
     async def toggle(self, ctx, command: str):
         m = ctx.message
@@ -183,14 +152,8 @@ class Curation():
             restricted[command]['disabled']=toggle
             await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(ctx.send(f'Command `{command}` was {toggle}abled.'))
-            # if not restricted[command]['disable']:
-                # restricted[command]['disable']=True
-                # await ctx.send(f'Command `{command}` was disabled.')
-            # else:
-                # restricted[command]['disable']=False
-                # await ctx.send(f'Command `{command}` was enabled.')
 
-    @is_curator_or_higher()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(name='restrict', aliases=["unrestrict"], no_pm=True)
     async def restrict(self, ctx, command: str, role: str):
         m = ctx.message
@@ -214,9 +177,10 @@ class Curation():
                         x for x in g['restrictions'][c]['restrict'] if not x == role.id
                     ]
                     await ctx.send(f'`{role.name}` removed from `{c}` restrictions')
+        await self.helpers.sql_update_record('server', g)
 
-    @is_curator_or_higher()
-    @has_dj()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
+    @role_exists('roles.dj')
     @commands.command(name='dj', aliases=['djadd'], no_pm=True)
     async def dj(self, ctx, user: str=None):
         if not user:
@@ -238,7 +202,7 @@ class Curation():
                                            f'{user.name}#{user.discriminator}.'))
 
 
-    @is_curator_or_higher()
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(pass_context=True, name="quote")
     async def quote(self, ctx, channel: str, message_id: str):
         m = ctx.message
@@ -264,6 +228,7 @@ class Curation():
                             value=f'{m.jump_url}')
                 await self.bot.get_channel(q).send(embed=embed)
                 await ctx.send('Quote added successfully!')
+                await self.helpers.sql_update_record('server', g)
             elif message.id in g['extra']['quotes']:
                 await ctx.send('Oops, it seems that has already been quoted.')
             else:
@@ -272,51 +237,55 @@ class Curation():
             await ctx.send('Check you supplied a valid channel name+message id')
 
     async def curate_channels(self, message):
-        if not isinstance(message.channel, discord.abc.PrivateChannel):
-            m = message
-            c, guild, a = m.channel, m.guild, m.author
-            g = await self.helpers.get_record('server', guild.id)
-            if g and c.id in g['channels'].get('curated', []):
-                try:
-                    r=urlparse(m.content)
-                except:
-                    r=None
-                finally:
-                    if not m.embeds and not m.attachments and not getattr(r, 'netloc', None):
-                        await m.delete()
-                        await self.bot.get_user(a.id).send(
-                            (f'Hey {a.name}, <#{c.id}> is a curated channel,'
-                              ' meaning you can only send links or pictures.')
-                        )
+        if isinstance(message.channel, discord.abc.PrivateChannel):
+            return
+        m = message
+        c, guild, a = m.channel, m.guild, m.author
+        g = await self.helpers.get_record('server', guild.id)
+        if g and c.id not in g['channels'].get('curated', []):
+            return
+        try:
+            r=urlparse(m.content)
+        except:
+            r=None
+        if not m.embeds and not m.attachments and not getattr(r, 'netloc', None):
+            asyncio.ensure_future(m.delete())
+            asyncio.ensure_future(self.bot.get_user(a.id).send(
+                (f'Hey {a.name}, <#{c.id}> is a curated channel,'
+                  ' meaning you can only send links or pictures.')
+            ))
 
     async def quote_react(self, reaction, user):
         m = reaction.message
         if not isinstance(reaction.message.channel, discord.abc.PrivateChannel) and reaction.emoji == "⭐":
             g = await self.helpers.get_record('server', m.guild.id)
-            u = user
             q = g['channels'].get('quotes')
-            # print(q)
-            if not q:
+            if not q or m.id in g['extra'].get('quotes',[]):
                 return
-            if m.id in g['extra'].get('quotes',[]):
+            u, a, c = user, m.author, m.channel
+
+            no_permission = not any(await self.helpers.any_roles_in_list(
+                [a.id for a in u.roles],
+                [g['roles'].get(x) for x in ('admin','moderator','curator')] 
+            ))
+            if no_permission:
                 return
-            u_roles = [a.id for a in u.roles]
-            is_admin = g['roles'].get('admin') in u_roles
-            is_mod = g['roles'].get('moderator') in u_roles
-            is_cur = g['roles'].get('curator') in u_roles
-            if not any([is_admin, is_mod, is_cur]):
-                return
-            a = m.author
-            c = m.channel
             if not g['extra'].get('quotes'):
                 g['extra']['quotes']=[]
             g['extra']['quotes'].append(m.id)
-            # print(m.content)
-            e = await self.helpers.build_embed(m.content, a.color)
-            e.set_author(name=f'{a.name}#{a.discriminator}', icon_url=a.avatar_url_as(format='jpeg'))
-            e.add_field(name=f'Quote #{len(g["extra"]["quotes"])}', value=f'in {c.mention}')
-            e.add_field(name=f'Quoted by {user.name}#{user.discriminator}',
-                        value=f'{m.jump_url}')
+            fq_an = f'{a.name}#{a.discriminator}'
+            fq_un = f'{user.name}#{user.discriminator}'
+            avatar = await self.helpers.get_avatar(a)
+            e = await self.helpers.full_embed(
+                m.content,
+                author={'name': fq_an, 'icon_url': avatar},
+                thumbnail=avatar,
+                fields={
+                    f'Quote #{len(g["extra"]["quotes"])}': f'in {c.mention}',
+                    f'Quoted by {fq_un}': f'{m.jump_url}'
+                }
+            )
+            await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(self.bot.get_channel(q).send(embed=e))
 
     

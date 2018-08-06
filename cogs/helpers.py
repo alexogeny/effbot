@@ -20,10 +20,44 @@ from playhouse.shortcuts import dict_to_model, model_to_dict
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
 LETTERS = re.compile(r'^[wdhms]')
 MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
+
+
+async def role_in_list(role, role_list):
+    return any([role_ for role_ in role_list if role_ == role])
+
+async def any_roles_in_list(list_one, list_two):
+    return any(await asyncio.gather(*[
+        role_in_list(list_item, list_one) for list_item in list_two
+    ]))
+
+def has_any_role(*roles):
+    async def _has_any_role(ctx):
+        m, a, g = ctx.message, ctx.author, await ctx.bot.get_cog('Helpers').get_record('server',ctx.guild.id)
+        user_roles = [r.id for r in a.roles]
+        for role in roles:
+            key, val = role.split('.')
+            if g[key].get(val, None) in user_roles:
+                return True
+        asyncio.ensure_future(ctx.send('Sorry, you do not have permission.'))
+        return False
+    return commands.check(_has_any_role)
+
+def role_exists(role):
+    async def _role_exists(ctx):
+        g = await ctx.bot.cogs['Helpers'].get_record('server', ctx.guild.id)
+        key, value = role.split('.')
+        result = g[key].get(value)
+        if result:
+            return True
+        asyncio.ensure_future(ctx.send(f'No `{value}` role found.'))
+        return False
+    return commands.check(_role_exists)
+
+
+
 class Helpers():
     def __init__(self, bot):
         self.bot = bot
-        # self.last_save = int(time.time())
         self.scifi = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
         self.lifi = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
         self.flagstr = 'https://s26.postimg.cc/{}.png'
@@ -290,6 +324,7 @@ class Helpers():
             "zambia":"yyg2chmjt/flag-for-zambia_1f1ff-1f1f2",
             "zimbabwe":"c9qvcxcvt/flag-for-zimbabwe_1f1ff-1f1fc"
             }
+
 
     async def build_embed(self, description, colour):
         embed = discord.Embed(
