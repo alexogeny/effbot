@@ -12,7 +12,7 @@ import asyncio
 import re
 import datetime as dt
 import time
-from .helpers import has_any_role
+from .helpers import has_any_role, tournament_forecast
 UOT = 60
 SCIFI = re.compile(r'^([^a-z]+)([A-Za-z]+)$')
 LIFI = re.compile(r'^([0-9\.]+)[^0-9]+([0-9,]+)$')
@@ -84,7 +84,11 @@ class TapTitans():
                 asyncio.ensure_future(self.helpers.update_tls())
             await asyncio.sleep(9.999999)
 
-    
+    @commands.command(name='tournament', aliases=['tournaments', 'tourney', 'tourneys'], no_pm=True)
+    async def _tourney(self, ctx):
+        upcoming = await tournament_forecast()
+        e = await self.helpers.full_embed('\n\n'.join(upcoming))
+        asyncio.ensure_future(ctx.send('Upcoming TT2 tournaments:', embed=e))
 
     @commands.group(pass_context=True, invoke_without_command=False, name="tt")
     async def tt(self, ctx):
