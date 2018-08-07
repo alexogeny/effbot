@@ -66,7 +66,7 @@ class Curation():
                     '\nI would suggest placing my role above `{role.name}`'))
             
 
-    @role_exists('roles.update')
+    @role_exists('roles.updates')
     @commands.command(name='updates')
     async def _updates(self, ctx, state):
         m = ctx.message
