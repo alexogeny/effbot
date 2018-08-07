@@ -20,36 +20,44 @@ from playhouse.shortcuts import dict_to_model, model_to_dict
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
 LETTERS = re.compile(r'^[wdhms]')
 MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
-PRIZE_ROTATOR = [
-    ('Fortune weapon', 'Hero weapon'),
-    ('Skill point', 'Perk'), 
-    ('Crafting shard', 'Pet egg')
-]
+PRIZE_ROTATOR = ['Weapons', 'SP & Perks', 'Shards & Eggs']
 
 BONUS_ROTATOR = [
-    '5x all hero damage',
-    '8x melee damage',
-    '8x ranged damage',
-    '8x spell damage',
-    '5x tap damage',
-    '+4 mana regen',
-    '+200 mana pool',
-    '+100% double fairy chance',
-    '+40% critical chance',
-    'None'
+    '🧝‍♀️ 5x all hero damage',
+    '⚔ 8x melee damage',
+    '🏹 8x ranged damage',
+    '🧙‍♀️ 8x spell damage',
+    '👆 5x tap damage',
+    '🔮 +4 mana regen',
+    '⚗ +200 mana pool',
+    '🧚‍♀️ +100% x2 fairy chance',
+    '💫 +40% critical chance',
+    '❎ None'
 ]
 
 async def get_next_prize(days=1):
-    now = datetime.utcnow()+timedelta(days=days)
+    now = datetime.utcnow()+timedelta(days=days+1)
     origin_date = datetime.utcfromtimestamp(1532242116.705826)
     weeks, remainder = divmod((now-origin_date).days, 3.5)
-    tourneys = (0 - now.weekday()/2) % 3.5 <= remainder and weeks+1 or weeks
-    prize = await rotatle(prize_rotator, 3)
-    bonus = await rotatle(prize_rotator, 10)
-    return prize, bonus
+    tourneys = floor(weeks)+1
+    prize = await rotate(PRIZE_ROTATOR, tourneys%3)[0]
+    bonus = await rotate(BONUS_ROTATOR, tourneys%10)[0]
+    return bonus, prize, now.strftime('%A'), now.strftime('%d %b, %Y')
+
+async def tournament_forecast():
+    result = []
+    for i in range(18):
+        item = await get_next_prize(days=i)
+        if item not in result and item[2] in ['Sunday','Wednesday']:
+            result.append(item)
+    return [
+        '{}, **{}** - **{}**\n*{}*'.format(r[2], r[3], r[1], r[0])
+        for r
+        in result[0:10]
+    ]
 
 async def rotate(table, mod):
-    return table[int(max(0, table%mod))]
+    return table[mod:] + table [:mod]
 
 
 async def tournament_time_remains():
