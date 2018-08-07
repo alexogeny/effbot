@@ -17,17 +17,23 @@
             "usage": ".help <command>",
             "example": ".help leaderboard"
         },
-        "tt setinterval": {
+        "tt": {
+            "description": "Tap Titans 2 module. Contains a whole bunch of different things, including Titan Lord timers, titancount, profile cards, relics command, artifacts command, profile cards, and a bunch of other stuff.\nFor setting TLs, check out `.tt group get` command and the `.tt set` command.\nFor everything else, try things like `.help titancount`."
+        },
+        "tt set": {
+            "description": "Used for setting settings of the Tap Titans module. If no group is added, you must first do `.tt group add`. If you haven't named your group, you don't need to specify a name (uses `default` ... by default).\nTo see which settings have been set, and which have not, use the `.tt group get` command."
+        },
+        "tt set pings": {
             "description": "Set the interval (in minutes) for when the timer will ping users befor the next clan quest begins.",
             "requires": "GM or Master rank role for TT2",
-            "usage": ".tt setinterval <time1>, <time2>, <time3>, [...], <timeN>",
-            "example": ".tt setinterval 15 10 5 2 1"
+            "usage": ".tt set pings <time1>, <time2>, <time3>, [...], <timeN>",
+            "example": ".tt set pings 15 10 5 2 1"
         },
-        "tt settext": {
-            "description": "Set the text used for certain pings and information. There are several tags available: `{time}`, `{spawn}`, `{cq}`, `{round}`.",
+        "tt set text": {
+            "description": "Set the text used for certain pings and information. There are several tags available: `%time%`, `%spawn%`, `%cq%`, `%round%`, '%group%`.",
             "requires": "GM or Master rank role for TT2",
-            "usage": ".tt settext <text_type> <text_content...>",
-            "example": ".tt settext timer {time} until boss #{cq} (@ {spawn})"
+            "usage": ".tt set text <text_type> <text_content...>",
+            "example": ".tt set text timer %time% until %group% boss #%cq% (@ %spawn%)"
         },
         "emote": {
             "description": "Used to transform an emote into a .jpg or .gif, depending on the emote.",
@@ -47,7 +53,7 @@
             "usage": ".8ball <question...>",
             "example": ".8ball Will I ever be happy?"
         },
-        "when": {
+        "boss when": {
             "description": "Displays the remaining time before your clan's next Clan Quest begins.",
             "requires": "Can only be run from the `when` channel set by admin",
             "usage": ".when boss",
@@ -96,6 +102,8 @@
             "usage": ".info server",
             "example": ""
         },
+        "tl": {"refer_to": "boss"},
+        "titanlord": {"refer_to": "boss"},
         "loa": {
             "description": "Set a leave of absence and let your clan know how long you will be away.",
             "requires": "A TT2 clan related role.",
