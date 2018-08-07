@@ -40,9 +40,9 @@ async def get_next_prize(days=1):
     origin_date = datetime.utcfromtimestamp(1532242116.705826)
     weeks, remainder = divmod((now-origin_date).days, 3.5)
     tourneys = floor(weeks)+1
-    prize = await rotate(PRIZE_ROTATOR, tourneys%3)[0]
-    bonus = await rotate(BONUS_ROTATOR, tourneys%10)[0]
-    return bonus, prize, now.strftime('%A'), now.strftime('%d %b, %Y')
+    prize = await rotate(PRIZE_ROTATOR, tourneys%3)
+    bonus = await rotate(BONUS_ROTATOR, tourneys%10)
+    return bonus[0], prize[0], now.strftime('%A'), now.strftime('%d %b, %Y')
 
 async def tournament_forecast():
     result = []
