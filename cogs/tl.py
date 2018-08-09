@@ -562,7 +562,8 @@ class TapTitans():
         content = ("{} base + {} bonus\nat stage {} with:\n{} sets,\n"
                    "{} craft power,\n{} Book of Shadows\n\nTips: to get a preci"
                    "se BoS value, use SequenceTT2. If you don't want to specify"
-                   " these flags every time, use the `.my set` command.")
+                   " these flags every time, use the `.my` commands:\n"
+                   "`.my bos`, `.my sets`, `.my craft`, `.my ms`")
 
         content = content.format(
             base, bonus, args['ms'], args['sets'], args['cp'], args['bos']

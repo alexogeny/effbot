@@ -17,6 +17,12 @@
             "usage": ".help <command>",
             "example": ".help leaderboard"
         },
+        "relics": {
+            "description": "Tells you how many base and bonus relics you will get at a given stage based on the values you supply.\nYou can set the values up in your TT2 profile so you do not have to continuously reenter them. Check out `.help my`.",
+            "requires": "",
+            "usage": ".relics <stage> <bos> <sets> <craftpower>",
+            "example": ".relics 23000 5e16 5 20"
+        },
         "tt": {
             "description": "Tap Titans 2 module. Contains a whole bunch of different things, including Titan Lord timers, titancount, profile cards, relics command, artifacts command, profile cards, and a bunch of other stuff.\nFor setting TLs, check out `.tt group get` command and the `.tt set` command.\nFor everything else, try things like `.help titancount`."
         },
@@ -181,10 +187,10 @@
             "example": ""
         },
         "my": {
-            "description": "Change user settings.",
+            "description": "Change user settings - e.g. track your bos, ms, and other tt2 stats, as well as set language and country. It's as simple as `.my bos 7e27` (if you somehow got it that absurdly high, congrats, lol).",
             "requires": "",
             "usage": ".my <setting> <value>",
-            "example": ".my language"
+            "example": ".my ltr 2.82e39"
         }
     }
 }
