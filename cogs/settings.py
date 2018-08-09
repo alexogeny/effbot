@@ -176,7 +176,7 @@ class SettingsCog():
             return
         if not 0<=int(v)<=6:
             return
-        await self.helpers.sql_update_key('user', a.id, 'tt', 'cp', int(v))
+        await self.helpers.sql_update_key('user', a.id, 'tt', 'sets', int(v))
         asyncio.ensure_future(ctx.send(
             f'Set **{a.name}#{a.discriminator}**\'s mythic sets to **{v}**!'
         ))
@@ -188,7 +188,7 @@ class SettingsCog():
             return
         if not 0<=int(v)<=10000:
             return
-        await self.helpers.sql_update_key('user', a.id, 'tt', 'cp', int(v))
+        await self.helpers.sql_update_key('user', a.id, 'tt', 'sp', int(v))
         asyncio.ensure_future(ctx.send(
             f'Set **{a.name}#{a.discriminator}**\'s skillpoints to **{v}**!'
         ))

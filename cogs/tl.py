@@ -32,6 +32,38 @@ def advance_start(level: int) -> float:
 def clan_damage(level: int) -> float:
     return round(pow(1.0233, level) + pow(level, 1.05), 2)
 
+
+async def base_relics_amount(stage: int) -> int:
+    return (
+        3 * pow(1.21, pow(stage, .48))
+    ) + (
+        1.5 * (stage-110)
+    ) + (
+        pow(1.002, pow(stage, min(
+            (1.005*(pow(stage, 1.1*.0000005+1))), 1.0155
+        )))
+)
+
+async def artifact_boost(level: int, per_level: int, cost_exponent: float, 
+                         growth_rate, growth_max, growth_exponent) -> int:
+    return round(1 + per_level * pow(level, pow(
+        (1 + (cost_exponent - 1) * min(growth_rate * level, growth_max)),
+        growth_exponent
+        )
+    ) + .5)
+
+async def primary_craft_boost(level: int) -> float:
+    return pow(1.02, level - 1)
+async def round_to_x(x, n):
+    return round(x, -int(floor(log10(x))) + (n - 1))
+async def secondary_craft_boost(level: int) -> float:
+    return pow(1.1, level - 1)
+
+async def bonus_relics_amount(stage, bos, sets, craftpower) -> int:
+    return await round_to_x(await base_relics_amount(stage) * await artifact_boost(
+        bos, .05, 2.5, .0001, .12, .5
+    ) * pow(1.5 * await primary_craft_boost(craftpower), max(sets, 0)), 3)
+
 async def process_time(input_time: str) -> timedelta:
     match = TIME_SUCKER.findall(input_time)
     units = [
@@ -495,6 +527,52 @@ class TapTitans():
                             image="https://i.imgur.com/MY8x9aY.png")
             )
             asyncio.ensure_future(ctx.send(embed=e))
+
+    @commands.command(name='relics', aliases=['prestige', 'prestigerelics'])
+    async def _relics(self, ctx, stage='100', bos='0', sets='0', craft='0'):
+        a = ctx.author
+        user = await self.helpers.get_record('user', a.id)
+        args = {'ms': stage, 'bos': bos, 'sets': sets, 'cp': craft}
+        for key, value in args.items():
+            if value == '0':
+                args[key] = user['tt'].get(key) or 0
+            elif value.isnumeric():
+                args[key] = int(value)
+            else:
+                try:
+                    args[key] = Decimal(value)
+                except:
+                    asyncio.ensure_future(ctx.send('Only sci notation atm'))
+                    return
+        if args['ms'] > 30000:
+            asyncio.ensure_future(ctx.send('The MS cap atm is 30k. Silly!'))
+            return
+        elif args['sets'] > 5:
+            asyncio.ensure_future(ctx.send('There are only 5 mythic sets available rn'))
+            return
+        elif args['cp'] > 80:
+            asyncio.ensure_future(ctx.send('What are you, some kind of god?'))
+            return
+
+        base = await round_to_x(await base_relics_amount(args['ms']), 3)
+        bonus = await bonus_relics_amount(
+            args['ms'], args['bos'], args['sets'], args['cp']
+        )
+
+        content = ("{} base + {} bonus\nat stage {} with:\n{} sets,\n"
+                   "{} craft power,\n{} Book of Shadows\n\nTips: to get a preci"
+                   "se BoS value, use SequenceTT2. If you don't want to specify"
+                   " these flags every time, use the `.my set` command.")
+
+        content = content.format(
+            base, bonus, args['ms'], args['sets'], args['cp'], args['bos']
+        )
+
+        e = await self.helpers.full_embed(content, author={
+            'name': 'Prestige Relics', 'image': 'https://cdn.discordapp.com/emojis/325072418701967375.png?v=1'}
+        )
+
+        asyncio.ensure_future(ctx.send(embed=e))
 
     @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
     @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
