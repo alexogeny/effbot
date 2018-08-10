@@ -4,7 +4,7 @@ from discord.ext import commands
 from string import ascii_lowercase
 from itertools import chain, zip_longest
 from random import choice
-from math import log, log10, floor
+from math import log, log10, floor, ceil
 from collections import defaultdict
 from csv import DictReader
 import functools
@@ -119,7 +119,12 @@ class TapTitans():
     @commands.command(name='tournament', aliases=['tournaments', 'tourney', 'tourneys'], no_pm=True)
     async def _tourney(self, ctx):
         upcoming = await tournament_forecast()
-        e = await self.helpers.full_embed('\n\n'.join(upcoming))
+        #asyncio.ensure_future(ctx.send(await self.helpers.tournament_time_remains()))
+        e = await self.helpers.full_embed(
+            'The next tournament is '
+            + await self.helpers.tournament_time_remains()
+            + '\n\n'.join(upcoming)
+        )
         asyncio.ensure_future(ctx.send('Upcoming TT2 tournaments:', embed=e))
 
     @commands.group(pass_context=True, invoke_without_command=False, name="tt")
@@ -559,11 +564,13 @@ class TapTitans():
             args['ms'], args['bos'], args['sets'], args['cp']
         )
 
-        content = ("{} base + {} bonus\nat stage {} with:\n{} sets,\n"
-                   "{} craft power,\n{} Book of Shadows\n\nTips: to get a preci"
-                   "se BoS value, use SequenceTT2. If you don't want to specify"
-                   " these flags every time, use the `.my` commands:\n"
-                   "`.my bos`, `.my sets`, `.my craft`, `.my ms`")
+        content = (
+            "**{}** base + **{}** bonus\nat stage **{}** with:\n**{}** sets,\n"
+            "**{}** craft power,\n**{}** Book of Shadows\n\nTips: to get a preci"
+            "se BoS value, use SequenceTT2. If you don't want to specify"
+            " these flags every time, use the `.my` commands:\n"
+            "`.my bos`, `.my sets`, `.my craft`, `.my ms`"
+        )
 
         content = content.format(
             base, bonus, args['ms'], args['sets'], args['cp'], args['bos']
@@ -574,6 +581,13 @@ class TapTitans():
         )
 
         asyncio.ensure_future(ctx.send(embed=e))
+
+    # @commands.command(name='artifact', aliases=['arts','artifacts'])
+    # async def _artifacts(self, ctx, name, level, level_to):
+    #     # pull list of artifacts
+    #     # search on name 
+    #     # get boost(s) at level
+    #     # show embed + prestige number if specified
 
     @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
     @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
@@ -683,7 +697,7 @@ class TapTitans():
     async def tl_embed_builder(self, record, ttk):
         cq_no = int(record.get('cq_number') or 1)
         icon = 'https://i.imgur.com/{}.png'.format(choice(self.tl_icons))
-        c_dmg = round_to_x(clan_damage(cq_no-1)*100,3)
+        c_dmg = await round_to_x(clan_damage(cq_no-1)*100,3)
         c_adv = advance_start(cq_no-1)
         c_hp = boss_hitpoints(cq_no-1)
         field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
@@ -792,7 +806,7 @@ class TapTitans():
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay
-        next_at = exists.get('next')+timedelta(hours=6)+_ttk-full_delay
+        next_at = exists.get('next')+timedelta(hours=6, seconds=.5)+_ttk-full_delay
         exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3600})
         result = await self.helpers.sql_update_record('titanlord', exists)
     

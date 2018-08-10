@@ -43,6 +43,11 @@ class LevelsCog():
             myrank = await self._lb_get_local_rank(ctx.author.id, top10)
             myxp = top10[myrank]['xp']
             ids = [(u['id'], u['xp']) for u in top10[0:10]]
+        else:
+            asyncio.ensure_future(ctx.send(
+                '🚫 Please choose between `all` or `here`.'
+            ))
+            return
         all_users = {m.id: m for m
                      in self.bot.get_all_members()
                      if m.id in [i[0] for i in ids]}
@@ -71,7 +76,11 @@ class LevelsCog():
             u = a
         elif member and not member.isnumeric():
             u = await self.helpers.choose_member(ctx, m.guild, member)
-        
+        if not u:
+            asyncio.ensure_future(ctx.send(
+                f'🚫 Could not find a user with the name `{member}`'
+            ))
+            return
         g = await self.helpers.get_record('server', m.guild.id)
         u_global = await self.helpers.sql_query_db(
             'SELECT * FROM "user"'

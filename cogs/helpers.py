@@ -23,16 +23,16 @@ MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
 PRIZE_ROTATOR = ['Weapons', 'SP & Perks', 'Shards & Eggs']
 
 BONUS_ROTATOR = [
-    '🧝‍♀️ 5x all hero damage',
-    '⚔ 8x melee damage',
-    '🏹 8x ranged damage',
-    '🧙‍♀️ 8x spell damage',
-    '👆 5x tap damage',
+    '🧝‍♀️ 5x all hero dmg',
+    '⚔ 8x melee dmg',
+    '🏹 8x ranged dmg',
+    '🧙‍♀️ 8x spell dmg',
+    '👆 5x tap dmg',
     '🔮 +4 mana regen',
     '⚗ +200 mana pool',
     '🧚‍♀️ +100% x2 fairy chance',
-    '💫 +40% critical chance',
-    '❎ None'
+    '💫 +40% crit chance',
+    '🙅 None'
 ]
 
 async def get_next_prize(days=1):
@@ -46,12 +46,12 @@ async def get_next_prize(days=1):
 
 async def tournament_forecast():
     result = []
-    for i in range(18):
+    for i in range(14):
         item = await get_next_prize(days=i)
         if item not in result and item[2] in ['Sunday','Wednesday']:
             result.append(item)
     return [
-        '{}, **{}** - **{}**\n*{}*'.format(r[2], r[3], r[1], r[0])
+        f'{r[2][0:3]}, **{r[3]}** | {r[1]}\n{r[0]}'
         for r
         in result[0:10]
     ]
@@ -60,29 +60,7 @@ async def rotate(table, mod):
     return table[mod:] + table [:mod]
 
 
-async def tournament_time_remains():
-    time, classifier = datetime.utcnow(), 'for another'
-    date = datetime(time.year, time.month, time.day)
-    due = date+timedelta(hours=23, minutes=55)
-    if time.weekday() in [6,2] and time < due:
-        weekday = time.strftime('%A')[0:3]
-    else:
-        classifier = 'in'
-        today = date
-        wkd = today.weekday()
-        if wkd < 2:
-            weekday, t = 'Wed', 2
-        elif wkd < 6:
-            weekday, t = 'Sun', 6
-        due = today+timedelta((t-wkd) % 7)
-    units = mod_timedelta(due-time)
-    print(units)
-    # h, m, s = map(lambda x: int(float(x)+.5), str(due-time).split(':'))
-        
-    remaining = '`, `'.join(map_timedelta(units))
-    #remaining = str(due-time)
-    
-    return '{} {} `{}`'.format(weekday, classifier, remaining)
+
 
 async def role_in_list(role, role_list):
     return any([role_ for role_ in role_list if role_ == role])
@@ -399,6 +377,31 @@ class Helpers():
         )
         return embed
 
+    async def tournament_time_remains(self):
+        time, classifier = datetime.utcnow(), 'for another'
+        date = datetime(time.year, time.month, time.day)
+        due = date+timedelta(hours=23, minutes=55)
+        if time.weekday() in [6,2] and time < due:
+            weekday = time.strftime('%A')[0:3]
+        else:
+            classifier = 'in'
+            today = date
+            wkd = today.weekday()
+            if wkd < 2:
+                weekday, t = 'Wed', 2
+            elif wkd < 6:
+                weekday, t = 'Sun', 6
+            due = date+timedelta((t-wkd) % 7)
+        units = await self.mod_timedelta(due-time)
+        #print(units)
+        # h, m, s = map(lambda x: int(float(x)+.5), str(due-time).split(':'))
+        mapped = await self.map_timedelta(units)
+        remaining = ', '.join([f'{x} {y}' for x, y in mapped])
+        # remaining = '`, `'.join()
+        #remaining = str(due-time)
+        
+        return '{} `{}`'.format(classifier, remaining)
+
     async def full_embed(self, description, colour=0, thumbnail=None,
                          fields={}, author={}, inline=True):
         e = await self.build_embed(description, colour)
@@ -451,6 +454,7 @@ class Helpers():
             (x, '{}{}'.format(keys[i], (await self.is_plural(x) and 's') or ''))
             for i, x in enumerate(modded_time)
         ]
+        print(result)
         return result
 
     async def channel_exists(self, channel):

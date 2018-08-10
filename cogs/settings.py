@@ -175,6 +175,9 @@ class SettingsCog():
         if not v.isnumeric():
             return
         if not 0<=int(v)<=6:
+            asyncio.ensure_future(ctx.send(
+                '🚫 Oops, there are currently only 5 mythic sets in the game.'
+            ))
             return
         await self.helpers.sql_update_key('user', a.id, 'tt', 'sets', int(v))
         asyncio.ensure_future(ctx.send(
