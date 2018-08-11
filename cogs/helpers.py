@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from discord.ext import commands
 from urllib.parse import urlparse
-from playhouse.shortcuts import dict_to_model, model_to_dict
+#from playhouse.shortcuts import dict_to_model, model_to_dict
 TIME_SUCKER = re.compile(r'([0-9]+)([^0-9]+)?')
 LETTERS = re.compile(r'^[wdhms]')
 MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
