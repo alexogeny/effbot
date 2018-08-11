@@ -195,10 +195,10 @@ class TapTitans():
         if g and s:
             short_code = g.get('shortcode') or 'Clan'
             clan_name = g.get('clanname') or '`No clan name set`'
-            cq_no = g.get('cq_number') or 1
+            cq_no = g.get('cq_number') or 0
             fields = {}
             roles = {'Grandmaster': "<@&{}>".format(s['roles'].get('grandmaster', '0'))}
-            roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit']})
+            roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit', 'mercenary', 'applicant', 'alumni']})
             rmap = dict(ms='Max Stage', tcq='Total Clan Quests',
                         prestige='Prestige Count', tpcq='Taps Per Clan Quest',
                         hpcq='Hits Per Clan Quest')
@@ -212,11 +212,20 @@ class TapTitans():
                     k.replace('_channel','').replace('channel', 'titanlord'), g[k] and f'<#{g[k]}>' or '`not set`'
                 ) for k in g if k.endswith('channel'))
             })
+            fields.update({f'{short_code} CQ:': f'{cq_no or "`not set`"}'})
             fields.update({f'{short_code} Roles': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
             fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at')) or '`not set`'})
             fields.update({f'{short_code} {k.title()} text': (g.get(k) or "None").format(
                 TIME="**04:32:22**", CQ=cq_no, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP=clan_name
             ) for k in ['timer', 'ping', 'now', 'round', 'after']})
+            fields.update({'Notes':
+                ('There are a few template tags available when setting text:'
+                 '\n`%time%` time until the boss spawns'
+                 '\n`%cq%` the cq number of the boss'
+                 '\n`%spawn%` the time when the boss spawns'
+                 '\n`%round%` the round number of the boss'
+                 '\n`%group%` the group the titanlord belongs to')
+            })
             embed = await self.helpers.full_embed(
                 f'TL Group: {short_code} - {clan_name}',
                 fields=fields,
@@ -374,9 +383,19 @@ class TapTitans():
                 '`, `'.join(k for k in kinds)
             )))
             return
+        
+        if kind in ['timer', 'ping'] and '%time%' not in msg_text.lower() and '{time}' not in msg_text.lower():
+            asyncio.ensure_future(ctx.send(
+                'Oops, did you drop this: `%time%`? This needs to be in the text, otherwise you won\'t know when the boss spawns!'
+            ))
+            return
+
         for unit in ['time', 'cq', 'round', 'spawn', 'timer', 'group']:
+            msg_text = msg_text.replace(f'{{unit}}', '{'+unit.upper()+'}')
             msg_text = msg_text.replace(f'%{unit}%', '{'+unit.upper()+'}')
             msg_text = msg_text.replace(f'%{unit.upper()}%', '{'+unit.upper()+'}')
+
+
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
             exists.update({kind: msg_text})
@@ -427,7 +446,7 @@ class TapTitans():
         if not group:
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
-
+        pings = pings.replace(',','')
         if not all([x.isnumeric() for x in pings.split()]):
             asyncio.ensure_future(ctx.send('You must supply space-sparated whole numbers. e.g. `15 5 1`'))
             return
@@ -446,7 +465,7 @@ class TapTitans():
     @tt_set.command(name='rank', no_pm=True)
     @has_any_role('roles.grandmaster', 'tt.master')
     async def _setrank(self, ctx, rank, role):
-        ranks = 'master knight captain recruit guest vip alumni applicant timer vip probation'.split()
+        ranks = 'master knight captain recruit guest vip alumni applicant timer vip probation mercenary'.split()
         if rank not in ranks:
             asyncio.ensure_future(ctx.send('The rank must be a valid name of an in-game role'
                 ' or a tt2 related rank. You can choose from: `{}`'.format(
@@ -534,7 +553,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(embed=e))
 
     @commands.command(name='relics', aliases=['prestige', 'prestigerelics'])
-    async def _relics(self, ctx, stage='100', bos='0', sets='0', craft='0'):
+    async def _relics(self, ctx, stage='0', bos='0', sets='0', craft='0'):
         a = ctx.author
         user = await self.helpers.get_record('user', a.id)
         args = {'ms': stage, 'bos': bos, 'sets': sets, 'cp': craft}
@@ -573,7 +592,8 @@ class TapTitans():
         )
 
         content = content.format(
-            base, bonus, args['ms'], args['sets'], args['cp'], args['bos']
+            base, bonus, args['ms'], args['sets'], args['cp'],
+            await self.helpers.humanize_decimal(args['bos'])
         )
 
         e = await self.helpers.full_embed(content, author={
@@ -590,7 +610,7 @@ class TapTitans():
     #     # show embed + prestige number if specified
 
     @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
-    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit', 'tt.mercenary')
     async def tl(self, ctx):
         pfx = await self.bot.get_prefix(ctx.message)
         mc = ctx.message.clean_content
@@ -651,7 +671,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(f'Successfully cleared the `{group}` boss timer!'))
 
     @tl.command(name='when')
-    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit', 'tt.mercenary')
     async def tl_when(self, ctx, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
@@ -697,9 +717,9 @@ class TapTitans():
     async def tl_embed_builder(self, record, ttk):
         cq_no = int(record.get('cq_number') or 1)
         icon = 'https://i.imgur.com/{}.png'.format(choice(self.tl_icons))
-        c_dmg = await round_to_x(clan_damage(cq_no-1)*100,3)
-        c_adv = advance_start(cq_no-1)
-        c_hp = boss_hitpoints(cq_no-1)
+        c_dmg = await self.helpers.humanize_decimal(clan_damage(cq_no)*100)
+        c_adv = advance_start(cq_no)
+        c_hp = boss_hitpoints(cq_no)
         field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
         field2 = f'Spawns with **{c_hp:,}** hitpoints.'
         e = await self.helpers.full_embed(
@@ -768,7 +788,7 @@ class TapTitans():
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay
-        exists.update({'next': next_spawn-full_delay, 'message': mx.id, 'pinged_at': 3600})
+        exists.update({'next': next_spawn-full_delay, 'message': mx.id, 'pinged_at': 3660})
         result = await self.helpers.sql_update_record('titanlord', exists)
     
     @tl.command(name='ttk')
@@ -806,8 +826,8 @@ class TapTitans():
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay
-        next_at = exists.get('next')+timedelta(hours=6, seconds=.5)+_ttk-full_delay
-        exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3600})
+        next_at = exists.get('next')+timedelta(hours=6, seconds=1)+_ttk-full_delay
+        exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3660})
         result = await self.helpers.sql_update_record('titanlord', exists)
     
     async def map_hits_to_damage(self, ms, taps, hits):

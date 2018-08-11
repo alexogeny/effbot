@@ -15,7 +15,7 @@ from models import get_db, Server, User, Titanlord
 from os.path import isfile, join
 from pathlib import Path
 from discord.ext import commands
-from playhouse.shortcuts import dict_to_model
+# from playhouse.shortcuts import dict_to_model
 
 # class Struct(object):
 #     def __init__(self, **entries):

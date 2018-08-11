@@ -12,6 +12,7 @@ from uuid import uuid4
 from pprint import pprint
 from string import ascii_lowercase
 from difflib import get_close_matches
+from decimal import Decimal
 from datetime import datetime, timedelta
 from collections import defaultdict
 from discord.ext import commands
@@ -493,24 +494,32 @@ class Helpers():
         seconds_until_tl = (next_boss-now).total_seconds()
         H, M, S = await self.mod_timedelta(next_boss-now)
         is_not_final = seconds_until_tl > 10
-        
+        round_ping = tl.get('message') in range(1, 13) and tl.get('message') or 0
         boss_spawn = await self.get_spawn_string(tl.get('tz') or 0, next_boss)
         
         params = dict(
             TIME='**{:02}:{:02}:{:02}**'.format(H, M, S),
-            SPAWN=boss_spawn, ROUND=0, CQ=tl.get('cq_number', 1),
+            SPAWN=boss_spawn, ROUND=1, CQ=tl.get('cq_number', 1),
             GROUP=tl.get('group', 'Clan'))
         
         ping_intervals = [p*60 for p in tl.get('ping_at', [15,5,1])]
         text_type, action, last_ping = 'timer', 'edit', tl.get('pinged_at')
-        if is_not_final and seconds_until_tl <= max(ping_intervals):
+        if is_not_final and seconds_until_tl <= max(ping_intervals) and not round_ping:
             text_type = 'ping'
-        elif not is_not_final:
+        elif not is_not_final and not round_ping:
             text_type = 'now'
             action = 'send'
+        elif round_ping and -seconds_until_tl//3600>=round_ping:
+            tl['message'] = round_ping+1
+            params['ROUND'] = round_ping+1
+            action = 'send'
+            text_type = 'round'
+        elif not is_not_final:
+            action = 'pass'
+
         text = tl.get(text_type).format(**params)
         
-        if text_type != 'now':
+        if text_type != 'now' and action != 'pass':
             will_ping = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
             if will_ping:
                 action, tl['pinged_at'] = 'send', seconds_until_tl
@@ -528,13 +537,18 @@ class Helpers():
                 tl.update({'message': mx.id})
             else:   
                 asyncio.ensure_future(mx.edit(content=text))
-        elif action == 'send' and text_type != 'now':
+        elif action == 'send' and text_type != 'now' and text_type != 'round':
+            # if tl.get('message') > 1:
+            # m = await chan.get_message(tl['message'])
+            # await m.delete()
             mx = await chan.send(text)
             tl.update({'message': mx.id})
         elif action == 'send' and text_type == 'now':
             await asyncio.sleep(seconds_until_tl)
             asyncio.ensure_future(chan.send(text))
-            tl.update({'message': 0})
+            tl.update({'message': 1})
+        elif action == 'send' and text_type == 'round':
+            asyncio.ensure_future(chan.send(text))
         
         if await self.tl_has_settings(tl, c=('when_message', 'when_channel')):
             when_channel = self.bot.get_channel(tl['when_channel'])
@@ -554,7 +568,7 @@ class Helpers():
             asyncio.ensure_future(self.sql_update_record('titanlord', tl))
 
     async def will_tl_ping(self, intervals, seconds_until_tl, last_ping):
-        filtered = next((p for p in intervals[::-1] if p > seconds_until_tl), 3600)
+        filtered = next((p for p in intervals[::-1] if p > seconds_until_tl), 3660)
         if last_ping > filtered:
             return True
         return False
@@ -690,6 +704,17 @@ class Helpers():
             user = await self.choose_from(ctx, choices, choicetext)
             return user
     async def choose_channel(self, ctx, server, channel: str):
+        if channel.startswith('<#') and channel.endswith('>'):
+            channel = channel.replace('<#', '').replace('>', '')
+        elif channel.startswith('#'):
+            channel = channel.replace('#', '')
+        if channel.isnumeric():
+            try:
+                channel = self.bot.get_channel(int(channel))
+            except:
+                pass
+            else:
+                return channel
         channels = [c for c in server.text_channels if c not in server.categories]
         result = await self.search_for([m.name.lower() for m in channels], channel.lower())
         if len(result) == 0:
@@ -767,6 +792,17 @@ class Helpers():
         magnitude = int(log10(float(number)))
         number = float(number)/max((pow(10,magnitude)),1)
         return '{}e{:,}'.format(number, result*3+15+magnitude)
+
+    async def humanize_decimal(self, decimal):
+        bos = str(Decimal(decimal))
+        if len(bos) < 15:
+            bos = self.human_format(bos)
+        else:
+            x = bos[1:]
+            dec = bos[1:3]
+            bos = bos[0]
+            bos = bos+'.'+dec+ 'e' + str(len(x))
+        return bos
 
     @staticmethod
     def human_format(num):
