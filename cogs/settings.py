@@ -257,10 +257,11 @@ class SettingsCog():
         bos = await self.humanize_decimal(u['tt'].get('bos', 1))
         ltr = await self.humanize_decimal(u['tt'].get('ltr', 1))
         shr = u['tt'].get('shortcode', '')
-        clan = await self.helpers.sql_query_db("SELECT * FROM server")
-        clan = next((c['tt'].get('name') for c in clan if c['tt'].get('shortcode')==shr), 'no clan set')
+        #clan = await self.helpers.sql_query_db("SELECT * FROM server")
+        #clan = next((c['tt'].get('name') for c in clan if c['tt'].get('shortcode')==shr), 'no clan set')
+        clan = await self.helpers.sql_filter('titanlord', 'shortcode', shr.upper())
         # clan = next((s.tt.get('name') for s in self.bot._servers if s.tt.get('shortcode')==shr), 'no clan set')
-        final = f"Clan: **{clan}**\nMax Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
+        final = f"Clan: **{clan.get('clanname')}**\nMax Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
         e = await self.helpers.full_embed(final,
             thumbnail=avatar,
             author=dict(name=f'{u["tt"].get("ign", a.name)} ({a.name}#{a.discriminator})',
