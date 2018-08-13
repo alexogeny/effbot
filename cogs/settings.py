@@ -74,7 +74,7 @@ class SettingsCog():
             asyncio.ensure_future(ctx.send(
                 f'Sorry, but `{lc}` is not an available locale.\nAvailable locales: {available_locales}'))
     
-    @my.command(name='ms', aliases=['maxstage'])
+    @my.command(name='ms', aliases=['maxstage', 'MS'])
     async def _ms(self, ctx, ms="1"):
         k = ms.endswith('k') and 1000 or 1
         try:
@@ -97,7 +97,7 @@ class SettingsCog():
             msg = f'Successfully updated MS to `{ms:,}`!'
         asyncio.ensure_future(ctx.send(msg))
 
-    @my.command(name='tcq', aliases=['cq'])
+    @my.command(name='tcq', aliases=['cq', 'CQ', 'TCQ'])
     async def _tcq(self, ctx, tcq="1"):
         k = tcq.endswith('k') and 1000 or 1
         try:
@@ -118,7 +118,7 @@ class SettingsCog():
             asyncio.ensure_future(ctx.send(f'Successfully updated TCQ to `{tcq:,}`!'))
 
 
-    @my.command(name='ign')
+    @my.command(name='ign', aliases=['IGN'])
     async def _ign(self, ctx, *ign):
         if not ign:
             return
@@ -207,7 +207,7 @@ class SettingsCog():
                 f'Set {a.name}#{a.discriminator}\'s BoS level to {o}'
             ))
 
-    @my.command(name='ltr', aliases=['lifetimerelics'])
+    @my.command(name='ltr', aliases=['lifetimerelics', 'LTR'])
     async def _ltr(self, ctx, ltr):
         o = ltr
         ltr = await self._normalize_number(ctx, ltr)
@@ -223,10 +223,18 @@ class SettingsCog():
         a = ctx.author
         if not user:
             user = await self.helpers.get_record('user', a.id)
-        elif not user.isnumeric():
+        elif user:
             a = await self.helpers.choose_member(ctx, ctx.guild, user)
+            if not a:
+                asyncio.ensure_future(ctx.send(
+                    'Oops, I could not find a user with that name or ID.'
+                ))
+                return
             user = await self.helpers.get_record('user', a.id)
-        elif user.isnumeric():
+        if not user:
+            asyncio.ensure_future(ctx.send(
+                'Oops, I could not find a user with that name or ID.'
+            ))
             return
         e = await self.tt2_card(a, user)
         asyncio.ensure_future(ctx.send(embed=e))
@@ -262,16 +270,61 @@ class SettingsCog():
 
     @my.command(name='clan')
     async def _clan(self, ctx, clan=None):
-        if not clan or not clan.isalnum() or not len(clan) < 6:
+        a = ctx.author
+        if not clan:
+            g = await self.helpers.get_record('user', a.id)
+            if g and not g['tt'].get('shortcode'):
+                asyncio.ensure_future(ctx.send(
+                    f'{a.name}#{a.discriminator} does not belong to a clan. :<'
+                ))
+                return
+            else:
+                clan = await self.helpers.sql_filter(
+                    'titanlord', 'shortcode', g['tt'].get('shortcode')
+                )
+                if not clan:
+                    return
+                
+                if clan and clan.get('clanname'):
+                    asyncio.ensure_future(ctx.send(
+                        f'{a.name}#{a.discriminator} is a memeber of {clan["clanname"]}!'
+                    ))
+                    return
+        elif not clan.isalnum():
             asyncio.ensure_future(ctx.send(
                 'Clan shortcodes must be letters or numbers and less than 6 characters. e.g. `T2RC`'
             ))
-        else:
-            exists = await self.helpers.sql_filter_key('server', 'tt', 'shortcode', clan.upper())
-            if exists:
-                a = ctx.author
-                await self.helpers.sql_update_key('user', a.id, 'tt', 'shortcode', clan.upper())
-                asyncio.ensure_future(ctx.send(f'Set the shortcode for {a.name}#{a.discriminator} to: `{clan.upper()}`'))
+            return
+        clan_ = await self.helpers.sql_filter('titanlord', 'shortcode', clan.upper())
+        if clan_ and clan_.get('clanname'):
+            guild_ = self.bot.get_guild(clan_.get('guild'))
+            if not guild_:
+                return
+            guild_record = await self.helpers.get_record('server', guild_.id)
+            user_ = guild_.get_member(a.id)
+            if not user_:
+                return
+            roles = [r.id for r in user_.roles]    
+            is_in_clan = False
+            for role in ['roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit']:
+                if not is_in_clan:
+                    key, subkey = role.split('.')
+                    if guild_record[key].get(subkey, None) in roles:
+                        is_in_clan = True
+            if not is_in_clan:
+                asyncio.ensure_future(ctx.send(
+                    'Oops, it looks like you are not in this clan. Sorry!'
+                ))
+                return
+
+            a = ctx.author
+            await self.helpers.sql_update_key('user', a.id, 'tt', 'shortcode', clan.upper())
+            asyncio.ensure_future(ctx.send(f'Set the shortcode for {a.name}#{a.discriminator} to: `{clan.upper()}`'))
+            
+        elif clan_ and not clan_.get('clanname'):
+            asyncio.ensure_future(ctx.send('That clan exists but has no name set. :<'))
+        elif not clan_:
+            asyncio.ensure_future(ctx.send(f'I could not find a clan with code: {clan.upper()}'))
 
     @my.command(name='supportcode', aliases=['sc', 'code'])
     async def _code(self, ctx, code=None):

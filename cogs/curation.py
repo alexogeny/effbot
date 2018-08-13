@@ -21,6 +21,29 @@ class Curation():
         self.helpers = self.bot.get_cog('Helpers')
 
     @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
+    @commands.command(name='broadcast')
+    async def _broadcast(self, ctx, channel):
+        m = ctx.message
+        g = await self.helpers.get_record('server', m.guild.id)
+        a = m.author
+        channel = await self.helpers.choose_channel(ctx, m.guild, channel)
+        if not channel:
+            asyncio.ensure_future(ctx.send('Sorry, I could not find a channel with that name.'))
+            return
+        pfx = await self.bot.get_prefix(m)
+        mc = m.content
+        passed = 0
+        while not passed:
+            for p in pfx:
+                if mc.startswith(p):
+                    mc = mc[len(p):]
+                    passed = 1
+        mc = re.sub(r'^([^\s]+)','',mc).strip()
+        mc = re.sub(r'^([^\s]+)','',mc.strip()).strip()
+        asyncio.ensure_future(channel.send(mc))
+        asyncio.ensure_future(ctx.send('Successfully posted the broadcast!'))
+
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @role_exists('roles.updates')
     @commands.command(name='update')
     async def update(self, ctx, channel):

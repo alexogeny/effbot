@@ -163,18 +163,21 @@ class Information():
 
         if not user:
             user = author
-        elif not hasattr(user, 'roles'):
+        elif not hasattr(user, 'roles') and not user.isnumeric():
             try:
                 user = server.get_member(int(user[2:-1]))
             except:
                 user = await self.helpers.choose_member(ctx, server, user)
+        elif user.isnumeric():
+            try:
+                user = self.bot.get_user(int(user))
+            except:
+                pass
         if not user:
             return
-        avatar = await self.helpers.build_embed(f"{user.name}#{user.discriminator}'s avatar", user.colour)
-        avatar.set_image(url=user.avatar_url_as(static_format='png'))
-        if user.is_avatar_animated():
-            r = urlparse(user.avatar_url_as(format='gif'))
-            avatar.set_image(url=str(f'{r.scheme}://{r.netloc}{r.path}'))
+        avatar = await self.helpers.build_embed(f"{user.name}#{user.discriminator}'s avatar", getattr(user, 'color', 000000))
+        if user.avatar_url:
+            avatar.set_image(url=await self.helpers.get_avatar(user))
         try:
             await ctx.send(embed=avatar)
         except discord.HTTPException:

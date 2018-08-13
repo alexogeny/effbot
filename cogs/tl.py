@@ -311,7 +311,7 @@ class TapTitans():
             'SELECT * FROM titanlord'
         )
         exists = [dict(r) for r in exists]
-        clanname_exists = next((r for r in exists if (r['clanname'] or '').lower()==clanname.lower()), None)
+        clanname_exists = next((r for r in exists if (r['clanname'] or '').lower().strip().replace(' ', '').replace('_','')==clanname.lower().strip().replace(' ', '').replace('_','')), None)
         if clanname_exists is not None:
             asyncio.ensure_future(ctx.send('A clan has already claimed that name. Try another. If this is your clan name and somebody has falsely claimed it, join the support server: `.support`'))
             return
@@ -630,7 +630,7 @@ class TapTitans():
             now = datetime.utcnow()
             for e in exists:
                 n = e.get('clanname') or 'Clan #{}'.format(exists.index(e))
-                fields[n] = '**{}** until boss'.format((e.get('next') or now) - now)
+                fields[n] = '**{}**'.format(e.get('next') and str(e.get('next') - now)[0:-7] or 'Spawned!')
             embed = await self.helpers.full_embed(
                 f'List of TLs for server: `{ctx.guild.name}`',
                 fields=fields
@@ -720,7 +720,7 @@ class TapTitans():
         c_dmg = await self.helpers.humanize_decimal(clan_damage(cq_no)*100)
         c_adv = advance_start(cq_no)
         c_hp = boss_hitpoints(cq_no)
-        field1 = f'Adv. start is **{c_adv}%** & damage bonus is **{c_dmg}%**.'
+        field1 = f'Advanced start - **{c_adv}%**\nDamage bonus - **{c_dmg}%**'
         field2 = f'Spawns with **{c_hp:,}** hitpoints.'
         e = await self.helpers.full_embed(
             "Killed in: {}".format(ttk),
@@ -749,7 +749,7 @@ class TapTitans():
         return multi_text, group
 
     @tl.command(name='in')
-    @has_any_role('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
     async def tl_in(self, ctx, *time, group="-default"):
         delay = datetime.utcnow()
         time_text, group = await self.munge_group(time, group)
@@ -764,6 +764,13 @@ class TapTitans():
             return
 
         time = ''.join(time_text)
+
+        tm = time.lower()
+        if tm.endswith('h') and tm.replace('h','').isnumeric():
+            time = tm.replace('h','')+'h0m0s'
+        elif tm.endswith('m') and tm.replace('m', '').isnumeric():
+            time = tm+'0s'
+
 
         _next, _units = await self.helpers.process_time(time)
         now = datetime.utcnow()
@@ -792,7 +799,7 @@ class TapTitans():
         result = await self.helpers.sql_update_record('titanlord', exists)
     
     @tl.command(name='ttk')
-    @has_any_role('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
     async def tl_ttk(self, ctx, *time, group="-default"):
         delay = datetime.utcnow()
         time_text, group = await self.munge_group(time, group)
@@ -807,6 +814,13 @@ class TapTitans():
             return
 
         time = ''.join(time_text)
+
+        tm = time.lower()
+        if tm.endswith('h') and tm.replace('h','').isnumeric():
+            time = tm.replace('h','')+'h0m0s'
+        elif tm.endswith('m') and tm.replace('m', '').isnumeric():
+            time = tm+'0s'
+        
         _ttk, _units = await self.helpers.process_time(time)
         modded_ = await self.helpers.mod_timedelta(_ttk)
         mapped_ = await self.helpers.map_timedelta(modded_)

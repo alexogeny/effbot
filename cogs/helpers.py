@@ -514,6 +514,8 @@ class Helpers():
             params['ROUND'] = round_ping+1
             action = 'send'
             text_type = 'round'
+            if not tl.get(text_type):
+                return
         elif not is_not_final:
             action = 'pass'
 
@@ -614,8 +616,12 @@ class Helpers():
     async def sql_filter_key(self, kind, key, subkey, value):
         collection = await self.sql_query_db(f'SELECT * FROM "{kind}"')
         collection = [dict(c) for c in collection]
-        # print(collection[0:5])
         return any(c for c in collection if c[key].get(subkey)==value)
+
+    async def sql_filter(self, kind, key, value):
+        collection = await self.sql_query_db(f'SELECT * FROM "{kind}"')
+        collection = [dict(c) for c in collection]
+        return next((c for c in collection if c[key]==value), None)
 
     async def sql_insert(self, table, data_dict):
         keys = ', '.join(f'"{m}"' for m in data_dict.keys())
@@ -688,13 +694,23 @@ class Helpers():
 
     async def choose_member(self, ctx, server, user: str):
         members = server.members
+
+        if user.startswith('<@') and user.endswith('>'):
+            user = user.replace('<@', '').replace('>', '').replace('!', '')
+            return user
+
         result = await self.search_for([m.name.lower() for m in members], user.lower())
+        nicks = await self.search_for([(m.nick or '').lower() for m in members], user.lower())
+        if nicks:
+            for n in nicks:
+                if n not in result:
+                    result.append(n)
         if len(result) == 0:
             return None
         elif len(result) == 1:
             return members[result[0]]
         elif len(result) > 1:
-            choices = [members[r] for r in result[0:10]]
+            choices = [members[r] for r in result[0:15]]
             choicetext = "{}```\n{}\n-----\n{}```".format(
                 'I found multiple users. Please reply with a matching number:',
                 '\n'.join([f'{i+1} {c.name}#{c.discriminator}'
