@@ -88,7 +88,7 @@ class LevelsCog():
         u_global = sorted([dict(t) for t in u_global], key=lambda x: x['xp'].get('amount', 0), reverse=True)
         u_local = sorted(g['users'], key=lambda u: u['xp'], reverse=True)
         rank_global = await self._lb_get_local_rank(u.id, u_global)
-        xp_global = u_global[rank_global]['xp']['amount']
+        xp_global = u_global[rank_global]['xp'].get('amount',0)
         rank_local = await self._lb_get_local_rank(u.id, u_local)
         xp_local = u_local[rank_local]['xp']
         avatar = await self.helpers.get_avatar(u)
