@@ -433,12 +433,12 @@ class SettingsCog():
             if result or value=="0":
                 if value == "0":
                     # g['logs'][key[3:]] = 0
-                    await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key[3:], 0)
+                    await self.helpers.sql_update_key('server', ctx.guild.id, 'logs', key[3:], 0)
                     # await ctx.send(f'Unset the {key} setting.')
                     msg = f'Unset the {key} setting.'
                 else:
                     # g['logs'][key[3:]] = result.id
-                    await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key[3:], result.id)
+                    await self.helpers.sql_update_key('server', ctx.guild.id, 'logs', key[3:], result.id)
                 # print(g['logs'])
                     # await ctx.send(f'Set the {key} setting to {result.mention}')
                     msg = f'Set the {key} setting to {result.mention}'
