@@ -516,9 +516,12 @@ class Helpers():
             text_type = 'round'
             if not tl.get(text_type):
                 return
+        elif round_ping:
+            return
         elif not is_not_final:
             action = 'pass'
-
+        if not tl.get(text_type):
+            return
         text = tl.get(text_type).format(**params)
         
         if text_type != 'now' and action != 'pass':
