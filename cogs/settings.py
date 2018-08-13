@@ -432,11 +432,13 @@ class SettingsCog():
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             if result or value=="0":
                 if value == "0":
-                    g['logs'][key[3:]] = 0
+                    # g['logs'][key[3:]] = 0
+                    await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key[3:], 0)
                     # await ctx.send(f'Unset the {key} setting.')
                     msg = f'Unset the {key} setting.'
                 else:
-                    g['logs'][key[3:]] = result.id
+                    # g['logs'][key[3:]] = result.id
+                    await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key[3:], result.id)
                 # print(g['logs'])
                     # await ctx.send(f'Set the {key} setting to {result.mention}')
                     msg = f'Set the {key} setting to {result.mention}'
@@ -449,20 +451,24 @@ class SettingsCog():
                 g['channels'][key] = []
             if result and key == 'curated' and result not in g['channels'][key]:
                 g['channels'][key].append(result.id)
+                await self.helpers.sql_update_record('server', g)
                 # asyncio.ensure_future(ctx.send(
                 msg = f'Added {result.mention} to curated channels.'
                 # ))
             elif result and key == 'curated' and result in g['channels'][key]:
-                g['channels'][key] = [c for c in g['channels'][key] if c!=result.id]
+                await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key, [c for c in g['channels'][key] if c!=result.id])
+                #g['channels'][key] = [c for c in g['channels'][key] if c!=result.id]
                 # asyncio.ensure_future(ctx.send(
                 msg = f'Removed {result.mention} from curated channels.'
                 # ))
             elif result:
-                g['channels'][key] = result.id
+                # g['channels'][key] = result.id
+                await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key, result.id)
                 msg = f'Set the {key} setting to {result.mention}'
                 # asyncio.ensure_future(ctx.send(
                 #     f'Set the {key} setting to {result.mention}'
                 # ))
+            
         if msg:
             asyncio.ensure_future(ctx.send(msg))
 
