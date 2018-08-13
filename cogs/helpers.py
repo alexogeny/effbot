@@ -534,7 +534,7 @@ class Helpers():
             try:
                 mx = await chan.get_message(tl['message'])
             except:
-                mx = await chan.send(txt)
+                mx = await chan.send(text)
                 action = 'send'
                 tl.update({'message': mx.id})
             else:   
