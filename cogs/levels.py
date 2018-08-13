@@ -31,8 +31,8 @@ class LevelsCog():
             )
             top10 = sorted([dict(t) for t in top10], key=lambda x: x['xp'].get('amount', 0), reverse=True)
             myrank = await self._lb_get_local_rank(ctx.author.id, top10)
-            myxp = top10[myrank]['xp']['amount']
-            ids = [(u['id'], u['xp']['amount']) for u in top10[0:10]]
+            myxp = top10[myrank]['xp'].get('amount',0)
+            ids = [(u['id'], u['xp'].get('amount',0)) for u in top10[0:10]]
 
         elif location == 'here':
             
