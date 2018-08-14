@@ -224,7 +224,9 @@ class TapTitans():
                  '\n`%cq%` the cq number of the boss'
                  '\n`%spawn%` the time when the boss spawns'
                  '\n`%round%` the round number of the boss'
-                 '\n`%group%` the group the titanlord belongs to')
+                 '\n`%group%` the group the titanlord belongs to'
+                 '\n`%everyone%` set an everyone ping without pinging everyone setting it up',
+                 '\n`%user%` mentions the user who set up the timer')
             })
             embed = await self.helpers.full_embed(
                 f'TL Group: {short_code} - {clan_name}',
@@ -264,7 +266,7 @@ class TapTitans():
             result = await self.helpers.sql_update_record('titanlord', exists)
             asyncio.ensure_future(ctx.send(f'Set the `{friendly_name}` channel for `{group}` to {channel.mention}!'))
         else:
-            asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` does not exist. Please create one first using `.tt group add`'))
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
 
     @tt_set.command(name='shortcode')
     @has_any_role('roles.grandmaster', 'tt.master')
@@ -397,7 +399,8 @@ class TapTitans():
             msg_text = msg_text.replace(f'{{unit}}', '{'+unit.upper()+'}')
             msg_text = msg_text.replace(f'%{unit}%', '{'+unit.upper()+'}')
             msg_text = msg_text.replace(f'%{unit.upper()}%', '{'+unit.upper()+'}')
-
+        msg_text = msg_text.replace('%everyone%', '@everyone')
+        msg_text = msg_text.replace('{everyone}', '@everyone')
 
         exists = await self.get_tl_from_db(ctx, group)
         if exists:

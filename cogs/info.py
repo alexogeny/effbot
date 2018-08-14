@@ -48,7 +48,7 @@ class Information():
         ping = (after - before) * 1000
         asyncio.ensure_future(ping_msg.edit(content=f"***{ping:.0f}ms***"))
 
-    @info.command(name='bot', pass_context=True, no_pm=True)
+    @info.command(name='bot', aliases=['effbot', '<@466854404965007360>', '<@!466854404965007360>'], no_pm=True)
     async def _bot(self, ctx):
         embed = discord.Embed(title='Effbot', description='I am the mighty Effbot. Born a human, but raised by gods.')
         embed.add_field(name='Author', value='effrill3#0001')
@@ -56,6 +56,12 @@ class Information():
         embed.add_field(name='Server Count', value=f'{len(self.bot.guilds)}')
         embed.add_field(name='Invite', value='[Bot Invite Link](https://discordapp.com/api/oauth2/authorize?client_id=466854404965007360&permissions=2146954487&scope=bot)')
         asyncio.ensure_future(ctx.send(embed=embed))
+
+    @commands.command(name='patreon', aliases=['patron', 'donate', 'donations'])
+    async def _patreon(self, ctx):
+        asyncio.ensure_future(ctx.send((
+            'Wow, I _love_ that you want to support me! You can support the bot on Patreon: <https://www.patreon.com/effrill3>'
+        )))
 
     @info.command(name='commands')
     async def _commands(self, ctx):
