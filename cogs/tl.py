@@ -371,6 +371,9 @@ class TapTitans():
     @tt_set.command(name='text', aliases=['message'])
     @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_set_text(self, ctx, kind, *text, group="-default"):
+        if not kind or not text:
+            asyncio.ensure_future(ctx.send('Oops, did you supply the right arguments? `tt set text <type> <message> <-group>'))
+            return
         msg_text, group = await self.munge_group(text, group)
 
         if not group:

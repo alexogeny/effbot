@@ -23,6 +23,8 @@ def is_admin_or_owner():
             return True
         elif msg.author.id == msg.guild.owner_id:
             return True
+        elif ctx.author.guild_permissions.administrator == True:
+            return True
         elif g['roles'].get('admin') not in [a.id for a in msg.author.roles]:
             await ctx.send('You need to be a server admin to do that.')
             return False
@@ -254,12 +256,14 @@ class SettingsCog():
         avatar = await self.helpers.get_avatar(a)
         ms = u['tt'].get('ms', 1)
         tcq = u['tt'].get('tcq', 1)
-        bos = await self.humanize_decimal(u['tt'].get('bos', 1))
-        ltr = await self.humanize_decimal(u['tt'].get('ltr', 1))
-        shr = u['tt'].get('shortcode', '')
+        bos = await self.humanize_decimal(u['tt'].get('bos') or 1)
+        ltr = await self.humanize_decimal(u['tt'].get('ltr') or 1)
+        shr = u['tt'].get('shortcode') or ''
         #clan = await self.helpers.sql_query_db("SELECT * FROM server")
         #clan = next((c['tt'].get('name') for c in clan if c['tt'].get('shortcode')==shr), 'no clan set')
         clan = await self.helpers.sql_filter('titanlord', 'shortcode', shr.upper())
+        if not clan:
+            clan = dict(clanname='no clan set')
         # clan = next((s.tt.get('name') for s in self.bot._servers if s.tt.get('shortcode')==shr), 'no clan set')
         final = f"Clan: **{clan.get('clanname')}**\nMax Stage: **{ms:,}**\nTotal Clan Quests: **{tcq:,}**\nBook of Shadows: **{bos}**\nLifetime Relics: **{ltr}**"
         e = await self.helpers.full_embed(final,
@@ -268,6 +272,24 @@ class SettingsCog():
                         image=self.flagstr.format(self.flags[u['tt'].get('country', 'united-states')]))
         )
         return e
+
+    @my.command(name='unset')
+    async def _unset(self, ctx, value=None):
+        value = value.lower()
+        if value == 'clan':
+            value = 'shortcode'
+        if not value:
+            asyncio.ensure_future(ctx.send('You need to tell me what to unset!'))
+            return
+
+        g = await self.helpers.get_record('user', ctx.author.id)
+        if g and not g['tt'].get(value):
+            asyncio.ensure_future(ctx.send('There was nothing to unset!'))
+            return
+        elif g and g['tt'].get(value):
+            g['tt'][value] = None
+            await self.helpers.sql_update_key('user', ctx.author.id, 'tt', value, None)
+            asyncio.ensure_future(ctx.send(f'All done! {value} cleared for {ctx.author.name}#{ctx.author.discriminator}'))
 
     @my.command(name='clan')
     async def _clan(self, ctx, clan=None):
@@ -383,8 +405,8 @@ class SettingsCog():
         msg = ctx.message
         g = await self.helpers.get_record('server', msg.guild.id)
         
-        if key.replace('role', '')=='admin' and msg.author.id in [msg.guild.owner_id, 305879281580638228]:
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
+        if key.replace('role', '')=='admin':
+            # result = await self.helpers.choose_role(ctx, msg.guild, value)
             key = key.replace('role', '')
             result = await self.helpers.choose_role(ctx, msg.guild, value)
             if not result:
@@ -463,6 +485,8 @@ class SettingsCog():
                 # asyncio.ensure_future(ctx.send(
                 #     f'Set the {key} setting to {result.mention}'
                 # ))
+        if msg == ctx.message:
+            msg = 'Oops, something weird happened. Please report this!'
         if msg:
             asyncio.ensure_future(ctx.send(msg))
 
