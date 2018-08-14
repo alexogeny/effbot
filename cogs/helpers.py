@@ -516,9 +516,12 @@ class Helpers():
             text_type = 'round'
             if not tl.get(text_type):
                 return
+        elif round_ping:
+            return
         elif not is_not_final:
             action = 'pass'
-
+        if not tl.get(text_type):
+            return
         text = tl.get(text_type).format(**params)
         
         if text_type != 'now' and action != 'pass':
@@ -534,7 +537,7 @@ class Helpers():
             try:
                 mx = await chan.get_message(tl['message'])
             except:
-                mx = await chan.send(txt)
+                mx = await chan.send(text)
                 action = 'send'
                 tl.update({'message': mx.id})
             else:   
