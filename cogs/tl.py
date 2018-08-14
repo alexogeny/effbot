@@ -198,7 +198,7 @@ class TapTitans():
             cq_no = g.get('cq_number') or 0
             fields = {}
             roles = {'Grandmaster': "<@&{}>".format(s['roles'].get('grandmaster', '0'))}
-            roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit', 'mercenary', 'applicant', 'alumni']})
+            roles.update({k.title(): f"<@&{s['tt'].get(k, '0')}>" for k in ['master', 'captain', 'knight', 'recruit', 'timer', 'mercenary', 'applicant', 'alumni']})
             rmap = dict(ms='Max Stage', tcq='Total Clan Quests',
                         prestige='Prestige Count', tpcq='Taps Per Clan Quest',
                         hpcq='Hits Per Clan Quest')
@@ -225,8 +225,9 @@ class TapTitans():
                  '\n`%spawn%` the time when the boss spawns'
                  '\n`%round%` the round number of the boss'
                  '\n`%group%` the group the titanlord belongs to'
-                 '\n`%everyone%` set an everyone ping without pinging everyone setting it up',
-                 '\n`%user%` mentions the user who set up the timer')
+                 '\n`%everyone%` set an everyone ping without pinging everyone setting it up'
+                 #'\n`%user%` mentions the user who set up the timer'
+                 )
             })
             embed = await self.helpers.full_embed(
                 f'TL Group: {short_code} - {clan_name}',
@@ -238,6 +239,32 @@ class TapTitans():
     #@has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_set(self, ctx):
         pass
+
+    @tt_set.group(name='defaults')
+    @has_any_role('roles.grandmaster', 'tt.master')
+    async def tt_set_defaults(self, ctx, group="-default"):
+        group = await self.is_valid_groupname(group, ctx)
+        if not group:
+            return
+        await ctx.send('This command does the following:\n- set default options (except for channels)\n- override any existing values.\nValues that will be set: `timer text`, `now text`, `ping text`, `round text`, `pings`.\nIt will not set up channels. You will still need to set up roles like `timer` and `recruit`.')
+        result = await self.helpers.choose_from(ctx, ['confirm'],
+            'Type `1` to confirm or `c` to cancel.')
+        if not result:
+            return
+        exists = await self.get_tl_from_db(ctx, group)
+        if not exists:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+            return
+        exists.update({
+            'ping_at': [60, 5, 1],
+            'timer': '{TIME} until the boss spawns!',
+            'now': 'BOSS ALIVE @everyone! KILL IT!!!',
+            'ping': '{TIME} until the boss spawns, @everyone! Get ready!!',
+            'round': 'Round {ROUND} reading for the taking! Go slay, @everyone'
+        })
+        await self.helpers.sql_update_record('titanlord', exists)
+        asyncio.ensure_future(ctx.send(
+            f'Successfully updated defaults. To check them out, do `.tt group get {group}`'))
 
     @tt_set.command(name='channel')
     @has_any_role('roles.grandmaster', 'tt.master')
@@ -262,7 +289,7 @@ class TapTitans():
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
 
-            exists.update({kind: channel.id})
+            exists.update({'kind': channel.id})
             result = await self.helpers.sql_update_record('titanlord', exists)
             asyncio.ensure_future(ctx.send(f'Set the `{friendly_name}` channel for `{group}` to {channel.mention}!'))
         else:
@@ -663,7 +690,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(embed=embed))
 
     @tl.command(name='clear')
-    @has_any_role('roles.grandmaster', 'tt.master')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.clear')
     async def tl_clear(self, ctx, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
