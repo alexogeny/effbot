@@ -213,7 +213,7 @@ class TapTitans():
                 ) for k in g if k.endswith('channel'))
             })
             fields.update({f'{short_code} CQ:': f'{cq_no or "`not set`"}'})
-            fields.update({f'{short_code} Roles': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
+            fields.update({f'{short_code} Ranks': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
             fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at')) or '`not set`'})
             fields.update({f'{short_code} {k.title()} text': (g.get(k) or "None").format(
                 TIME="**04:32:22**", CQ=cq_no, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP=clan_name
@@ -289,7 +289,7 @@ class TapTitans():
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
 
-            exists.update({'kind': channel.id})
+            exists.update({kind: channel.id})
             result = await self.helpers.sql_update_record('titanlord', exists)
             asyncio.ensure_future(ctx.send(f'Set the `{friendly_name}` channel for `{group}` to {channel.mention}!'))
         else:
