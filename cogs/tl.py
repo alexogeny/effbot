@@ -235,9 +235,9 @@ class TapTitans():
                 inline=False)
             await ctx.send('',embed=embed)
 
-    @tt_group.command(name='setup')
-    @has_any_role('roles.grandmaster', 'tt.master')
-    async def tt_group_setup
+    # @tt_group.command(name='setup')
+    # @has_any_role('roles.grandmaster', 'tt.master')
+    # async def tt_group_setup
 
     @tt.group(name='set', invoke_without_command=False)
     #@has_clan_roles('roles.grandmaster', 'tt.master')
