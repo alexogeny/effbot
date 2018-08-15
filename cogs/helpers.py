@@ -498,7 +498,7 @@ class Helpers():
         H, M, S = await self.mod_timedelta(next_boss-now)
         is_not_final = seconds_until_tl > 10
         round_ping = tl.get('message') in range(1, 13) and tl.get('message') or 0
-        boss_spawn = await self.get_spawn_string(tl.get('tz') or 0, next_boss)
+        boss_spawn = await self.get_spawn_string(tl.get('timezone') or 0, next_boss)
         
         params = dict(
             TIME='**{:02}:{:02}:{:02}**'.format(H, M, S),
@@ -592,7 +592,7 @@ class Helpers():
         await self.sql_update_record('titanlord', tl)
 
     async def get_spawn_string(self, timezone, next_boss):
-        boss_spawn = next_boss+timedelta(seconds=timezone*60*60)
+        boss_spawn = next_boss+timedelta(seconds=int(timezone)*60*60)
         if timezone > 0:
             timezone = '+{}'.format(timezone)
         return boss_spawn.strftime('%H:%M:%S UTC{}').format(timezone or '')

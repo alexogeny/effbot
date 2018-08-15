@@ -1,0 +1,79 @@
+ArtifactID,MaxLevel,BonusType,EffectPerLevel,GrowthMax,GrowthRate,GrowthExpo,DamageBonus,CostCoef,CostExpo,Note,Name,Test
+Artifact22,0,PrestigeRelic,0.05,0.1200,1.00E-04,0.5,0.3,0.7,2.5,Bonus Relics every pretige,Book of Shadows,"10,000.00"
+Artifact2,0,GoldPerRunningActiveSkill,0.01,0.3600,1.80E-04,0.5,0.2,0.6,1.8,Gold Per enabled active skill,Stone of the Valrunes,"5,555.56"
+Artifact19,0,ChestAmount,0.25,0.4000,2.00E-04,0.5,0.4,1,1.8,Treasure Box Amount,Chest of Contentment,"5,000.00"
+Artifact1,0,GoldBoss,0.2,0.4000,2.00E-04,0.5,0.4,0.7,1.8,+2% Gold from Boss Monsters,Heroic Shield,"5,000.00"
+Artifact20,0,GoldAll,0.2,0.4000,1.50E-04,0.5,0.3,0.7,2.2,Extra Gold for everything,Book of Prophecy,"6,666.67"
+Artifact66,0,UnskilledGold,0.04,0.4000,2.00E-04,0.5,0.3,0.7,1.8,Extra Gold for Idle + Inactive Play,-,"5,000.00"
+Artifact43,0,InactiveGold,0.6,0.4000,2.00E-04,0.5,0.3,0.7,1.8,Extra Gold for Inactive Play,Zakynthos Coin,"5,000.00"
+Artifact44,0,FairyGold,0.3,0.4000,1.80E-04,0.5,0.4,1,1.8,Fairy Gold Bonus,Great Fay Medallion,"5,555.56"
+Artifact45,0,SplashGold,0.3,0.4000,2.00E-04,0.5,0.5,0.7,1.8,Gold Bonus applied to splash kills,Coins of Ebizu,"5,000.00"
+Artifact26,0,HSArtifactDamage,0.05,0.4000,2.50E-04,0.5,1,0.7,2.2,Increase all artifact damage,Heavenly Sword,"4,000.00"
+Artifact31,0,AllDamage,0.1,0.3200,1.50E-04,0.5,1,1,2,All damage,Divine Retribution,"6,666.67"
+Artifact29,0,TapDamage,0.1,0.4000,2.00E-04,0.5,0.3,0.6,1.7,Increase Tap Damage,Drunken Hammer,"5,000.00"
+Artifact51,0,SwordAttackDamage,0.1,0.3200,1.40E-04,0.5,0.5,0.7,2,Increase Sword Attack Damage,Samosek Sword,"7,142.86"
+Artifact59,0,CritDamage,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase critical damage,The Retaliator,"5,000.00"
+Artifact35,0,AllHelperDamage,0.15,0.4000,2.00E-04,0.5,0.5,0.7,1.7,Increase all helpers' damage,Hero's Blade,"5,000.00"
+Artifact32,0,MeleeHelperDamage,0.2,0.4000,2.00E-04,0.5,0.3,0.7,1.7,Increase Melee helpers damage,The Sword of Storms,"5,000.00"
+Artifact33,0,RangedHelperDamage,0.2,0.4000,2.00E-04,0.5,0.3,0.7,1.7,Increase Range helpers damage,Furies Bow,"5,000.00"
+Artifact34,0,SpellHelperDamage,0.2,0.4000,2.00E-04,0.5,0.3,0.7,1.7,Increase magic helpers' damage,Charm of the Ancient,"5,000.00"
+Artifact61,0,GroundHelperDamage,0.2,0.4000,2.00E-04,0.5,0.3,0.7,1.7,increase ground helper dmg,Tiny Titan Tree,"5,000.00"
+Artifact62,0,FlyingHelperDamage,0.2,0.4000,2.00E-04,0.5,0.3,0.7,1.7,increase flying helper dmg,Helm of Hermes,"5,000.00"
+Artifact38,0,PetDamage,0.1,0.4000,1.50E-04,0.5,0.5,0.7,2,Increase Pet Damage,Fruit of Eden,"6,666.67"
+Artifact30,0,ClanShipDamage,0.1,0.4000,1.50E-04,0.5,0.5,0.7,1.7,Increase Clan Ship Damage,Influential Elixir,"6,666.67"
+Artifact64,0,CompanionDamage,0.1,0.4000,1.50E-04,0.5,0.5,0.7,1.8,increase companion dmg,O'Ryan's Charm,"6,666.67"
+Artifact52,0,AllPetDamageEffect,0.005,0.3200,1.50E-04,0.5,0.5,0.7,2.2,increase all pet dmg bonuses,Heart of Storms,"6,666.67"
+Artifact53,0,AllPetGoldEffect,0.02,0.3200,1.50E-04,0.5,0.5,0.7,2.2,increase all pet gold bonuses,Apollo Orb,"6,666.67"
+Artifact67,0,UnskilledDamage,0.03,0.4000,2.00E-04,0.5,0.3,0.6,1.7,Increase Idle + Inactive Damage,-,"5,000.00"
+Artifact42,0,InactiveAllDamage,0.5,0.4000,2.00E-04,0.5,0.3,0.6,1.7,Increase Inactive Damage,Avian Feather,"5,000.00"
+Artifact46,0,SplashDamage,0.00025,0.4000,2.00E-04,0.5,0.3,0.6,1.7,Increase Splash Damage,Corrupted Rune Heart,"5,000.00"
+Artifact55,0,TitanDamage,0.24,0.3200,1.50E-04,0.5,1,1,2,increase non boss dmg,Durendal Sword,"6,666.67"
+Artifact56,0,BossDamage,0.12,0.3200,1.50E-04,0.5,1,1,2,increase dmg vs bosses,Helheim Skull,"6,666.67"
+Artifact75,0,KnightBonusBoost,0.02,0.3200,1.50E-04,0.5,0.5,0.65,2.2,"increase tapDmg, FS, PetDmg",-,"6,666.67"
+Artifact76,0,WarlordBonusBoost,0.02,0.3200,1.50E-04,0.5,0.5,0.65,2.2,"increase AllHero, ClanShip, WC",-,"6,666.67"
+Artifact77,0,SorcererBonusBoost,0.02,0.3200,1.50E-04,0.5,0.5,0.65,2.2,"increase HoM, HS, SC",-,"6,666.67"
+Artifact78,0,RogueBonusBoost,0.02,0.3200,1.50E-04,0.5,0.5,0.65,2.2,"increase inactiveGold/Dmg, DS",-,"6,666.67"
+Artifact40,0,AllEquipmentEffect,0.01,0.3200,1.50E-04,0.5,0.5,0.65,2.2,Inc all non aura equipment,Ring of Calisto,"6,666.67"
+Artifact25,0,SwordBoost,0.08,0.3200,1.50E-04,0.5,0.5,0.65,2,SwordBoost,Blade of Damocles,"6,666.67"
+Artifact17,0,HelmetBoost,0.08,0.3200,1.50E-04,0.5,0.5,0.65,2,HelmetBoost,Helmet of Madness,"6,666.67"
+Artifact23,0,ArmorBoost,0.08,0.3200,1.50E-04,0.5,0.5,0.65,2,Armor Boost,Titanium Plating,"6,666.67"
+Artifact73,0,AuraBoost,0.08,0.3200,1.50E-04,0.5,0.5,0.65,2,Aura Boost,-,"6,666.67"
+Artifact28,0,SlashBoost,0.08,0.3200,1.50E-04,0.5,0.5,0.65,2,SlashBoost,Amethyst Staff,"6,666.67"
+Artifact47,0,AllActiveSkillAmount,0.02,0.3600,1.80E-04,0.5,0.2,0.6,1.8,Increase all active skill effects,Invader's Gjallarhorn,"5,555.56"
+Artifact11,0,BurstDamageSkillAmount,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase this active skill's effect,Titan's Mask,"5,000.00"
+Artifact41,0,CritBoostSkillAmount,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase this active skill's effect,Royal Toxin,"5,000.00"
+Artifact9,0,HandOfMidasSkillAmount,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase this active skill's effect,Laborer's Pendant,"5,000.00"
+Artifact10,0,TapBoostSkillAmount,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase this active skill's effect,Bringer of Ragnarok,"5,000.00"
+Artifact7,0,HelperBoostSkillAmount,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase this active skill's effect,Parchment of Foresight,"5,000.00"
+Artifact6,0,ShadowCloneSkillAmount,0.1,0.4000,2.00E-04,0.5,0.2,0.6,1.7,Increase this active skill's effect,Elixir of Eden,"5,000.00"
+Artifact65,40,AllActiveSkillCooldownRate,0.02,0,0.00E+00,1,0.8,0.5,2.6,increase active skill cooldowns,Hourglass of the Impatient,0
+Artifact48,30,AllActiveSkillDuration,1,0,0.00E+00,1,0.8,1,3,Increase all active skill duration,Phantom Timepiece,0
+Artifact13,30,CritBoostSkillDuration,2,0,0.00E+00,1,1.5,0.6,2.4,Increase this active skill duration,Forbidden Scroll,0
+Artifact15,30,HandOfMidasSkillDuration,2,0,0.00E+00,1,1.5,0.6,2.4,Increase this active skill duration,Ring of Fealty,0
+Artifact16,30,TapBoostSkillDuration,2,0,0.00E+00,1,1.5,0.6,2.4,Increase this active skill duration,Glacial Axe,0
+Artifact14,30,HelperBoostSkillDuration,2,0,0.00E+00,1,1.5,0.6,2.4,Increase this active skill duration,Aegis,0
+Artifact12,30,ShadowCloneSkillDuration,2,0,0.00E+00,1,1.5,0.6,2.4,Increase this active skill duration,Swamp Gauntlet,0
+Artifact36,20,BurstDamageSkillMana,1,0,0.00E+00,1,0.9,0.6,3,Decrease this active skill mana cost,Infinity Pendulum,0
+Artifact27,30,CritBoostSkillMana,1,0,0.00E+00,1,0.8,0.6,3,Decrease this active skill mana cost,Glove of Kuma,0
+Artifact39,40,HandOfMidasSkillMana,1,0,0.00E+00,1,0.8,0.6,3,Decrease this active skill mana cost,Titan Spear,0
+Artifact37,30,TapBoostSkillMana,1,0,0.00E+00,1,0.8,0.6,3,Decrease this active skill mana cost,Oak Staff,0
+Artifact3,40,HelperBoostSkillMana,1,0,0.00E+00,1,0.8,0.6,3,Decrease this active skill mana cost,The Arcana Cloak,0
+Artifact8,40,ShadowCloneSkillMana,1,0,0.00E+00,1,0.8,0.6,3,Decrease this active skill mana cost,Hunter's Ointment,0
+Artifact50,40,ManaPoolCap,2,0,0.00E+00,1,0.8,0.6,3,Increase Mana Capacity,Ambrosia Elixir,0
+Artifact58,40,ManaRegen,0.075,0,0.00E+00,1,2,0.5,2.6,Increase mana regen,Mystic Staff,0
+Artifact68,40,ManaRefundPercent,0.0025,0,0.00E+00,1,2,0.5,2.6,Increase mana refend percentage,-,0
+Artifact18,40,ChestChance,0.005,0,0.00E+00,1,2,1.4,3,Treasure Box Chance,Egg of Fortune,0
+Artifact21,50,Goldx10Chance,0.01,0,0.00E+00,1,1,0.8,2.6,Chances of 10x money,Divine Chalice,0
+Artifact5,50,FairySpawnChance,0.005,0,0.00E+00,1,1.6,0.5,2.1,Chance to get double fairy,Invader's Shield,0
+Artifact4,40,CritChance,0.005,0,0.00E+00,1,3,0.8,2.5,Critical Strike Chance,Axe of Muerte,0
+Artifact54,40,MultiMonsters,0.005,0,0.00E+00,1,3,0.8,2.5,Increase multi spawn chance,Essence of the Kitsune,0
+Artifact70,40,StageSkipMonsterSpawnChance,0.001,0,0.00E+00,1,3,0.8,2.5,Increase stage skip monster chance,-,0
+Artifact74,40,MegaBombSpawnChance,0.001,0,0.00E+00,1,3,0.8,2.5,Increase mega bomb monster chance,-,0
+Artifact72,40,ManaMonsterSpawnChance,0.002,0,0.00E+00,1,3,0.8,2.5,Increase mana monster chance,-,0
+Artifact69,40,AllProbabilityBoost,0.0025,0,0.00E+00,1,2,0.5,2.6,Multiply all stats panel probabilities,-,0
+Artifact63,40,AllUpgradeCost,0.02,0,0.00E+00,1,0.8,0.5,3,decrease upgrade costs,Lost King's Mask,0
+Artifact24,40,HelperUpgradeCost,0.02,0,0.00E+00,1,0.8,0.5,2.6,Heroes & Upgrade Cost,Staff of Radiance,0
+Artifact71,50,HelperWeaponBoost,0.01,0,0.00E+00,1,0.8,0.5,3,Increase helper weapon strength,-,0
+Artifact49,40,TapDamageFromHelpers,0.0001,0,0.00E+00,1,2,0.5,2.6,Sword Master Upgrade Cost,The Master's Sword,0
+Artifact57,40,MonsterHP,0.02,0,0.00E+00,1,2,0.5,2.6,reduce monster hp,Aram Spear,0
+Artifact60,60,BossTimerDuration,1,0,0.00E+00,1,2,0.5,2.6,increase boss timer length,Ward of the Darkness,0

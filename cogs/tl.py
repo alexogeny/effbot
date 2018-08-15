@@ -96,7 +96,7 @@ class TapTitans():
         self.helpers = self.bot.get_cog('Helpers')
         self.last_check = int(time.time())
         self.tl_icons = '2Zep8pE Y8OWqXd r7i7rlR VLjcRBe TBZAL4A eYtmbjg Y6jfEhM'.split()
-        self.load_txt = 'Loading... If this takes ages, let <@!305879281580638228> know!'
+        self.load_txt = 'Loading... If this takes ages, let **effrill3#0001** know!'
         self.error_map = {
             'channel': 'No titanlord channel set. `.tt set channel tl <channel>`',
             'cq_number': 'No CQ number set. `.tt set cq <cq>`',
@@ -106,8 +106,7 @@ class TapTitans():
             'ping': 'No ping text set. `.tt set text ping <text...>`',
             'timer': 'No timer text set. `.tt set text timer <text...>`'
         }
-        self.game_version = 2.9
-        self.csv_path = 'https://s3.amazonaws.com/tt2-static/info_files/{game_version}/{file_name}.csv'
+        
         
 
     async def timer_check(self):
@@ -862,6 +861,13 @@ class TapTitans():
             time = tm+'0s'
         
         _ttk, _units = await self.helpers.process_time(time)
+        
+        if exists.get('next')+_ttk > delay:
+            asyncio.ensure_future(ctx.send(
+                'What are you, \'arry? Some kind of wizzerd? Time travel is not supported. Wait until the boss dies!'
+            ))
+            return
+
         modded_ = await self.helpers.mod_timedelta(_ttk)
         mapped_ = await self.helpers.map_timedelta(modded_)
         
