@@ -235,6 +235,10 @@ class TapTitans():
                 inline=False)
             await ctx.send('',embed=embed)
 
+    @tt_group.command(name='setup')
+    @has_any_role('roles.grandmaster', 'tt.master')
+    async def tt_group_setup
+
     @tt.group(name='set', invoke_without_command=False)
     #@has_clan_roles('roles.grandmaster', 'tt.master')
     async def tt_set(self, ctx):
@@ -286,6 +290,9 @@ class TapTitans():
             kind = 'channel'
             friendly_name='tl'
         channel = await self.helpers.choose_channel(ctx, ctx.guild, channel)
+        if not channel:
+            asyncio.ensure_future(ctx.send('Hmm, looks like that channel does not exist. Try a different search? You can also mention a channel.'))
+            return
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
 

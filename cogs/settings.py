@@ -85,7 +85,13 @@ class SettingsCog():
             asyncio.ensure_future(ctx.send('You must submit a whole number.'))
             return
         a = ctx.author
-        ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
+        try:
+            ms = k == 1 and int(ms) or int(float(ms[:-1])*k)
+        except ValueError:
+            asyncio.ensure_future(ctx.send(
+                'Sorry, MS only accepts whole numbers. If your MS is one of `30.000`, `30,000` or `30k`, enter: `30000`'
+            ))
+            return
         g = await self.helpers.get_record('user', a.id)
         ms_cap = self.bot.config['MS']
         msg = None
@@ -136,6 +142,8 @@ class SettingsCog():
             ))
 
     async def _normalize_number(self, ctx, number):
+        if number.isnumeric():
+            number = str(float(number))
         if not number.isnumeric():
             mode = await self.helpers.choose_conversion(number)
             if mode == 2:
@@ -154,7 +162,8 @@ class SettingsCog():
                     ))
             elif mode == 1:
                 n = await self.helpers.to_scientific(number)
-                number = Decimal(b.replace(',', ''))
+                number = Decimal(n)
+                # number = Decimal(b.replace(',', ''))
             elif mode == 0:
                 number = Decimal(number)
             return number
@@ -254,8 +263,8 @@ class SettingsCog():
     async def tt2_card(self, a, u):
         
         avatar = await self.helpers.get_avatar(a)
-        ms = u['tt'].get('ms', 1)
-        tcq = u['tt'].get('tcq', 1)
+        ms = u['tt'].get('ms') or 1
+        tcq = u['tt'].get('tcq') or 1
         bos = await self.humanize_decimal(u['tt'].get('bos') or 1)
         ltr = await self.humanize_decimal(u['tt'].get('ltr') or 1)
         shr = u['tt'].get('shortcode') or ''
