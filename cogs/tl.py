@@ -201,9 +201,9 @@ class TapTitans():
             rmap = dict(ms='Max Stage', tcq='Total Clan Quests',
                         prestige='Prestige Count', tpcq='Taps Per Clan Quest',
                         hpcq='Hits Per Clan Quest')
-            reqs = {rmap[r]: g[f'{r}_requirement'] or '`not set`' for r in 'ms tcq prestige tpcq hpcq'.split()}
+            reqs = {rmap[r]: g[f'{r}_requirement'] or 0 for r in 'ms tcq prestige tpcq hpcq'.split()}
             fields.update({'requirements':
-                '\n'.join('{}: {}'.format(k, v) for k, v in reqs.items())
+                '\n'.join('{}: {:,}'.format(k, int(v)) for k, v in reqs.items())
             })
 
             fields.update({'channels':
@@ -649,7 +649,7 @@ class TapTitans():
     #     # show embed + prestige number if specified
 
     @commands.group(name='tl', aliases=['boss', 'titanlord'], no_pm=True)
-    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit', 'tt.mercenary')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit', 'tt.mercenary', 'tt.timer')
     async def tl(self, ctx):
         pfx = await self.bot.get_prefix(ctx.message)
         mc = ctx.message.clean_content
@@ -696,7 +696,7 @@ class TapTitans():
         asyncio.ensure_future(ctx.send(embed=embed))
 
     @tl.command(name='clear')
-    @has_any_role('roles.grandmaster', 'tt.master', 'tt.clear')
+    @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
     async def tl_clear(self, ctx, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
@@ -862,11 +862,16 @@ class TapTitans():
         
         _ttk, _units = await self.helpers.process_time(time)
         
-        if exists.get('next')+_ttk > delay:
+        try:
+            if exists.get('next')+_ttk > delay:
+                asyncio.ensure_future(ctx.send(
+                    'What are you, \'arry? Some kind of wizzerd? Time travel is not supported. Wait until the boss dies!'
+                ))
+                return
+        except TypeError:
             asyncio.ensure_future(ctx.send(
-                'What are you, \'arry? Some kind of wizzerd? Time travel is not supported. Wait until the boss dies!'
+                'You cannot set by TTK until a previous boss has spawned.'
             ))
-            return
 
         modded_ = await self.helpers.mod_timedelta(_ttk)
         mapped_ = await self.helpers.map_timedelta(modded_)

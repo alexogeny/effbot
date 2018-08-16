@@ -63,6 +63,16 @@ class Information():
             'Wow, I _love_ that you want to support me! You can support the bot on Patreon: <https://www.patreon.com/effrill3>'
         )))
 
+    @commands.command(name='emoji', alises=['emojiexport'])
+    async def _emoji(self, ctx, server: int):
+        if ctx.author.id != 305879281580638228:
+            return
+
+        emojis = self.bot.get_guild(server).emojis
+        asyncio.ensure_future(ctx.send(
+            '```'+'\n'.join([str(e) for e in emojis])+'```'
+        ))
+
     @info.command(name='commands')
     async def _commands(self, ctx):
         cogs = [c for c in self.bot.cogs if c not in 'LogCog,TitanLord,Owner,Helpers,RandomStatus']

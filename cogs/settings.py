@@ -287,6 +287,9 @@ class SettingsCog():
         value = value.lower()
         if value == 'clan':
             value = 'shortcode'
+        if value.lower().strip() in ['ms', 'maxstage']:
+            asyncio.ensure_future(ctx.send('Sorry, you cannot unset your max stage. If you need to change it, join the `.support` server'))
+            return
         if not value:
             asyncio.ensure_future(ctx.send('You need to tell me what to unset!'))
             return

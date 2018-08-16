@@ -63,6 +63,13 @@ class Fun():
         else:
             await ctx.send('OMG, HI BAE!!')
 
+    @commands.command(name='pleb')
+    async def _pleb(self, ctx):
+        if ctx.author.id != 254710997225308181:
+            asyncio.ensure_future(ctx.send('You are not enough of a pleb to use this command :<'))
+        else:
+            asyncio.ensure_future(ctx.send('**Relajarse#0010** is the most pleb pleb I ever met, out of all the plebs >:D'))
+
     @commands.command(name='emote', aliases=['mote', 'e'])
     async def emote(self, ctx, emote: str):
         match = emoji_exp.search(emote.strip())

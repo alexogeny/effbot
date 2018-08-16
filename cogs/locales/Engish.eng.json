@@ -23,6 +23,9 @@
             "usage": ".relics <stage> <bos> <sets> <craftpower>",
             "example": ".relics 23000 5e16 5 20"
         },
+        "artifacts": {
+            "description": "Provides information about all the artifacts as of version 2.9."
+        },
         "tt": {
             "description": "Tap Titans 2 module. Contains a whole bunch of different things, including Titan Lord timers, titancount, profile cards, relics command, artifacts command, profile cards, and a bunch of other stuff.\nFor setting TLs, check out `.tt group get` command and the `.tt set` command.\nFor everything else, try things like `.help titancount`."
         },
