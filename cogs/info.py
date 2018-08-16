@@ -69,9 +69,10 @@ class Information():
             return
 
         emojis = self.bot.get_guild(server).emojis
-        asyncio.ensure_future(ctx.send(
-            '```'+'\n'.join([str(e) for e in emojis])+'```'
-        ))
+        for chunk in self.helpers.chunker(emojis, 30):
+            asyncio.ensure_future(ctx.send(
+                '```'+'\n'.join([str(e) for e in chunk])+'```'
+            ))
 
     @info.command(name='commands')
     async def _commands(self, ctx):
