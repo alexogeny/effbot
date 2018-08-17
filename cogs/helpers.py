@@ -576,12 +576,17 @@ class Helpers():
             try:
                 mx = await chan.get_message(tl['message'])
             except:
-                mx = await chan.send(text)
+                try:
+                    mx = await chan.send(text)
+                except discord.errors.Forbidden:
+                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                    return
+                # mx = await chan.send(text)
                 action = 'send'
                 tl.update({'message': mx.id})
             else:
                 try:
-                    asyncio.ensure_future(mx.edit(content=text))
+                    await mx.edit(content=text)
                 except discord.errors.Forbidden:
                     await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
                     return
@@ -597,7 +602,11 @@ class Helpers():
             tl.update({'message': mx.id})
         elif action == 'send' and text_type == 'now':
             await asyncio.sleep(seconds_until_tl)
-            asyncio.ensure_future(chan.send(text))
+            try:
+                mx = await chan.send(text)
+            except discord.errors.Forbidden:
+                await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                return
             tl.update({'message': 1})
         elif action == 'send' and text_type == 'round':
             try:
@@ -617,7 +626,11 @@ class Helpers():
                 else:
                     text = 'Boss spawned!'
                     tl.update({'when_message': 0})
-                asyncio.ensure_future(mx.edit(content=text))
+                try:
+                    asyncio.ensure_future(mx.edit(content=text))
+                except discord.errors.Forbidden:
+                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                    return
 
         if action == 'send':
             asyncio.ensure_future(self.sql_update_record('titanlord', tl))
