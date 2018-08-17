@@ -579,7 +579,7 @@ class Helpers():
                 try:
                     mx = await chan.send(text)
                 except discord.errors.Forbidden:
-                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                     return
                 # mx = await chan.send(text)
                 action = 'send'
@@ -588,7 +588,7 @@ class Helpers():
                 try:
                     await mx.edit(content=text)
                 except discord.errors.Forbidden:
-                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                     return
         elif action == 'send' and text_type != 'now' and text_type != 'round':
             # if tl.get('message') > 1:
@@ -597,7 +597,7 @@ class Helpers():
             try:
                 mx = await chan.send(text)
             except discord.errors.Forbidden:
-                await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                 return
             tl.update({'message': mx.id})
         elif action == 'send' and text_type == 'now':
@@ -605,14 +605,14 @@ class Helpers():
             try:
                 mx = await chan.send(text)
             except discord.errors.Forbidden:
-                await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                 return
             tl.update({'message': 1})
         elif action == 'send' and text_type == 'round':
             try:
                 asyncio.ensure_future(chan.send(text))
             except discord.errors.Forbidden:
-                await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                 return
         if await self.tl_has_settings(tl, c=('when_message', 'when_channel')):
             when_channel = self.bot.get_channel(tl['when_channel'])
@@ -629,7 +629,7 @@ class Helpers():
                 try:
                     asyncio.ensure_future(mx.edit(content=text))
                 except discord.errors.Forbidden:
-                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                     return
 
         if action == 'send':
