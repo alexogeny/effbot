@@ -84,7 +84,7 @@ def artifact_map():
         dict(id=40, op='^', type='multi', acronym='roc', name='Ring of Calisto', effect='equipment', emote='<a:ring_of_calisto:479215474530320385>'),
         dict(id=41, op='x', type='damage', acronym='rt', name='Royal Toxin', effect='deadlystrike', emote='<a:royal_toxin:479216934219546625>'),
         dict(id=42, op='x', type='damage', acronym='af', name='Avian Feather', effect='offline', emote='<:avian_feather:479210449519378443>'),
-        dict(id=43, op='x', type='gold', acronym='zk', name='Zakynthos Coin', effect='offline', emote='<a:zakynthos_coin:479218944415105035>'),
+        dict(id=43, op='x', type='gold', acronym='zc', name='Zakynthos Coin', effect='offline', emote='<a:zakynthos_coin:479218944415105035>'),
         dict(id=44, op='x', type='gold', acronym='gfm', name='Great Fay Medallion', effect='fairy', emote='<:great_fay_medallion:479210461884186624>'),
         dict(id=45, op='x', type='gold', acronym='coe', name='Coins of Ebizu', effect='splash', emote='<:coins_of_ebizu:479210453634121747>'),
         dict(id=46, op='%', type='damage', acronym='crh', name='Corrupted Rune Heart', effect='splash', emote='<:corrupted_rune_heart:479210454078586883>'),
@@ -204,6 +204,7 @@ class TT2Artifacts():
                     '\n'.join([a.get('emote', '<:sponge_right:475979143964524544>') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier])
                 )
                 asyncio.ensure_future(ctx.send(
+                    'The following list of artifacts was sorted into tiers by a totally "fine" algorithm:tm::',
                     embed=e
                 ))
             
@@ -215,15 +216,16 @@ class TT2Artifacts():
         if tier is None:
             for tier in 'A B C D E'.split():
                 e = await self.helpers.full_embed(
-                    '\n'.join(['<:sponge_right:475979143964524544> {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier])
+                    '\n'.join([a.get('emote', '<:sponge_right:475979143964524544>') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier])
                 )
                 asyncio.ensure_future(ctx.send(
+                    'The following list of artifacts was sorted into tiers by a totally "fine" algorithm:tm::',
                     embed=e
                 ))
         elif tier.upper() not in 'A B C D E'.split():
             asyncio.ensure_future(ctx.send('Not a valid tier! Valid tiers are: `A` `B` `C` `D` `E`'))
         else:
-            tierlist = ['{} ({})'.format(a['name'], a['acronym']) for a in self.artifacts if get_arti_tier(a) == tier.upper()]
+            tierlist = [a.get('emote', '') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier.upper()]
             e = await self.helpers.full_embed(
                 '__List of **{}** tier artifacts__:\n\n{}'.format(
                     tier.upper(),

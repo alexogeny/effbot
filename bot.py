@@ -66,6 +66,10 @@ class Effribot(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user.name}')
         print('--------')
+        # asyncio.ensure_future(self.helpers.update_timed_roles())
+        await self.get_cog('Helpers').update_timed_roles()
+        print('Updated timed roles!')
+        print('--------')
 
     async def on_command_error(self, ctx, error):
         channel = ctx.message.channel

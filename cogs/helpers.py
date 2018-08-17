@@ -71,6 +71,15 @@ async def any_roles_in_list(list_one, list_two):
         role_in_list(list_item, list_one) for list_item in list_two
     ]))
 
+def has_role(user, *roles):
+    user_roles = [r.id for r in user.roles]
+    if any([r for r in roles if r in user_roles]):
+        return True
+    return False
+
+def is_admin(user, guild):
+    return guild.get_member(user).guild_permissions.administrator
+
 def has_any_role(*roles):
     async def _has_any_role(ctx):
         m, a, g = ctx.message, ctx.author, await ctx.bot.get_cog('Helpers').get_record('server',ctx.guild.id)
@@ -473,6 +482,12 @@ class Helpers():
                                in titanlords
                                if await self.tl_has_settings(dict(tl))])
 
+    async def update_timed_roles(self):
+        servers = await self.sql_query_db("SELECT * FROM server")
+        await asyncio.gather(*[self.update_timed_role(dict(server))
+            for server in servers if server['extra'].get('timed_role_timer') and server['roles'].get('timed')])
+
+
     async def get_tl_time_string(self, tl, kind='timer'):
         now, next_boss = datetime.utcnow(), tl['next']
         seconds_until_tl = (next_boss-now).total_seconds()
@@ -488,6 +503,27 @@ class Helpers():
             text = 'Boss has spawned!'
         return text
 
+    async def update_timed_role(self, server):
+        print('updating timed roles')
+        try:
+            guild = self.bot.get_guild(server['id'])
+        except:
+            return
+        if not guild:
+            return
+        print('Updating roles for: {}'.format(server['id']))
+        now = datetime.utcnow()
+        role_to_add = next((r for r in guild.roles if r.id == server['roles']['timed']), None)
+        if not role_to_add:
+            return
+        req = server['extra']['timed_role_timer']
+        await asyncio.gather(*[
+            await member.add_roles(role_to_add, reason='Timed role criteria passed.')
+            for member
+            in guild.members
+            if (now-member.joined_at).total_seconds()/3600 >= req and role_to_add not in member.roles
+        ])
+
 
     async def update_tl(self, tl):
         chan, msg = None, None
@@ -501,7 +537,7 @@ class Helpers():
         boss_spawn = await self.get_spawn_string(tl.get('timezone') or 0, next_boss)
         
         params = dict(
-            TIME='**{:02}:{:02}:{:02}**'.format(H, M, S),
+            TIME='{:02}:{:02}:{:02}'.format(H, M, S),
             SPAWN=boss_spawn, ROUND=1, CQ=tl.get('cq_number', 1),
             GROUP=tl.get('group', 'Clan'))
         
@@ -582,7 +618,8 @@ class Helpers():
         return False
 
     async def process_time(self, input_time: str) -> timedelta:
-        matches = re.match(r'(?:(?:(?P<hours>\d{1,2})[:.h])?(?P<minutes>\d{1,2})[:.m])?(?P<seconds>\d{1,2})', input_time)
+        # matches = re.match(r'(?:(?:(?P<hours>\d{1,2})[:.h])?(?P<minutes>\d{1,2})[:.m])?(?P<seconds>\d{1,2})', input_time)
+        matches = re.match(r'(?:(?P<hours>\d{1,2}){0,1}(?=[h: ]{0,2})(?<=\d)[h :]+)?(?:(?P<minutes>\d{1,2}){0,1}(?=[m: ]{0,2})(?<=\d)[m :]+)?(?:(?P<seconds>\d{1,2}){0,1}(?=[s: ]{0,2})(?<=\d)[s :]{0,2})?', input_time)
         mgroups = {k: v and int(v) or 0 for k, v in matches.groupdict().items()}
         return (timedelta(**mgroups), {unit: value or 0 for unit, value in mgroups.items()})
 
@@ -703,8 +740,8 @@ class Helpers():
 
         if user.startswith('<@') and user.endswith('>'):
             user = user.replace('<@', '').replace('>', '').replace('!', '')
+            user = ctx.guild.get_member(int(user))
             return user
-
         result = await self.search_for([m.name.lower() for m in members], user.lower())
         nicks = await self.search_for([(m.nick or '').lower() for m in members], user.lower())
         if nicks:
@@ -846,6 +883,4 @@ class Helpers():
 
 def setup(bot):
     cog = Helpers(bot)
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(cog.timer_save())
     bot.add_cog(cog)

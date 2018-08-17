@@ -225,6 +225,7 @@ class TapTitans():
                  '\n`%round%` the round number of the boss'
                  '\n`%group%` the group the titanlord belongs to'
                  '\n`%everyone%` set an everyone ping without pinging everyone setting it up'
+                 '\n`%br%` adds a line break to the text'
                  #'\n`%user%` mentions the user who set up the timer'
                  )
             })
@@ -434,6 +435,8 @@ class TapTitans():
             msg_text = msg_text.replace(f'%{unit.upper()}%', '{'+unit.upper()+'}')
         msg_text = msg_text.replace('%everyone%', '@everyone')
         msg_text = msg_text.replace('{everyone}', '@everyone')
+        msg_text = msg_text.replace('%br%', '\n')
+        msg_text = msg_text.replace('{br}', '\n')
 
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
@@ -703,7 +706,7 @@ class TapTitans():
             return
         exists = await self.get_tl_from_db(ctx, group)
         if not exists:
-            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+            await self.tl_error_message(exists, ctx)
             return
         exists.update({'next': None, 'message': 0, 'when_message': 0})
         await self.helpers.sql_update_record('titanlord', exists)
@@ -743,15 +746,18 @@ class TapTitans():
         group = valid_group and group[1:] or None
         return group
     
-    async def tl_error_message(self, record):
+    async def tl_error_message(self, record, ctx):
         if not record:
-            return 'The group name you supplied does not exist. `.tt group add`'
-        return next((
-            self.error_map[property]
-            for property
-            in 'channel cq_number clanname ping_at now ping timer'.split()
-            if not record.get(property)
-        ), None)
+            exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+            )
+            exists = [dict(r) for r in exists if r['guild']==ctx.guild.id]
+            
+            if not exists:
+                asyncio.ensure_future(ctx.send('Could not find any groups. Do `.tt group add` to create one.'))
+                return
+            exists = ', '.join([f'`{r["name"]}`' for r in exists])
+            asyncio.ensure_future(ctx.send(f'No default group set, or group not found. The following TL groups exist in this server: {exists}'))
     
     async def tl_embed_builder(self, record, ttk):
         cq_no = int(record.get('cq_number') or 1)
@@ -781,8 +787,11 @@ class TapTitans():
     async def munge_group(*multi_arg):
         multi_arg, group = multi_arg
         multi_text = ' '.join(multi_arg)
-        if multi_arg[-1].startswith('-'):
-            multi_text = ' '.join(multi_arg[:-1])
+        try:
+            if multi_arg[-1].startswith('-'):
+                multi_text = ' '.join(multi_arg[:-1])
+        except IndexError:
+            pass
         group = multi_arg[-1].startswith('-') and multi_arg[-1] or group
         group = group.startswith('-') and group[1:] or None
         return multi_text, group
@@ -791,26 +800,26 @@ class TapTitans():
     @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
     async def tl_in(self, ctx, *time, group="-default"):
         delay = datetime.utcnow()
-        time_text, group = await self.munge_group(time, group)
+        try:
+            time_text, group = await self.munge_group(time, group)
+        except IndexError:
+            asyncio.ensure_future(ctx.send('No time was supplied. Should be in the format `5h55m55s`'))
+            return
 
         if not group:
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
+
         exists = await self.get_tl_from_db(ctx, group)
-        msg = await self.tl_error_message(exists)
-        if msg:
-            asyncio.ensure_future(ctx.send(msg))
+        if not exists:
+            asyncio.ensure_future(ctx.send(await self.tl_error_message(exists, ctx)))
             return
+        # msg = await self.tl_error_message(exists)
+        # if msg:
+            # asyncio.ensure_future(ctx.send(msg))
+            # return
 
-        time = ''.join(time_text)
-
-        tm = time.lower()
-        if tm.endswith('h') and tm.replace('h','').isnumeric():
-            time = tm.replace('h','')+'h0m0s'
-        elif tm.endswith('m') and tm.replace('m', '').isnumeric():
-            time = tm+'0s'
-
-
+        time = ''.join(time_text.split())
         _next, _units = await self.helpers.process_time(time)
         now = datetime.utcnow()
         modded_ = await self.helpers.mod_timedelta(_next)
@@ -852,14 +861,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(msg))
             return
 
-        time = ''.join(time_text)
-
-        tm = time.lower()
-        if tm.endswith('h') and tm.replace('h','').isnumeric():
-            time = tm.replace('h','')+'h0m0s'
-        elif tm.endswith('m') and tm.replace('m', '').isnumeric():
-            time = tm+'0s'
-        
+        time = ''.join(time_text.split())
         _ttk, _units = await self.helpers.process_time(time)
         
         try:

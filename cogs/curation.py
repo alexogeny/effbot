@@ -303,38 +303,45 @@ class Curation():
                   ' meaning you can only send links or pictures.')
             ))
 
-    async def quote_react(self, reaction, user):
-        m = reaction.message
-        if isinstance(reaction.message.channel, discord.abc.PrivateChannel) or not reaction.emoji == "⭐":
+    async def quote_react(self, payload):
+        if str(payload.emoji) != '⭐':
             return
-        g = await self.helpers.get_record('server', m.guild.id)
-        q = g['channels'].get('quotes')
-        if not q or m.id in g['extra'].get('quotes',[]):
-            return
-        u, a, c = user, m.author, m.channel
 
+        channel = self.bot.get_channel(payload.channel_id)
+        if not isinstance(channel, discord.TextChannel):
+            return
+
+        user = self.bot.get_user(payload.user_id)
+        if user is None or user.bot:
+            return
         
-        user_roles = [r.id for r in u.roles]
+        message = await channel.get_message(payload.message_id)
+
+        g = await self.helpers.get_record('server', message.guild.id)
+        q = g['channels'].get('quotes')
+        if not q or message.id in g['extra'].get('quotes',[]):
+            return
+
+        user = message.guild.get_member(user.id)
+        user_roles = [r.id for r in user.roles]
         has_permission = False
         for role in ('admin','moderator','curator'):
             if g['roles'].get(role) in user_roles:
                 has_permission = True
         if not has_permission:
             return
-        
+
         if not g['extra'].get('quotes'):
             g['extra']['quotes']=[]
-        g['extra']['quotes'].append(m.id)
-        fq_an = f'{a.name}#{a.discriminator}'
-        fq_un = f'{user.name}#{user.discriminator}'
-        avatar = await self.helpers.get_avatar(a)
+        g['extra']['quotes'].append(message.id)
+        avatar = await self.helpers.get_avatar(message.author)
         e = await self.helpers.full_embed(
-            m.content,
-            author={'name': fq_an, 'image': avatar},
+            message.content,
+            author={'name': f'{message.author}', 'image': avatar},
             thumbnail=avatar,
             fields={
-                f'Quote #{len(g["extra"]["quotes"])}': f'in {c.mention}',
-                f'Quoted by {fq_un}': f'{m.jump_url}'
+                f'Quote #{len(g["extra"]["quotes"])}': f'in {channel.mention}',
+                f'Quoted by {user}': f'{message.jump_url}'
             }
         )
         await self.helpers.sql_update_record('server', g)
@@ -374,5 +381,6 @@ def setup(bot):
     cog = Curation(bot)
     bot.add_listener(cog.curate_channels, "on_message")
     bot.add_check(cog.check_restrictions, call_once=True)
-    bot.add_listener(cog.quote_react, "on_reaction_add")
+    # bot.add_listener(cog.quote_react, "on_reaction_add")
+    bot.add_listener(cog.quote_react, 'on_raw_reaction_add')
     bot.add_cog(cog)

@@ -37,6 +37,7 @@ class SettingsCog():
         self.helpers = self.bot.get_cog('Helpers')
         self.flags = self.helpers.flags
         self.flagstr = self.helpers.flagstr
+        self.last_check = int(time.time())
 
     @commands.group(name="my", pass_context=True)
     async def my(self, ctx):
@@ -411,7 +412,7 @@ class SettingsCog():
 
     @settings.command(pass_context=True)
     @is_admin_or_owner()
-    async def set(self, ctx, setting: str=None, value: str=None):
+    async def set(self, ctx, setting: str=None, value: str=None, extra=None):
         guild_id = ctx.message.guild.id
         key = setting.lower().strip()
         msg = ctx.message
@@ -428,13 +429,27 @@ class SettingsCog():
             await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
             return
-        elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto', 'dj']:
+        elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto', 'dj', 'timed']:
             key = key.replace('role', '')
             result = await self.helpers.choose_role(ctx, msg.guild, value)
             if not result:
                 asyncio.ensure_future(ctx.send('No roles found!'))
                 return
+
+            if key == 'timed' and not extra:
+                asyncio.ensure_future(ctx.send('When setting the `timed` roled, you must supply a time in hours, e.g. 24. Must be greater than 0 and less than 2400.'))
+                return
+            elif key == 'timed' and not extra.isnumeric():
+                asyncio.ensure_future(ctx.send('When setting the `timed` roled, you must supply a time in hours, e.g. 24. Must be greater than 0 and less than 2400.'))
+                return
+            elif key == 'timed' and not int(extra) > 0:
+                return
+            elif key == 'timed' and not int(extra) <= 2400:
+                return
+
             g['roles'][key]=result.id
+            if key == 'timed':
+                g['extra']['timed_role_timer'] = int(extra)
             await self.helpers.sql_update_record('server', g)
             asyncio.ensure_future(self.helpers.try_mention(ctx, f'{key} role', result))
             return
@@ -478,7 +493,7 @@ class SettingsCog():
                     msg = f'Set the {key} setting to {result.mention}'
 
 
-        elif key.replace('channel', '') in ['quotes', 'updates', 'curated', 'welcome']:
+        elif key.replace('channel', '') in ['quotes', 'updates', 'curated', 'welcome', 'staff']:
             result = await self.helpers.choose_channel(ctx, msg.guild, value)
             key = key.replace('channel', '')
             if not g['channels'].get(key):
@@ -507,6 +522,12 @@ class SettingsCog():
         if msg:
             asyncio.ensure_future(ctx.send(msg))
 
+    async def timer_check(self):
+        while self is self.bot.get_cog('SettingsCog'):
+            if int(time.time()) - self.last_check >= 2399.9999999:
+                asyncio.ensure_future(self.helpers.update_timed_roles())
+            await asyncio.sleep(2399.9999999)
+
     async def auto_role(self, member):
         gid = member.guild.id
         g = await self.helpers.get_record('server', gid)
@@ -531,6 +552,8 @@ class SettingsCog():
 
 def setup(bot):
     cog = SettingsCog(bot)
+    loop = asyncio.get_event_loop()
+    loop.create_task(cog.timer_check())
     bot.add_listener(cog.auto_role, "on_member_join")
     bot.add_listener(cog.welcome_message, "on_member_join")
     bot.add_cog(cog)

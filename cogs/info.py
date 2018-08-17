@@ -176,23 +176,21 @@ class Information():
     @commands.command(pass_context=True, no_pm=True)
     async def avatar(self, ctx, user: str=None):
         author = ctx.message.author
-        server = ctx.message.guild
-
         if not user:
             user = author
         elif not hasattr(user, 'roles') and not user.isnumeric():
             try:
-                user = server.get_member(int(user[2:-1]))
+                user = await self.bot.get_user_info(int(user[2:-1]))
             except:
                 user = await self.helpers.choose_member(ctx, server, user)
         elif user.isnumeric():
             try:
-                user = self.bot.get_user(int(user))
+                user = await self.bot.get_user_info(int(user))
             except:
                 pass
         if not user:
             return
-        avatar = await self.helpers.build_embed(f"{user.name}#{user.discriminator}'s avatar", getattr(user, 'color', 000000))
+        avatar = await self.helpers.build_embed(f"{user}'s avatar", getattr(user, 'color', 000000))
         if user.avatar_url:
             avatar.set_image(url=await self.helpers.get_avatar(user))
         try:
