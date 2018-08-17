@@ -579,21 +579,32 @@ class Helpers():
                 mx = await chan.send(text)
                 action = 'send'
                 tl.update({'message': mx.id})
-            else:   
-                asyncio.ensure_future(mx.edit(content=text))
+            else:
+                try:
+                    asyncio.ensure_future(mx.edit(content=text))
+                except discord.errors.Forbidden:
+                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                    return
         elif action == 'send' and text_type != 'now' and text_type != 'round':
             # if tl.get('message') > 1:
             # m = await chan.get_message(tl['message'])
             # await m.delete()
-            mx = await chan.send(text)
+            try:
+                mx = await chan.send(text)
+            except discord.errors.Forbidden:
+                await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                return
             tl.update({'message': mx.id})
         elif action == 'send' and text_type == 'now':
             await asyncio.sleep(seconds_until_tl)
             asyncio.ensure_future(chan.send(text))
             tl.update({'message': 1})
         elif action == 'send' and text_type == 'round':
-            asyncio.ensure_future(chan.send(text))
-        
+            try:
+                asyncio.ensure_future(chan.send(text))
+            except discord.errors.Forbidden:
+                await self.bot.get_channel(466192124115681281).send(f'{chan} - {channel.guild}')
+                return
         if await self.tl_has_settings(tl, c=('when_message', 'when_channel')):
             when_channel = self.bot.get_channel(tl['when_channel'])
             try:
