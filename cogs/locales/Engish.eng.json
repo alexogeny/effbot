@@ -194,6 +194,59 @@
             "requires": "",
             "usage": ".my <setting> <value>",
             "example": ".my ltr 2.82e39"
+        },
+        "my ltr": {
+            "description": "Sets your life time relics as per your earned relics in the achievements pane.",
+            "requires": "",
+            "usage": ".my ltr <value>",
+            "example": ".my ltr 27.4M"
+        },
+        "my country": {
+            "description": "Change your country flag in your `.tt2` profile. Should be a full name of the country to search for.",
+            "usage": ".my country <country>",
+            "example": ".my country united states"
+        },
+        "my bos": {
+            "description": "Sets your book of shadows level.",
+            "requires": "",
+            "usage": ".my bos <level>",
+            "example": ".my bos 20K"
+        },
+        "my ms": {
+            "description": "Sets your max stage.",
+            "requires": "",
+            "usage": ".my ms <ms>",
+            "example": ".my ms 30k"
+        },
+        "my tcq": {
+            "description": "Sets your total clan quest count.",
+            "requires": "",
+            "usage": ".my tcq <tcq>",
+            "example": ".my tcq 3272"
+        },
+        "my language": {
+            "description": "Sets your language/locale, which affects texts returned by the bot (if available and if translated). 3 character ISO code.",
+            "requires": "",
+            "usage": ".my lang <lang>",
+            "example": ".my lang ger"
+        },
+        "my ign": {
+            "description": "Sets your in-game name.",
+            "requires": "",
+            "usage": ".my ign <name>",
+            "example": ".my ign Harry Potter"
+        },
+        "my clan": {
+            "description": "Sets your clan. Only works if you are in that clan's server.",
+            "requires": "have one of the 5 clan roles: gm, master, captain, knight, recruit.",
+            "usage": ".my clan <clan acronym>",
+            "example": ".my clan FMT"
+        },
+        "my craftpower": {
+            "description": "Sets your crafting power as shown in-game.",
+            "requires": "",
+            "usage": ".my craftpower <power>",
+            "example": ".my craftpower 7"
         }
     }
 }

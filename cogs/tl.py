@@ -856,7 +856,7 @@ class TapTitans():
             return
         
         exists = await self.get_tl_from_db(ctx, group)
-        msg = await self.tl_error_message(exists)
+        msg = await self.tl_error_message(exists, ctx)
         if msg:
             asyncio.ensure_future(ctx.send(msg))
             return

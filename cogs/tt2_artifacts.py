@@ -31,8 +31,7 @@ async def base_relics_amount(stage: int) -> int:
         )))
 )
 
-async def artifact_boost(level: int, per_level: int, cost_exponent: float, 
-                         growth_rate, growth_max, growth_exponent) -> int:
+async def artifact_boost(level: int, per_level: int, cost_exponent: float, growth_rate, growth_max, growth_exponent) -> int:
     return round(1 + per_level * pow(level, pow(
         (1 + (cost_exponent - 1) * min(growth_rate * level, growth_max)),
         growth_exponent
@@ -146,15 +145,15 @@ def arti_effect_map(effect):
 def get_arti_tier(arti):
     raw = round(arti_op_map(arti['op'])*arti_type_map(arti['type'])*arti_effect_map(arti['effect']))
     if raw > 15:
-        return 'A'
+        return 'S'
     elif raw > 8.5:
-        return 'B'
+        return 'A'
     elif raw > 5.5:
-        return 'C'
+        return 'B'
     elif raw > 3:
-        return 'D'
+        return 'C'
     else:
-        return 'E'
+        return 'D'
 
 
 class TT2Artifacts():
@@ -199,14 +198,12 @@ class TT2Artifacts():
                     mc = mc[len(p):]
                     passed = 1
         if mc.strip() in ['art', 'artifact', 'arti', 'artifacts', 'arts']:
-            for tier in 'A B C D E'.split():
+            await ctx.send('The following list of artifacts was sorted into tiers by a totally "fine" algorithm:tm::')
+            for tier in 'S A B C D'.split():
                 e = await self.helpers.full_embed(
                     '\n'.join([a.get('emote', '<:sponge_right:475979143964524544>') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier])
                 )
-                asyncio.ensure_future(ctx.send(
-                    'The following list of artifacts was sorted into tiers by a totally "fine" algorithm:tm::',
-                    embed=e
-                ))
+                asyncio.ensure_future(ctx.send(embed=e))
             
 
     @_artifacts.command(name='tiers', aliases=['tierlist', 'tier'])
@@ -214,16 +211,14 @@ class TT2Artifacts():
         # print('tier list asked for')
         # asyncio.ensure_future(ctx.send('well i hope it might work'))
         if tier is None:
-            for tier in 'A B C D E'.split():
+            await ctx.send('The following list of artifacts was sorted into tiers by a totally "fine" algorithm:tm::')
+            for tier in 'S A B C D'.split():
                 e = await self.helpers.full_embed(
                     '\n'.join([a.get('emote', '<:sponge_right:475979143964524544>') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier])
                 )
-                asyncio.ensure_future(ctx.send(
-                    'The following list of artifacts was sorted into tiers by a totally "fine" algorithm:tm::',
-                    embed=e
-                ))
-        elif tier.upper() not in 'A B C D E'.split():
-            asyncio.ensure_future(ctx.send('Not a valid tier! Valid tiers are: `A` `B` `C` `D` `E`'))
+                asyncio.ensure_future(ctx.send(embed=e))
+        elif tier.upper() not in 'S A B C D'.split():
+            asyncio.ensure_future(ctx.send('Not a valid tier! Valid tiers are: **S**, **A**, **B**, **C**, D**'))
         else:
             tierlist = [a.get('emote', '') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier.upper()]
             e = await self.helpers.full_embed(
