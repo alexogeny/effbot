@@ -526,6 +526,8 @@ class Helpers():
 
 
     async def update_tl(self, tl):
+        MAX_ROUNDS = 23
+        UOT = 3600
         chan, msg = None, None
         chan = self.bot.get_channel(tl['channel'])
         
@@ -533,7 +535,8 @@ class Helpers():
         seconds_until_tl = (next_boss-now).total_seconds()
         H, M, S = await self.mod_timedelta(next_boss-now)
         is_not_final = seconds_until_tl > 10
-        round_ping = tl.get('message') in range(1, 13) and tl.get('message') or 0
+        round_ping = tl.get('message') in range(1, MAX_ROUNDS+1) and tl.get('message')
+        
         boss_spawn = await self.get_spawn_string(tl.get('timezone') or 0, next_boss)
         
         params = dict(
@@ -543,12 +546,12 @@ class Helpers():
         
         ping_intervals = [p*60 for p in tl.get('ping_at', [15,5,1])]
         text_type, action, last_ping = 'timer', 'edit', tl.get('pinged_at')
-        if is_not_final and seconds_until_tl <= max(ping_intervals) and not round_ping:
+        if is_not_final and seconds_until_tl <= max(ping_intervals) and not round_ping > 0:
             text_type = 'ping'
         elif not is_not_final and not round_ping:
             text_type = 'now'
             action = 'send'
-        elif round_ping and -seconds_until_tl//3600>=round_ping:
+        elif round_ping and -seconds_until_tl//UOT>=round_ping and round_ping <= MAX_ROUNDS:
             tl['message'] = round_ping+1
             params['ROUND'] = round_ping+1
             action = 'send'
@@ -556,7 +559,8 @@ class Helpers():
             if not tl.get(text_type):
                 return
         elif round_ping:
-            return
+            text_type = 'now'
+            action = 'send'
         elif not is_not_final:
             action = 'pass'
         if not tl.get(text_type):
@@ -567,9 +571,12 @@ class Helpers():
             will_ping = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
             if will_ping:
                 action, tl['pinged_at'] = 'send', seconds_until_tl
-        elif text_type == 'now':
+        elif text_type == 'now' and round_ping > MAX_ROUNDS+1:
             tl['cq_number'] += 1
             tl['pinged_at'] = 0
+        elif text_type == 'now' and round_ping >= MAX_ROUNDS:
+            tl['pinged_at'] = 0
+            tl['next'] == now
         
         if action == 'edit':
             mx = None

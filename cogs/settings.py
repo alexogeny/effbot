@@ -208,7 +208,7 @@ class SettingsCog():
             f'Set **{a.name}#{a.discriminator}**\'s skillpoints to **{v}**!'
         ))
 
-    @my.command(name='bos', aliases=['bookofshadows'])
+    @my.command(name='bos', aliases=['bookofshadows', 'BoS'])
     async def _bos(self, ctx, bos):
         o = bos
         a = ctx.author
@@ -406,9 +406,15 @@ class SettingsCog():
         await self.helpers.sql_update_key('user', u.id, 'tt', key, value)
         asyncio.ensure_future(ctx.send('Success!'))
 
-    @commands.group(pass_context=True, name="settings")
+    @commands.group(name="settings")
     async def settings(self, ctx):
         pass
+
+    @settings.group(name='set')
+    async def settings_set(self, ctx):
+        pass
+
+    @settings.command(name='role')
 
     @settings.command(pass_context=True)
     @is_admin_or_owner()

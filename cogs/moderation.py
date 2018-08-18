@@ -74,7 +74,7 @@ class ModerationCog():
         if reason is None:
             reason = 'not set'
         reason = reason.replace('|', '-')
-        await member.kick(reason=f'{ctx.author}|kick|{reason}')
+        await member.kick(reason=f'{ctx.author.id}|kick|{reason}')
         
         if not g['channels'].get('staff'):
             deliver = ctx.send
@@ -103,13 +103,13 @@ class ModerationCog():
         elif member == ctx.author or member.id == ctx.author.id:
             asyncio.ensure_future(ctx.send('❎ I cannot let you ban yourself.'))
             return
-        elif hasattr(member, 'top_role') and ctx.guild.role_hierarchy.index(member.top_role) >= ctx.guild.role_hierarchy.index(ctx.author.top_role):
+        elif hasattr(member, 'top_role') and ctx.guild.role_hierarchy.index(member.top_role) <= ctx.guild.role_hierarchy.index(ctx.author.top_role):
             asyncio.ensure_future(ctx.send('❎ You can only ban people lower than yourself in the role list.'))
             return
         if reason is None:
             reason = 'not set'
         reason = reason.replace('|', '-')
-        await ctx.guild.ban(member, reason=f'{ctx.author}|ban|{reason}', delete_message_days=0)
+        await ctx.guild.ban(member, reason=f'{ctx.author.id}|ban|{reason}', delete_message_days=0)
         
         if not g['channels'].get('staff'):
             deliver = ctx.send
@@ -158,13 +158,21 @@ class ModerationCog():
         elif member == ctx.author or member.id == ctx.author.id:
             asyncio.ensure_future(ctx.send('❎ I cannot let you rename yourself.'))
             return
-        elif hasattr(member, 'top_role') and ctx.guild.role_hierarchy.index(member.top_role) >= ctx.guild.role_hierarchy.index(ctx.author.top_role):
+        elif hasattr(member, 'top_role') and ctx.guild.role_hierarchy.index(member.top_role) <= ctx.guild.role_hierarchy.index(ctx.author.top_role):
             asyncio.ensure_future(ctx.send('❎ You can only rename people lower than yourself in the role list.'))
             return
         if reason is None:
             reason = 'no reason'
+        if not g['channels'].get('staff'):
+            deliver = ctx.send
+        else:
+            deliver = self.bot.get_channel(g['channels']['staff']).send
 
+        asyncio.ensure_future(deliver(
+            f'✅ **{member.display_name}** (**{member}**) was **renamed** to **{nickname[0:29]}** by **{ctx.author}**'
+        ))
 
+        await member.edit(nick = nickname[0:29])
 
 
 def setup(bot):
