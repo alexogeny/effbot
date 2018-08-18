@@ -414,7 +414,7 @@ class SettingsCog():
     async def settings_set(self, ctx):
         pass
 
-    @settings.command(name='role')
+    # @settings.command(name='role')
 
     @settings.command(pass_context=True)
     @is_admin_or_owner()
