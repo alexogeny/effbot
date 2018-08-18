@@ -558,7 +558,7 @@ class Helpers():
             text_type = 'round'
             if not tl.get(text_type):
                 return
-        elif round_ping:
+        elif round_ping and -seconds_until_tl//UOT>=round_ping:
             text_type = 'now'
             action = 'send'
         elif not is_not_final:
