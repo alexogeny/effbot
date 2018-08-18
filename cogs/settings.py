@@ -410,9 +410,9 @@ class SettingsCog():
     async def settings(self, ctx):
         pass
 
-    @settings.group(name='set')
-    async def settings_set(self, ctx):
-        pass
+    # @settings.group(name='set')
+    # async def settings_set(self, ctx):
+    #     pass
 
     # @settings.command(name='role')
 
