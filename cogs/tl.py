@@ -115,14 +115,27 @@ class TapTitans():
                 asyncio.ensure_future(self.helpers.update_tls())
             await asyncio.sleep(9.999999)
 
+    @commands.command(name='clanstats', aliases=['tt2clan'])
+    async def _clanstats(self, ctx, level: int):
+        if not 0 < level < 5000:
+            asyncio.ensure_future(ctx.send('CQ level must be between **1** and **5000**'))
+            return
+        dmg_bns = await self.helpers.humanize_decimal(clan_damage(level))
+        e = await self.helpers.full_embed(
+            f'\nBoss HP - **{self.helpers.human_format(boss_hitpoints(level))}**'
+            f'\nDamage Bonus - **{dmg_bns}**'
+            f'\nAdvanced Start - **{advance_start(level)}%**'
+        )
+        asyncio.ensure_future(ctx.send(
+            f'Clan stats for a level **{level}** clan:', embed=e
+        ))
+
     @commands.command(name='tournament', aliases=['tournaments', 'tourney', 'tourneys'], no_pm=True)
     async def _tourney(self, ctx):
         upcoming = await tournament_forecast()
         #asyncio.ensure_future(ctx.send(await self.helpers.tournament_time_remains()))
         e = await self.helpers.full_embed(
-            'The next tournament is '
-            + await self.helpers.tournament_time_remains()
-            + '\n\n'.join(upcoming)
+            '\n\n'.join(upcoming)
         )
         asyncio.ensure_future(ctx.send('Upcoming TT2 tournaments:', embed=e))
 
@@ -771,7 +784,7 @@ class TapTitans():
             "Killed in: {}".format(ttk),
             thumbnail=icon,
             fields={'Bonuses':field1, 'Next Boss':field2},
-            author=dict(name=f'Boss #{cq_no-1}', image=icon)
+            author=dict(name=f'Boss #{cq_no}', image=icon)
         )
         return e
     
@@ -820,6 +833,8 @@ class TapTitans():
             # return
 
         time = ''.join(time_text.split())
+        if time.strip().lower() == 'dead':
+            time = '6h'
         _next, _units = await self.helpers.process_time(time)
         now = datetime.utcnow()
         modded_ = await self.helpers.mod_timedelta(_next)

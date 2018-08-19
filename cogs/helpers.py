@@ -571,12 +571,12 @@ class Helpers():
             will_ping = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
             if will_ping:
                 action, tl['pinged_at'] = 'send', seconds_until_tl
-        elif text_type == 'now' and round_ping > MAX_ROUNDS+1:
-            tl['cq_number'] += 1
-            tl['pinged_at'] = 0
-        elif text_type == 'now' and round_ping >= MAX_ROUNDS:
-            tl['pinged_at'] = 0
-            tl['next'] == now
+        # elif text_type == 'now' and round_ping > MAX_ROUNDS+1:
+        #     tl['cq_number'] += 1
+        #     tl['pinged_at'] = 0
+        # elif text_type == 'now' and round_ping >= MAX_ROUNDS:
+        #     tl['pinged_at'] = 0
+        #     tl['next'] == now
         
         if action == 'edit':
             mx = None
@@ -614,7 +614,9 @@ class Helpers():
             except discord.errors.Forbidden:
                 await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
                 return
-            tl.update({'message': 1})
+            tl.update({'message': 1, 'cq_number': tl['cq_number']+1, 'pinged_at': 0})
+            if round_ping >= MAX_ROUNDS:
+                tl.update({'next': now})
         elif action == 'send' and text_type == 'round':
             try:
                 asyncio.ensure_future(chan.send(text))

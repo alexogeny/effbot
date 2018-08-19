@@ -101,36 +101,56 @@ class Information():
         a = ctx.author
         srv = ctx.guild
 
+        author = ctx.message.author
         if not user:
-            user = a
-        elif not hasattr(user, 'roles'):
+            user = author
+        elif not hasattr(user, 'roles') and not user.isnumeric():
             try:
-                user = srv.get_member(int(user[2:-1]))
-            except:
                 user = await self.helpers.choose_member(ctx, srv, user)
+            except:
+                user = await self.bot.get_user_info(int(user[2:-1]))
+        elif user.isnumeric():
+            try:
+                user = await self.bot.get_user_info(int(user))
+            except:
+                pass
         if not user:
             return
-        roles = [x.name for x in user.roles if x.name != "@everyone"]
+        if not hasattr(user, 'roles'):
+            roles = []
+        else:
+            roles = [x.name for x in user.roles if x.name != "@everyone"]
 
-        joined_at = user.joined_at
         since_created = (ctx.message.created_at - user.created_at).days
-        since_joined = (ctx.message.created_at - user.joined_at).days
-        user_joined = joined_at.strftime("%d %b %Y %H:%M")
+        try:
+            joined_at = user.joined_at
+            since_joined = (ctx.message.created_at - user.joined_at).days
+            user_joined = joined_at.strftime("%d %b %Y %H:%M")
+        except:
+            user_joined = None
         user_created = user.created_at.strftime("%d %b %Y %H:%M")
-        member_number = sorted(srv.members,
+        try:
+            member_number = sorted(srv.members,
                                key=lambda m: m.joined_at).index(user) + 1
+        except:
+            member_number = None
 
         created_on = "{}\n({} days ago)".format(user_created, since_created)
-        joined_on = "{}\n({} days ago)".format(user_joined, since_joined)
+        if user_joined:
+            joined_on = "{}\n({} days ago)".format(user_joined, since_joined)
+        try:
+            game = "Chilling in {} status".format(user.status)
+        except:
+            game = None
 
-        game = "Chilling in {} status".format(user.status)
-
-        if user.activity is None:
-            pass
+        if not hasattr(user, 'activity'):
+            game = None
         elif not hasattr(user.activity, 'url'):
             game = "{}".format(user.activity)
+        elif isinstance(user.activity, discord.activity.Activity):
+            game = "Streaming: [{}]({})".format(user.activity.name, user.activity.url)
         else:
-            game = "Streaming: [{}]({})".format(user.activity, user.activity.url)
+            game = "Streaming: [{}]({})".format(user.activity.name, user.activity.url)
 
         if roles:
             # roles = sorted(roles, key=[x.name for x in server.role_hierarchy
@@ -141,17 +161,25 @@ class Information():
                                if r.name != "@everyone"
                                and r in user.roles])
         else:
-            roles = "None"
-
-        data = discord.Embed(description=game, colour=user.colour)
+            roles = None
+        color = 000000
+        if hasattr(user, 'color'):
+            color = user.color
+        data = discord.Embed(description=game and game or 'Not in server', colour=color)
         data.add_field(name="Joined Discord on", value=created_on)
-        data.add_field(name="Joined this server on", value=joined_on)
-        data.add_field(name="Roles", value=roles, inline=False)
-        data.set_footer(text="Member #{} | User ID:{}"
+        if user_joined and joined_on:
+            data.add_field(name="Joined this server on", value=joined_on)
+        if roles:
+            data.add_field(name="Roles", value=roles, inline=False)
+        if member_number:
+            data.set_footer(text="Member #{} | User ID:{}"
                              "".format(member_number, user.id))
+        else:
+            data.set_footer(text="User ID: {}".format(user.id))
 
         name = str(user)
-        name = " ~ ".join((name, user.nick)) if user.nick else name
+        if getattr(user, 'nick', None):
+            name = " ~ ".join((name, getattr(user, 'nick')))
 
         if user.avatar_url:
             avatar = await self.helpers.get_avatar(user)
@@ -166,12 +194,28 @@ class Information():
         except discord.HTTPException:
             await ctx.send("I need the `Embed links` permission to send this")
 
-    @info.command(name='roles', no_pm=True)
-    async def _roles(self, ctx):
-        roles = ', '.join([r.mention for r in ctx.guild.role_hierarchy])
-        e = await self.helpers.full_embed(roles)
-        await ctx.send(embed=e)
+    @info.command(name='roles', no_pm=True, aliases=['role'])
+    async def _roles(self, ctx, role=None):
 
+        if not role:
+            roles = ', '.join([r.mention for r in ctx.guild.role_hierarchy])
+            e = await self.helpers.full_embed(roles)
+            await ctx.send(embed=e)
+            return
+        else:
+            role = await self.helpers.choose_role(ctx, ctx.guild, role)
+        if not role:
+            return
+        e = await self.helpers.full_embed(
+            '\n'.join([
+                f'**ID**: {role.id} (position {role.position + 1})',
+                f'**Name**: {role.mention} ({role.mentionable and "" or "not "}mentionable)',
+                f'**Hoisted**: {role.hoist and "" or "not "} hoisted',
+                f'**Created**: {role.created_at}',
+                f'**Integration**: {role.managed}'
+            ])
+        )
+        await ctx.send(f'Information about role: **{role}**', embed=e)
 
     @commands.command(pass_context=True, no_pm=True)
     async def avatar(self, ctx, user: str=None):
