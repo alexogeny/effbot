@@ -96,10 +96,10 @@ class SettingsCog():
         g = await self.helpers.get_record('user', a.id)
         ms_cap = self.bot.config['MS']
         msg = None
-        if ms <= g['tt'].get('ms', 0):
+        if ms <= (g['tt'].get('ms') or 0):
             msg = ('You cannot lower your MS. If you need it reset,'
                 ' join the support server: `.support`')
-        elif ms > ms_cap:
+        elif ms > ms_cap or 0:
             msg = f'You cannot set your MS over the current cap: `{ms_cap:,}`'
         else:
             await self.helpers.sql_update_key('user', a.id, 'tt', 'ms', ms)
@@ -117,7 +117,7 @@ class SettingsCog():
         a = ctx.author
         tcq = k == 1 and int(tcq) or int(float(tcq[:-1])*k)
         g = await self.helpers.get_record('user', a.id)
-        if tcq <= g['tt'].get('tcq', 0):
+        if tcq <= (g['tt'].get('tcq') or 0):
             asyncio.ensure_future(ctx.send(
                 'You can only ever set your TCQ higher than previous. If you'
                 ' need it reset, join the support server: `.support`'

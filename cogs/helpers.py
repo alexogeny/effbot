@@ -13,6 +13,7 @@ from pprint import pprint
 from string import ascii_lowercase
 from difflib import get_close_matches
 from decimal import Decimal
+from operator import neg
 from datetime import datetime, timedelta
 from collections import defaultdict
 from discord.ext import commands
@@ -519,139 +520,103 @@ class Helpers():
         req = server['extra']['timed_role_timer']
         await asyncio.gather(*[
             await member.add_roles(role_to_add, reason='Timed role criteria passed.')
-            for member
-            in guild.members
-            if (now-member.joined_at).total_seconds()/3600 >= req and role_to_add not in member.roles
+            for i, member
+            in enumerate([m for m in guild.members if role_to_add not in m.roles])
+            if (now-member.joined_at).total_seconds()/3600 >= req and i < 10
         ])
 
 
     async def update_tl(self, tl):
-        MAX_ROUNDS = 23
-        UOT = 3600
-        chan, msg = None, None
-        chan = self.bot.get_channel(tl['channel'])
-        
+        max_rounds, unit_of_time = 24, 60
+        channel, message = None, None
+        try:
+            channel = self.bot.get_channel(tl['channel'])
+        except:
+            return
+
         now, next_boss = datetime.utcnow(), tl['next']
         seconds_until_tl = (next_boss-now).total_seconds()
-        H, M, S = await self.mod_timedelta(next_boss-now)
-        is_not_final = seconds_until_tl > 10
-        round_ping = tl.get('message') in range(1, MAX_ROUNDS+1) and tl.get('message')
-        
+        round_ping = tl.get('round_number') or 1
+        if round_ping >= 2 and tl['pinged_at'] <= 0:
+
+            td = timedelta(seconds=unit_of_time*(int(round_ping)-1)*60)
+            td = ((next_boss+td)-now).total_seconds()
+            M, S = map(int, divmod(td, 60))
+            H = 0
+        else:
+            next_boss_delta = next_boss-now
+
+            H, M, S = await self.mod_timedelta(next_boss_delta)
         boss_spawn = await self.get_spawn_string(tl.get('timezone') or 0, next_boss)
         
         params = dict(
             TIME='{:02}:{:02}:{:02}'.format(H, M, S),
-            SPAWN=boss_spawn, ROUND=1, CQ=tl.get('cq_number', 1),
-            GROUP=tl.get('group', 'Clan'))
+            SPAWN=boss_spawn, ROUND=round_ping, CQ=tl.get('cq_number') or 1,
+            GROUP=tl.get('group') or 'Clan')
         
-        ping_intervals = [p*60 for p in tl.get('ping_at', [15,5,1])]
+        ping_intervals = [p*unit_of_time for p in tl.get('ping_at', [15,5,1])] + [.167] + [
+            -i*unit_of_time*60 for i in range(1, 24)
+        ]
         text_type, action, last_ping = 'timer', 'edit', tl.get('pinged_at')
-        if is_not_final and seconds_until_tl <= max(ping_intervals) and not round_ping > 0:
+        
+        if 10 > seconds_until_tl > -unit_of_time*60:
+            text_type = 'now'
+            seconds_until_tl = -1
+        elif 10 < seconds_until_tl <= max(ping_intervals):
             text_type = 'ping'
-        elif not is_not_final and not round_ping:
-            text_type = 'now'
-            action = 'send'
-        elif round_ping and -seconds_until_tl//UOT>=round_ping and round_ping <= MAX_ROUNDS:
-            tl['message'] = round_ping+1
-            params['ROUND'] = round_ping+1
-            action = 'send'
+        elif seconds_until_tl <= -unit_of_time*60:
             text_type = 'round'
-            if not tl.get(text_type):
-                return
-        elif round_ping and -seconds_until_tl//UOT>=round_ping:
-            text_type = 'now'
-            action = 'send'
-        elif not is_not_final:
-            action = 'pass'
+
+        if text_type != 'timer':
+            will_send = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
+            if will_send:
+                action, tl['pinged_at'] = 'send', seconds_until_tl
+
         if not tl.get(text_type):
             return
-        text = tl.get(text_type).format(**params)
-        
-        if text_type != 'now' and action != 'pass':
-            will_ping = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
-            if will_ping:
-                action, tl['pinged_at'] = 'send', seconds_until_tl
-        # elif text_type == 'now' and round_ping > MAX_ROUNDS+1:
-        #     tl['cq_number'] += 1
-        #     tl['pinged_at'] = 0
-        # elif text_type == 'now' and round_ping >= MAX_ROUNDS:
-        #     tl['pinged_at'] = 0
-        #     tl['next'] == now
-        
-        if action == 'edit':
-            mx = None
-            try:
-                mx = await chan.get_message(tl['message'])
-            except:
-                try:
-                    mx = await chan.send(text)
-                except discord.errors.Forbidden:
-                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
-                    return
-                # mx = await chan.send(text)
-                action = 'send'
-                tl.update({'message': mx.id})
-            else:
-                try:
-                    await mx.edit(content=text)
-                except discord.errors.Forbidden:
-                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
-                    return
-        elif action == 'send' and text_type != 'now' and text_type != 'round':
-            # if tl.get('message') > 1:
-            # m = await chan.get_message(tl['message'])
-            # await m.delete()
-            try:
-                mx = await chan.send(text)
-            except discord.errors.Forbidden:
-                await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
-                return
-            tl.update({'message': mx.id})
-        elif action == 'send' and text_type == 'now':
-            await asyncio.sleep(seconds_until_tl)
-            try:
-                mx = await chan.send(text)
-            except discord.errors.Forbidden:
-                await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
-                return
-            tl.update({'message': 1, 'cq_number': tl['cq_number']+1, 'pinged_at': 0})
-            if round_ping >= MAX_ROUNDS:
-                tl.update({'next': now})
-        elif action == 'send' and text_type == 'round':
-            try:
-                asyncio.ensure_future(chan.send(text))
-            except discord.errors.Forbidden:
-                await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
-                return
-        if await self.tl_has_settings(tl, c=('when_message', 'when_channel')):
-            when_channel = self.bot.get_channel(tl['when_channel'])
-            try:
-                mx = await when_channel.get_message(tl['when_message'])
-            except:
-                tl.update({'when_message': 0})
-            else:
-                if is_not_final:
-                    text = tl['timer'].format(**params)
-                else:
-                    text = 'Boss spawned!'
-                    tl.update({'when_message': 0})
-                try:
-                    asyncio.ensure_future(mx.edit(content=text))
-                except discord.errors.Forbidden:
-                    await self.bot.get_channel(466192124115681281).send(f'{chan} - {chan.guild}')
-                    return
 
-        if action == 'send':
-            asyncio.ensure_future(self.sql_update_record('titanlord', tl))
+        try:
+            if action == 'edit':
+                i, mx = 0, tl['message']
+                while i < 4:
+                    try:
+                        mx = await channel.get_message(mx)
+                        if text_type == 'round':
+                            params.update({'ROUND': params['ROUND']-1})
+                        formatted_text = tl.get(text_type).format(**params)
+                        await mx.edit(content=formatted_text)
+                        i = 4
+                    except:
+                        i += 1
+                        await asyncio.sleep(1)
+            elif action == 'send':
+                if round_ping > max_rounds:
+                    text_type = 'now'
+                    tl.update({'next': now, 'pinged_at': 10, 'round_number': 2})
+                    await self.update_tl(tl)
+                    return
+                if text_type == 'now':
+                    await asyncio.sleep(seconds_until_tl-.01)
+                    tl.update({'pinged_at': 0})
+                elif text_type == 'round':
+                    tl.update({'round_number': tl['round_number']+1})
+                # params.update({'ROUND': tl['round_number']})
+                formatted_text = tl.get(text_type).format(**params)
+                mx = await channel.send(formatted_text)
+                tl.update({'message': mx.id})
+
+        except discord.errors.Forbidden:
+            await self.bot.get_channel(466192124115681281).send(f'{channel} - {channel.guild}')
+            tl.update({'channel': 0})
+        finally:
+            if action != 'edit':
+                asyncio.ensure_future(self.sql_update_record('titanlord', tl))
 
     async def will_tl_ping(self, intervals, seconds_until_tl, last_ping):
-        filtered = next((p for p in intervals[::-1] if p > seconds_until_tl), 3660)
-        if last_ping > filtered:
-            return True
-        return False
+        filtered = next((p for p in intervals[::-1] if last_ping > p > seconds_until_tl), False)
+        return filtered and True or False
 
     async def process_time(self, input_time: str) -> timedelta:
-        # matches = re.match(r'(?:(?:(?P<hours>\d{1,2})[:.h])?(?P<minutes>\d{1,2})[:.m])?(?P<seconds>\d{1,2})', input_time)
         matches = re.match(r'(?:(?P<hours>\d{1,2}){0,1}(?=[h: ]{0,2})(?<=\d)[h :]+)?(?:(?P<minutes>\d{1,2}){0,1}(?=[m: ]{0,2})(?<=\d)[m :]+)?(?:(?P<seconds>\d{1,2}){0,1}(?=[s: ]{0,2})(?<=\d)[s :]{0,2})?', input_time)
         mgroups = {k: v and int(v) or 0 for k, v in matches.groupdict().items()}
         return (timedelta(**mgroups), {unit: value or 0 for unit, value in mgroups.items()})

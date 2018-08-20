@@ -204,6 +204,9 @@ class TT2Artifacts():
                     '\n'.join([a.get('emote', '<:sponge_right:475979143964524544>') + ' {} (**{}**) [{}]'.format(a['name'], a['acronym'].upper(), get_arti_tier(a)) for a in self.artifacts if get_arti_tier(a) == tier])
                 )
                 asyncio.ensure_future(ctx.send(embed=e))
+            return
+
+        cmd, search = mc.strip().split() 
             
 
     @_artifacts.command(name='tiers', aliases=['tierlist', 'tier'])

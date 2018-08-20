@@ -26,11 +26,11 @@ def round_to_x(x, n):
 def boss_hitpoints(level: int) -> int:
     return round(100000*pow(level, pow(level, .028))+.5)
 
-def advance_start(level: int) -> float:
-    return round(100*min(.003*pow(log(level+4),2.741), .9), 2)
+async def advance_start(level: int) -> float:
+    return await round_to_x(min(.003 * pow(log10(level+4),2.741), .9), 2)
 
-def clan_damage(level: int) -> float:
-    return round(pow(1.0233, level) + pow(level, 1.05), 2)
+async def clan_damage(level: int) -> float:
+    return await round_to_x(pow(1.0233, level) + pow(level, 1.05), 2)
 
 
 async def base_relics_amount(stage: int) -> int:
@@ -120,11 +120,11 @@ class TapTitans():
         if not 0 < level < 5000:
             asyncio.ensure_future(ctx.send('CQ level must be between **1** and **5000**'))
             return
-        dmg_bns = await self.helpers.humanize_decimal(clan_damage(level))
+        dmg_bns = await self.helpers.humanize_decimal(await clan_damage(level))
         e = await self.helpers.full_embed(
             f'\nBoss HP - **{self.helpers.human_format(boss_hitpoints(level))}**'
             f'\nDamage Bonus - **{dmg_bns}**'
-            f'\nAdvanced Start - **{advance_start(level)}%**'
+            f'\nAdvanced Start - **{await advance_start(level)}%**'
         )
         asyncio.ensure_future(ctx.send(
             f'Clan stats for a level **{level}** clan:', embed=e
@@ -711,7 +711,7 @@ class TapTitans():
         )
         asyncio.ensure_future(ctx.send(embed=embed))
 
-    @tl.command(name='clear')
+    @tl.command(name='clear', aliases=['stop', 'halt', 'erase', 'cancel', 'abort'])
     @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
     async def tl_clear(self, ctx, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
@@ -775,10 +775,10 @@ class TapTitans():
     async def tl_embed_builder(self, record, ttk):
         cq_no = int(record.get('cq_number') or 1)
         icon = 'https://i.imgur.com/{}.png'.format(choice(self.tl_icons))
-        c_dmg = await self.helpers.humanize_decimal(clan_damage(cq_no)*100)
-        c_adv = advance_start(cq_no)
+        c_dmg = await self.helpers.humanize_decimal(await clan_damage(cq_no)*100)
+        c_adv = await advance_start(cq_no)
         c_hp = boss_hitpoints(cq_no)
-        field1 = f'Advanced start - **{c_adv}%**\nDamage bonus - **{c_dmg}%**'
+        field1 = f'Advanced start - **{c_adv*100}%**\nDamage bonus - **{c_dmg}%**'
         field2 = f'Spawns with **{c_hp:,}** hitpoints.'
         e = await self.helpers.full_embed(
             "Killed in: {}".format(ttk),
@@ -808,6 +808,10 @@ class TapTitans():
         group = multi_arg[-1].startswith('-') and multi_arg[-1] or group
         group = group.startswith('-') and group[1:] or None
         return multi_text, group
+
+    # @tl.comamnd(name='dead')
+    # @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
+
 
     @tl.command(name='in')
     @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
@@ -852,13 +856,14 @@ class TapTitans():
             e = await self.tl_embed_builder(exists, ttk)
 
             asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
+            exists.update({'cq_number': exists['cq_number']+1})
         await asyncio.sleep(1)
         asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
             '`, `'.join([f'{x} {y}' for x, y in mapped_])
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay
-        exists.update({'next': next_spawn-full_delay, 'message': mx.id, 'pinged_at': 3660})
+        exists.update({'next': next_spawn-full_delay, 'message': mx.id, 'pinged_at': 3660, 'round_number': 2})
         result = await self.helpers.sql_update_record('titanlord', exists)
     
     @tl.command(name='ttk')
@@ -901,15 +906,15 @@ class TapTitans():
 
         e = await self.tl_embed_builder(exists, ttk_str)
         asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
-        
+        exists.update({'cq_number': exists['cq_number']+1})
         await asyncio.sleep(1)
         asyncio.ensure_future(ctx.send('Timer set for TTK: `{}`'.format(
             '`, `'.join([f'{x} {y}' for x, y in mapped_])
         )))
         mx = await self.bot.get_channel(exists['channel']).send(self.load_txt)
         full_delay = datetime.utcnow()-delay
-        next_at = exists.get('next')+timedelta(hours=6, seconds=1)+_ttk-full_delay
-        exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3660})
+        next_at = exists.get('next')+timedelta(hours=6, seconds=1.5)+_ttk-full_delay
+        exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3660, 'round_number': 2})
         result = await self.helpers.sql_update_record('titanlord', exists)
     
     async def map_hits_to_damage(self, ms, taps, hits):

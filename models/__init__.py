@@ -20,6 +20,8 @@ async def get_db():
         await connection.execute(_server)
         await connection.execute(_user)
         await connection.execute(_titanlord)
+        for migrator in _migrators:
+            await connection.execute(migrator)
     return pool
 
 _base = """
@@ -90,8 +92,15 @@ _titanlord = """CREATE TABLE IF NOT EXISTS Titanlord(
     prestige_requirement numeric,
     tpcq_requirement numeric,
     hpcq_requirement numeric,
-    top10_min numeric
+    top10_min numeric,
+    round_number numeric,
+    export_data jsonb default '{}'::jsonb
 );"""
+
+_migrators = (
+    """ALTER TABLE Titanlord ADD COLUMN IF NOT EXISTS round_number numeric;""",
+    """ALTER TABLE Titanlord ADD COLUMN IF NOT EXISTS export_data jsonb default '{}'::jsonb"""
+)
 
 Server = defaultdict(lambda: dict(
     id=0, create=datetime.utcnow(), update=datetime.utcnow(), tt={}, users=[], logs={}, roles={},
@@ -110,5 +119,5 @@ Titanlord = defaultdict(lambda: dict(
     round='Ding! Time for round {ROUND}, @everyone',
     after='Hey {TIMER}, set the timer and export CQ data!',
     when_message=0, when_channel=0, channel=0, paste_channel=0, report_channel=0,
-    masters_channel=0, loa_channel=0
+    masters_channel=0, loa_channel=0, round_number=0, export_data={}
 ))

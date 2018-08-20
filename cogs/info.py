@@ -222,11 +222,11 @@ class Information():
         author = ctx.message.author
         if not user:
             user = author
-        elif not hasattr(user, 'roles') and not user.isnumeric():
+        elif not getattr(user, 'roles', None) and not user.isnumeric():
             try:
-                user = await self.bot.get_user_info(int(user[2:-1]))
+                user = await self.helpers.choose_member(ctx, ctx.guild, user)
             except:
-                user = await self.helpers.choose_member(ctx, server, user)
+                user = await self.bot.get_user_info(int(user[2:-1]))
         elif user.isnumeric():
             try:
                 user = await self.bot.get_user_info(int(user))
