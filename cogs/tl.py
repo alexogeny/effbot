@@ -27,7 +27,7 @@ def boss_hitpoints(level: int) -> int:
     return round(100000*pow(level, pow(level, .028))+.5)
 
 async def advance_start(level: int) -> float:
-    return await round_to_x(min(.003 * pow(log10(level+4),2.741), .9), 2)
+    return await round_to_x(min(.003 * pow(log(level+4),2.741), .9)*100, 2)
 
 async def clan_damage(level: int) -> float:
     return await round_to_x(pow(1.0233, level) + pow(level, 1.05), 2)
@@ -778,7 +778,7 @@ class TapTitans():
         c_dmg = await self.helpers.humanize_decimal(await clan_damage(cq_no)*100)
         c_adv = await advance_start(cq_no)
         c_hp = boss_hitpoints(cq_no)
-        field1 = f'Advanced start - **{c_adv*100}%**\nDamage bonus - **{c_dmg}%**'
+        field1 = f'Advanced start - **{c_adv}%**\nDamage bonus - **{c_dmg}%**'
         field2 = f'Spawns with **{c_hp:,}** hitpoints.'
         e = await self.helpers.full_embed(
             "Killed in: {}".format(ttk),
