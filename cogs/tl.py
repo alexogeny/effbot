@@ -834,8 +834,8 @@ class TapTitans():
         elif not exists.get('cq_number'):
             asyncio.ensure_future(ctx.send('There is no CQ number set.'))
             return
-        elif not all([exists.get(x) or False for x in ['now','timer','ping','round']]):
-            missing=[f'`{x}`' for x in ['now','timer','ping','round'] if not exists.get(x)]
+        elif not all([exists.get(x) or False for x in ['now','timer','ping']]):
+            missing=[f'`{x}`' for x in ['now','timer','ping'] if not exists.get(x)]
             asyncio.ensure_future(ctx.send('The following texts are missing: {}'.format(', '.join(missing))))
             return
         # msg = await self.tl_error_message(exists)
