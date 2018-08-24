@@ -148,7 +148,7 @@ class TapTitans():
         pass
 
     @tt_group.command(name='list')
-    @has_any_role('roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit')
+    @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_group_list(self, ctx):
         exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
