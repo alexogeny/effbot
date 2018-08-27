@@ -5,6 +5,7 @@ import asyncio
 from discord.ext import commands
 from discord.errors import Forbidden
 from random import choice, random
+from datetime import datetime
 import re
 
 emoji_exp = re.compile(r'<:[A-z0-9_]+:([0-9]+)>')
@@ -13,8 +14,8 @@ aemoji_exp = re.compile(r'<a:[A-z0-9_]+:([0-9]+)>')
 class Fun():
     """Because who doesn't like to have fun?"""
     def __init__(self, bot):
-        
         self.bot = bot
+        self.helpers = self.bot.get_cog('Helpers')
         
 
     @commands.group(pass_context=True, invoke_without_command=False)
@@ -69,6 +70,60 @@ class Fun():
             asyncio.ensure_future(ctx.send('You are not enough of a pleb to use this command :<'))
         else:
             asyncio.ensure_future(ctx.send('**Relajarse#0010** is the most pleb pleb I ever met, out of all the plebs >:D'))
+
+
+    @commands.command(name='blame')
+    async def _blame(self, ctx, user=None):
+        if not user:
+            return
+        user = await self.helpers.choose_member(ctx, ctx.guild, user)
+        
+        if user.id == ctx.author.id and user.id != 259451392630980610:
+            asyncio.ensure_future(ctx.send('I cannot let you blame yourself. Whatever it was, it wasn\'t your fault. :pensive:'))
+            return
+        
+        author = await self.helpers.get_record('user', ctx.author.id)
+        user = await self.helpers.get_record('user', user.id)
+
+        now = datetime.utcnow().timestamp()
+        last_blame = author['fun'].get('last_blame', 0)
+        if now - last_blame >= 60:
+            author['fun']['last_blame'] = now
+        else:
+            asyncio.ensure_future(ctx.send('You must wait an hour between casting blames! Shame on you!'))
+            return
+
+        if not user['fun'].get('blamed'):
+            user['fun']['blamed']=0
+        user['fun']['blamed']+=1
+        await self.helpers.sql_update_record('user', user)
+        mention = await self.bot.get_user_info(user['id'])
+        msg = f'**{mention}** has been blamed **{user["fun"].get("blamed",0)}** time{user["fun"].get("blamed",0) > 1 and "s" or ""}!'
+        if user['id'] != 259451392630980610:
+            immo = await self.helpers.get_record('user', 259451392630980610)
+            if not immo['fun'].get('blamed'):
+                immo['fun']['blamed']=0
+            immo['fun']['blamed']+=1
+            user = immo
+            await self.helpers.sql_update_record('user', user)
+
+        asyncio.ensure_future(ctx.send(msg))
+        await self.helpers.sql_update_record('user', author)
+
+    @commands.command(name='blames')
+    async def _blames(self, ctx, user=None):
+        if not user:
+            user = ctx.author
+        else:
+            user = await self.helpers.choose_member(ctx, ctx.guild, user)
+
+        record = await self.helpers.get_record('user', user.id)
+        msg = f'**{user}** has been blamed **{record["fun"].get("blamed",0)}** time{record["fun"].get("blamed", 0) > 1 and "s" or ""}!'
+
+        asyncio.ensure_future(ctx.send(msg))
+
+
+
 
     @commands.command(name='emote', aliases=['mote', 'e'])
     async def emote(self, ctx, emote: str):

@@ -61,7 +61,7 @@ class Curation():
             asyncio.ensure_future(ctx.send('You must purge at least one message.'))
             return
         counter = 0
-        async for message in ctx.channel.history(limit=number):
+        async for message in ctx.channel.history(limit=number+1):
             counter += 1
             asyncio.ensure_future(message.delete())
 
