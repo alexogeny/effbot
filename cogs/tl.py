@@ -27,7 +27,7 @@ def boss_hitpoints(level: int) -> int:
     return round(100000*pow(level, pow(level, .028))+.5)
 
 async def advance_start(level: int) -> float:
-    return await round_to_x(min(.003 * pow(log(level+4),2.741), .9)*100, 2)
+    return await round_to_x(min(.003 * pow(log(level+4),2.741), .9)*100, 4)
 
 async def clan_damage(level: int) -> float:
     return await round_to_x(pow(1.0233, level) + pow(level, 1.05), 2)
@@ -176,6 +176,47 @@ class TapTitans():
         else:
             asyncio.ensure_future(ctx.send(f'A TL group with name `{name}` already exists on `{ctx.guild.name}`.'))
 
+    @tt_group.command(name='delete')
+    @has_any_role('roles.grandmaster', 'tt.master')
+    async def tt_group_delete(self, ctx, name=None):
+        exists = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        exists = [dict(r)['name'] for r in exists if r['guild']==ctx.guild.id]
+        
+        if not exists:
+            asyncio.ensure_future(ctx.send('Could not find any groups on this server. :<'))
+            return
+        exists_f = ', '.join([f'`{r}`' for r in exists])
+        if not name:
+            asyncio.ensure_future(ctx.send('You need to tell me which group to delete! Available groups: {}'.format(exists_f)))
+            return
+        elif name.lower() not in exists:
+            asyncio.ensure_future(ctx.send('You need to specify an existing group. Available groups: {}'.format(exists_f)))
+            return
+        await ctx.send(f'The group `{name.lower()}` WILL BE DELETED. Please confirm!')
+        result = await self.helpers.choose_from(ctx, ['confirm'],
+            'Type `1` to confirm or `c` to cancel.')
+        if not result:
+            return
+        if len(exists)==1:
+            await ctx.send('This is the ONLY group. Are you sure?')
+            result = await self.helpers.choose_from(ctx, ['confirm'],
+            'Type `1` to confirm or `c` to cancel.')
+            if not result:
+                return
+
+        async with self.bot.pool.acquire() as connection:
+            async with connection.transaction():
+                result = await connection.execute(
+                    "DELETE FROM Titanlord WHERE Titanlord.guild = $1 AND Titanlord.name = $2", ctx.guild.id, name
+                )
+        if result:
+            asyncio.ensure_future(ctx.send(f'Successfully deleted the group: `{name}`'))
+        else:
+            asyncio.ensure_future(ctx.send('Did not have anything to delete.'))
+
+
     @tt_group.command(name='rename')
     @has_any_role('roles.grandmaster', 'tt.master')
     async def tt_group_rename(self, ctx, name='default', newname='notdefault'):
@@ -204,6 +245,9 @@ class TapTitans():
             'SELECT * FROM server'
         )
         s = next((dict(r) for r in s if r['id']==ctx.guild.id), None)
+        if not g:
+            asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
+            return
         if g and s:
             short_code = g.get('shortcode') or 'Clan'
             clan_name = g.get('clanname') or '`No clan name set`'
@@ -305,6 +349,23 @@ class TapTitans():
         channel = await self.helpers.choose_channel(ctx, ctx.guild, channel)
         if not channel:
             asyncio.ensure_future(ctx.send('Hmm, looks like that channel does not exist. Try a different search? You can also mention a channel.'))
+            return
+        try:
+            perms = ctx.guild.get_member(self.bot.user.id).permissions_in(channel)
+        except:
+            asyncio.ensure_future(ctx.send('I do not have read access to {}'.format(channel.mention)))
+            return
+        if not perms.send_messages:
+            asyncio.ensure_future(ctx.send('I cannot send messages to {}'.format(channel.mention)))
+            return
+        elif not perms.manage_messages:
+            asyncio.ensure_future(ctx.send('I cannot manage messages in {}'.format(channel.mention)))
+            return
+        elif not perms.embed_links and not perms.attach_files:
+            asyncio.ensure_future(ctx.send('I cannot attach links or files in {}'.format(channel.mention)))
+            return
+        elif not perms.mention_everyone:
+            asyncio.ensure_future(ctx.send('I cannot mention **everyone** in {}'.format(channel.mention)))
             return
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
@@ -838,32 +899,31 @@ class TapTitans():
             missing=[f'`{x}`' for x in ['now','timer','ping'] if not exists.get(x)]
             asyncio.ensure_future(ctx.send('The following texts are missing: {}'.format(', '.join(missing))))
             return
-        # msg = await self.tl_error_message(exists)
-        # if msg:
-            # asyncio.ensure_future(ctx.send(msg))
-            # return
 
         time = ''.join(time_text.split())
         if time.strip().lower() == 'dead':
             time = '6h'
+
         _next, _units = await self.helpers.process_time(time)
         now = datetime.utcnow()
-        modded_ = await self.helpers.mod_timedelta(_next)
-        mapped_ = await self.helpers.map_timedelta(modded_)
         next_spawn = now+_next
-        if exists.get('next') and exists.get('next') < delay:
-            cq_no = int(exists.get('cq_number') or 0)
-            spawned_at = exists.get('next')
-            ttk = next_spawn-spawned_at-_next
-            ttk_ = await self.helpers.mod_timedelta(ttk)
-            ttk__ = await self.helpers.map_timedelta(ttk_)
 
-            ttk = ', '.join([f'{x} {y}' for x, y in ttk__])
+        if exists.get('next') and exists.get('next') < delay:
+            spawned_at = exists.get('next')
+            timer_remaining = timedelta(hours=6)-_next
+            timer_delay = now - spawned_at
+            time_to_kill = timer_delay-timer_remaining
+            modded_ = await self.helpers.mod_timedelta(time_to_kill)
+            mapped_ = await self.helpers.map_timedelta(modded_)
+            cq_no = int(exists.get('cq_number') or 0)
+            ttk = ', '.join([f'{x} {y}' for x, y in mapped_])
 
             e = await self.tl_embed_builder(exists, ttk)
 
             asyncio.ensure_future(self.bot.get_channel(exists['channel']).send(embed=e))
             exists.update({'cq_number': exists['cq_number']+1})
+        modded_ = await self.helpers.mod_timedelta(_next)
+        mapped_ = await self.helpers.map_timedelta(modded_)
         await asyncio.sleep(1)
         asyncio.ensure_future(ctx.send('Timer set for: `{}`'.format(
             '`, `'.join([f'{x} {y}' for x, y in mapped_])

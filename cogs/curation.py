@@ -21,6 +21,61 @@ class Curation():
         self.helpers = self.bot.get_cog('Helpers')
 
     @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
+    @commands.command(name='purge', aliases=['prune'])
+    async def _purge(self, ctx, number: int=0, member=None):
+        if number > 30:
+            asyncio.ensure_future(ctx.send('Please only purge up to 30 messages.'))
+            return
+        if number <= 0:
+            asyncio.ensure_future(ctx.send('You must purge at least one message.'))
+            return
+        if member != None:
+            member = await self.helpers.choose_member(ctx, ctx.guild, member)
+            if not member:
+                asyncio.ensure_future(ctx.send('Could not find that user!'))
+                return
+        else:
+            member = self.bot.user
+        counter = 0
+        async for message in ctx.channel.history(limit=250):
+            if message.author == member and counter < number:
+                counter += 1
+                asyncio.ensure_future(message.delete())
+        g = await self.helpers.get_record('server', ctx.guild.id)
+        if not g['channels'].get('staff'):
+            deliver = ctx.send
+        else:
+            deliver = self.bot.get_channel(g['channels']['staff']).send
+
+        asyncio.ensure_future(deliver(
+            f'✅ **{counter}** message{counter > 1 and "s" or ""} from **{member}** in **{ctx.channel}** purged by **{ctx.author}**'
+        ))
+
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
+    @commands.command(name='clear')
+    async def _clear(self, ctx, number:int=0):
+        if number > 100:
+            asyncio.ensure_future(ctx.send('Please only purge up to 100 messages.'))
+            return
+        if number <= 0:
+            asyncio.ensure_future(ctx.send('You must purge at least one message.'))
+            return
+        counter = 0
+        async for message in ctx.channel.history(limit=number):
+            counter += 1
+            asyncio.ensure_future(message.delete())
+
+        g = await self.helpers.get_record('server', ctx.guild.id)
+        if not g['channels'].get('staff'):
+            deliver = ctx.send
+        else:
+            deliver = self.bot.get_channel(g['channels']['staff']).send
+
+        asyncio.ensure_future(deliver(
+            f'✅ **{counter}** message{counter > 1 and "s" or ""} in **{ctx.channel}** purged by **{ctx.author}**'
+        ))
+
+    @has_any_role('roles.curator', 'roles.moderator', 'roles.admin')
     @commands.command(name='broadcast')
     async def _broadcast(self, ctx, channel):
         m = ctx.message

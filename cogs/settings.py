@@ -523,6 +523,15 @@ class SettingsCog():
                 # asyncio.ensure_future(ctx.send(
                 #     f'Set the {key} setting to {result.mention}'
                 # ))
+        elif key.lower() == 'prefix':
+            if not 0< len(value) < 6:
+                asyncio.ensure_future(ctx.send('Please use a prefix between 1 and 6 characters long.'))
+                return
+            g['prefix'] = value
+            await self.helpers.sql_update_record('server', g)
+            self.bot.prefixes[str(ctx.guild.id)]=value
+            msg = f'Successfully set the server prefix to **{value}**'
+
         if msg == ctx.message:
             msg = 'Oops, something weird happened. Please report this!'
         if msg:

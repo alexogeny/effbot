@@ -27,6 +27,11 @@ class Information():
         w, d = divmod(d, 7)
         asyncio.ensure_future(ctx.send(f"I've been online for `{int(w)}w : {int(d)}d : {int(h)}h : {int(m)}m : {int(s)}s`"))
 
+    @commands.command(name='prefix')
+    async def prefix(self, ctx):
+        p = self.bot.prefixes.get(str(ctx.guild.id), 'e@')
+        asyncio.ensure_future(ctx.send(f'The current server prefix is **{p}**'))
+
     @commands.command()
     async def ping(self, ctx):
         """Pings the bot."""
@@ -208,8 +213,8 @@ class Information():
             return
         e = await self.helpers.full_embed(
             '\n'.join([
-                f'**ID**: {role.id} (position {role.position + 1})',
-                f'**Name**: {role.mention} ({role.mentionable and "" or "not "}mentionable)',
+                f'**ID**: {role.id} (position {ctx.guild.role_hierarchy.index(role)+1})',
+                f'**Name**: {role.mention} ({role.mentionable and "is " or "not "}mentionable)',
                 f'**Hoisted**: {role.hoist and "" or "not "} hoisted',
                 f'**Created**: {role.created_at}',
                 f'**Integration**: {role.managed}'

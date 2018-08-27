@@ -44,7 +44,8 @@ _server = _base.format(
         channels=_js,
         texts=_js,
         warnings=_js,
-        extra=_js
+        extra=_js,
+        prefix='text'
     ).items())
 )
 print(_server)
@@ -99,12 +100,16 @@ _titanlord = """CREATE TABLE IF NOT EXISTS Titanlord(
 
 _migrators = (
     """ALTER TABLE Titanlord ADD COLUMN IF NOT EXISTS round_number numeric;""",
-    """ALTER TABLE Titanlord ADD COLUMN IF NOT EXISTS export_data jsonb default '{}'::jsonb"""
+    """ALTER TABLE Titanlord ADD COLUMN IF NOT EXISTS export_data jsonb default '{}'::jsonb""",
+    """ALTER TABLE Server ADD COLUMN IF NOT EXISTS prefix text;""",
+    """ALTER TABLE Titanlord DROP COLUMN IF EXISTS active;""",
+    """ALTER TABLE Server DROP COLUMN IF EXISTS active;""",
+    """ALTER TABLE "user" DROP COLUMN IF EXISTS active;"""
 )
 
 Server = defaultdict(lambda: dict(
     id=0, create=datetime.utcnow(), update=datetime.utcnow(), tt={}, users=[], logs={}, roles={},
-    restrictions={}, channels={}, texts={}, warnings={}, extra={}
+    restrictions={}, channels={}, texts={}, warnings={}, extra={}, prefix='e@'
 ))
 User = defaultdict(lambda: dict(
     id=0, create=datetime.utcnow(), update=datetime.utcnow(), tt={}, timers={}, xp={}, 

@@ -25,16 +25,15 @@ if Path('./config.json').exists():
     with Path('./config.json').open('r') as fh:
         CONFIG = json.load(fh)
 else:
-    CONFIG = dict(PREFIXES=['e.', '.', 'effbot '],
+    CONFIG = dict(PREFIXES=['e.', 'e!', 'e@', 'effbot '],
                   COGS_DIR="cogs",
                   TOKEN=os.getenv("TOKEN"),
                   MS=30000)
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
-    if isinstance(message.channel, discord.abc.PrivateChannel):
-        return ['e.','.','?']
-    return commands.when_mentioned_or(*prefixes)(bot, message)
+    local_prefixes = prefixes+[bot.prefixes[str(message.guild.id)]]
+    return commands.when_mentioned_or(*local_prefixes)(bot, message)
 
 class Effribot(commands.Bot):
     """docstring for Effribot"""
@@ -43,13 +42,11 @@ class Effribot(commands.Bot):
         self.remove_command('help')
         self.config = CONFIG
         self.models = dict(server=Server, user=User, titanlord=Titanlord)
-        # self.create_tables()
         self.start_time = time.time()
         self._last_exception = None
         self.description = "effrill3's custom bot"
         self.load_extensions()
-        # self._models = {}
-        # self.cogs['Helpers'].load_records(dict(server=Server, user=User))
+        self.prefixes = {}
 
     def load_extensions(self):
         self.load_extension('cogs.helpers')
@@ -62,13 +59,19 @@ class Effribot(commands.Bot):
                 print(f'Failed to load extension {extension}.', file=sys.stderr)
                 traceback.print_exc()
 
+    async def add_custom_prefix(self, guild):
+        g = await self.get_cog('Helpers').get_record('server', guild.id)
+        self.prefixes[str(guild.id)]=g.get('prefix') or 'e@'
+        return
 
     async def on_ready(self):
         print(f'Logged in as {self.user.name}')
         print('--------')
-        # asyncio.ensure_future(self.helpers.update_timed_roles())
         await self.get_cog('Helpers').update_timed_roles()
         print('Updated timed roles!')
+        print('--------')
+        await asyncio.gather(*[self.add_custom_prefix(guild) for guild in self.guilds])
+        print('Initialised custom prefixes')
         print('--------')
 
     async def on_command_error(self, ctx, error):
@@ -107,13 +110,13 @@ class Effribot(commands.Bot):
         await self.get_channel(462253601360969758).send(
             f'Joined guild **{guild.name}** ({guild.id})'
         )
-        if not [x for x in self._servers if x['id']==guild.id]:
-            g = {'id': guild.id}
-            gm = dict_to_model(Server, g)
-            # conf = await self.cog['Helpers'].spawn_config('server')
-            # g['config'] = conf
-            self._servers.append(gm)
-            asyncio.ensure_future(self.cogs['Helpers'].upsert_records([gm]))
+        # if not [x for x in self._servers if x['id']==guild.id]:
+        #     g = {'id': guild.id}
+        #     gm = dict_to_model(Server, g)
+        #     # conf = await self.cog['Helpers'].spawn_config('server')
+        #     # g['config'] = conf
+        #     self._servers.append(gm)
+        #     asyncio.ensure_future(self.cogs['Helpers'].upsert_records([gm]))
 
     async def on_guild_remove(self, guild):
         await self.get_channel(462253601360969758).send(

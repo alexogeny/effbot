@@ -44,8 +44,7 @@ class RandomStatus():
         self.avatars = {
             p.name: 'data:image/png;base64,'+base64.b64encode(p.open('rb').read()).decode('utf-8')
             for p
-            in self._cwd.rglob('avatar ([1-9]).jpg')}
-        # print(self.statuses)
+            in self._cwd.rglob('*dex[1-5].png')}
     def edit_profile(self, avatar):
         payload = {
             'username': 'effbot',
