@@ -118,11 +118,11 @@ class Help():
                 text = help_.get(f"{module.lower().strip()} {command.lower().strip()}")
         if isinstance(text, dict) and text.get('refer to'):
             text = help_.get(text['refer to'])
-        ff = lambda x, y: x in ['usage', 'example'] and f'```{y}```' or y
+        ff = lambda x, y: x in ['usage', 'example'] and f'```{self.bot.prefixes[str(ctx.guild.id)]}{y.startswith(".") and y[1:] or y}```' or y
         related = [h for h in help_ if h.startswith(name) and h != name]
         if isinstance(text, dict):
             fields.update({
-                keys_[k]:ff(k, v) for k,v in text.items()
+                keys_[k]:ff(k, v).replace('`.', f'`{self.bot.prefixes[str(ctx.guild.id)]}') for k,v in text.items()
                 if k in ['description', 'requires', 'usage', 'example']
                 and v
             })

@@ -185,9 +185,17 @@ class Owner:
             await ctx.send("All cogs are now unloaded.")
 
     @is_owner()
-    @commands.command(name="save", hidden=True)
-    async def _save(self, ctx):
-        asyncio.ensure_future(self.bot.get_cog('Helpers').save_records())
+    @commands.command(name='owner', hidden=True)
+    async def _owner(self, ctx, id: int):
+        g = self.bot.get_guild(id)
+        asyncio.ensure_future(ctx.send(
+            f'{g} is owned by {g.owner}'
+        ))
+
+    # @is_owner()
+    # @commands.command(name="save", hidden=True)
+    # async def _save(self, ctx):
+    #     asyncio.ensure_future(self.bot.get_cog('Helpers').save_records())
 
     @is_owner()
     @commands.command(name="reload")
