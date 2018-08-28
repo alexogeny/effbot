@@ -32,7 +32,7 @@ else:
 
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
-    local_prefixes = prefixes+[bot.prefixes[str(message.guild.id)]]
+    local_prefixes = prefixes+[bot.prefixes.get(str(message.guild.id),'.')]
     return commands.when_mentioned_or(*local_prefixes)(bot, message)
 
 class Effribot(commands.Bot):
