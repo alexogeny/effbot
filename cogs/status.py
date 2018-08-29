@@ -24,7 +24,7 @@ class RandomStatus():
         self.last_status_change = None
         self.last_avatar_change = None
         self.last_avatar_name = None
-        self.delay = 600
+        self.delay = 10800
         self.statuses = [
             ('playing', 'in {guilds} guilds'),
             ('watching', 'over {users} users'),
