@@ -1,7 +1,9 @@
 import discord
 import random
 import time
+import multiprocessing
 from discord.ext import commands
+from functools import partial
 from decimal import Decimal, getcontext
 getcontext().prec = 282822
 getcontext().Emax = 50505050
@@ -84,7 +86,7 @@ class Lexer(object):
                 self.advance()
                 return tk
 
-            self.error('Unrecognised token: `{}`'.format(self.current_char))
+            self.error('Unrecognised operator **{}**. Available operators: **+-*/()^><%√**'.format(self.current_char))
 
         return Token(EOF, None)
 
@@ -121,8 +123,8 @@ class Parser(object):
             self.previous_token = self.current_token
             self.current_token = self.lexer.get_next_token()
         else:
-            self.error('after `{}` got `{}`, expected `{}`'.format(
-                self.previous_token.value, self.current_token.type, token_type))
+            self.error('After **{}** I got **{}**, but I was expecting **{}**'.format(
+                self.previous_token.value, self.current_token.type.replace('EOF', 'end'), token_type))
 
     def factor(self):
         token = self.current_token
@@ -174,7 +176,7 @@ class Parser(object):
     def parse(self):
         node = self.expr()
         if self.current_token.type != EOF:
-            self.error('EOF not reached')
+            self.error(f'Unable to complete expression. Check: **{self.current_token.value}**')
         return node
 
 class NodeVisitor(object):
@@ -220,7 +222,7 @@ class Interpreter(NodeVisitor):
         return self.visit(tree)
 
 
-async def do_math(expression) -> str:
+def do_math(expression) -> str:
     try:
         lexer = Lexer(expression)
         parser = Parser(lexer)
@@ -232,6 +234,30 @@ async def do_math(expression) -> str:
     except MathError as e:
         return str(e)
 
+def exec_math(exp):
+    #print(exp)
+    f = partial(do_math, exp)
+    p = multiprocessing.Process(target=f)
+    p.start()
+    p.join(1)
+    if p.is_alive():
+        result = 'Error: expression too complex. Try something simpler.'
+        p.terminate()
+        p.join()
+    else:
+        result = f()
+    return result
+
+async def run_math(exp):
+    loop = asyncio.get_event_loop()
+    future = loop.run_in_executor(None, exec_math, exp)
+    try:
+        result = await asyncio.wait_for(future, 2.2, loop=loop)
+    except asyncio.TimeoutError:
+        result = 'Error: expression too complex. That would have taken a while. Try something simpler.'
+    return result
+    
+
 class Math():
     """Because who doesn't like to ~~have fun~~do math?"""
     def __init__(self, bot):
@@ -239,10 +265,13 @@ class Math():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    # @commands.command(name='math', aliases=['='])
-    # async def math(self, ctx, *math):
-    #     result = await do_math(' '.join(math))
-    #     asyncio.ensure_future(ctx.send(result[0:1999]))
+    @commands.command(name='math', aliases=['='])
+    async def math(self, ctx, *math):
+        
+        exp=' '.join(math)
+        result = await run_math(exp)
+        # result = await do_math(' '.join(math))
+        asyncio.ensure_future(ctx.send(result[0:1999]))
 
 def setup(bot):
     cog = Math(bot)

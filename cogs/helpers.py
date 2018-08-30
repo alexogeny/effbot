@@ -485,7 +485,7 @@ class Helpers():
 
     async def update_timed_roles(self):
         servers = await self.sql_query_db("SELECT * FROM server")
-        await asyncio.gather(*[self.update_timed_role(dict(server))
+        asyncio.gather(*[self.update_timed_role(dict(server))
             for server in servers if server['extra'].get('timed_role_timer') and server['roles'].get('timed')])
 
 
@@ -518,11 +518,12 @@ class Helpers():
         if not role_to_add:
             return
         req = server['extra']['timed_role_timer']
-        await asyncio.gather(*[
+        members = [member for i, member
+            in enumerate([m for m in guild.members if role_to_add not in m.roles and not m.bot])
+            if (now-member.joined_at).total_seconds()/3600 >= req and i < 10]
+        asyncio.gather(*[
             await member.add_roles(role_to_add, reason='Timed role criteria passed.')
-            for i, member
-            in enumerate([m for m in guild.members if role_to_add not in m.roles])
-            if (now-member.joined_at).total_seconds()/3600 >= req and i < 10
+            for member in members
         ])
 
 

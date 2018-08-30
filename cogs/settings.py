@@ -546,7 +546,7 @@ class SettingsCog():
     async def auto_role(self, member):
         gid = member.guild.id
         g = await self.helpers.get_record('server', gid)
-        if g['roles'].get('auto'):
+        if g['roles'].get('auto') and not member.bot:
             role = next((r for r in member.guild.roles if r.id == g['roles']['auto']), None)
             if role:
                 asyncio.ensure_future(member.add_roles(role))
@@ -554,7 +554,7 @@ class SettingsCog():
     async def welcome_message(self, m):
         gid = m.guild.id
         g = await self.helpers.get_record('server', gid)
-        if g['texts'].get('welcome') and g['channels'].get('welcome'):
+        if g['texts'].get('welcome') and g['channels'].get('welcome') and not member.bot:
             USERNUMBER = await self.helpers.member_number(m, m.guild)
             asyncio.ensure_future(m.guild.get_channel(g['channels']['welcome']).send(
                 g['texts']['welcome'].format(
