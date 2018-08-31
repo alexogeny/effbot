@@ -419,7 +419,7 @@ class SettingsCog():
     @is_admin_or_owner()
     async def set_role(self, ctx, role_setting, role_name, extra: int=0):
         roles = 'administrator moderator curator grandmaster updates auto dj timed muted'.split()
-        role = next((r.startswith(role_setting.lower()) and r for r in roles), None)
+        role = next((v for v in roles if v.startswith(role_setting.lower())), None)
         if not role or len(role_setting) < 2:
             return
         if role_setting.lower()[0:2] == 'ti' and not extra:
