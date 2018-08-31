@@ -410,132 +410,176 @@ class SettingsCog():
     async def settings(self, ctx):
         pass
 
-    # @settings.group(name='set')
-    # async def settings_set(self, ctx):
-    #     pass
+    @commands.group(name='set')
+    async def set(self, ctx):
+        pass
 
-    # @settings.command(name='role')
 
-    @settings.command(pass_context=True)
+    @set.command(name='role')
     @is_admin_or_owner()
-    async def set(self, ctx, setting: str=None, value: str=None, extra=None):
-        guild_id = ctx.message.guild.id
-        key = setting.lower().strip()
-        msg = ctx.message
-        g = await self.helpers.get_record('server', msg.guild.id)
+    async def set_role(self, ctx, role_setting, role_name, extra: int=0):
+        roles = 'administrator moderator curator grandmaster updates auto dj timed muted'.split()
+        role = next((r.startswith(role_setting.lower()) and r for r in roles), None)
+        if not role or len(role_setting) < 2:
+            return
+        if role_setting.lower()[0:2] == 'ti' and not extra:
+            return
+        elif role_setting.lower()[0:2] == 'ti' and not 0 < extra <= 2400:
+            return
+        result = await self.helpers.choose_role(ctx, ctx.message.guild, role_name)
+        if not result:
+            asyncio.ensure_future(ctx.send(f'Error: No role with name **{role_name}** found!'))
+            return
+
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        g['roles'][role]=result.id
+        if role_setting.lower()[0:2] == 'ti':
+            g['extra']['timed_role_timer'] = int(extra)
+        await self.helpers.sql_update_record('server', g)
+        asyncio.ensure_future(self.helpers.try_mention(ctx, f'{role} role', result))
+        return
+
+    @set.command(name='prefix')
+    @is_admin_or_owner()
+    async def set_prefix(self, ctx, prefix):
+        if not 0 < len(prefix) < 6:
+            return
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        g['prefix'] = prefix
+        await self.helpers.sql_update_record('server', g)
+        old = self.bot.prefixes.get(str(ctx.guild.id), '')
+        self.bot.prefixes[str(ctx.guild.id)]=prefix
+        asyncio.ensure_future(ctx.send('Successfully set the custom prefix from {} to **{}**'.format(
+            old and f'**{old}**' or 'nothing', prefix 
+        )))
+        return
+
+    @set.command(name='welcome')
+    @is_admin_or_owner()
+    async def set_welcome(self, ctx):
+        m = ctx.message
+        pfx = await self.bot.get_prefix(m)
+        mc = m.content
+        passed = 0
+        while not passed:
+            for p in pfx:
+                if mc.startswith(p):
+                    mc = mc[len(p)+len('set welcome'):].strip()
+                    passed = 1
+        g = await self.helpers.get_record('server', m.guild.id)
+        g['texts']['welcome'] = mc
+        await self.helpers.sql_update_record('server', g)
+        USERNUMBER = await self.helpers.member_number(m.author, m.guild)
+        e = await self.helpers.build_embed(mc.format(
+            USERID=m.author.id, USER=m.author,
+            USERNAME=m.author.name, USERDISCRIMINATOR=m.author.discriminator,
+            USERNUMBER=USERNUMBER, SERVER=ctx.guild.name, MENTION=m.author.mention
+        ), 0xffffff)
+        asyncio.ensure_future(ctx.send('Set the welcome message to:', embed=e))
+        return
+
+    @set.command(name='log')
+    @is_admin_or_owner()
+    async def set_log(self, ctx, log_setting, channel_name):
+        valid = 'leaves joins messages moderation system'.split()
+        kind = next((v for v in valid if v.startswith(log_setting.lower())), None)
+        if not kind or len(channel_name) < 2:
+            return
+        if kind.endswith('s'):
+            kind = kind[0:-1]
+        if channel_name.lower() not in ['off', '0']:
+            result = await self.helpers.choose_channel(ctx, ctx.message.guild, channel_name)
+            if not result:
+                asyncio.ensure_future(ctx.send(f'Error: No channel with name **{channel_name}** found!'))
+                return
+        else:
+            result = 0
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        g['logs'][kind]=result and result.id or 0
+        await self.helpers.sql_update_record('server', g)
+        if result:
+            valid=f'Set the logging channel for **{kind}** to: {result.mention}'
+        else:
+            valid=f'**{kind.title()}** logging turned **off**.'
+        asyncio.ensure_future(ctx.send(valid))
+        return
+
+    @set.command(name='logignore')
+    @is_admin_or_owner()
+    async def set_logignore(self, ctx, log_setting, item_name, mode: str='on'):
+        valid = 'channel user member'.split()
+        kind = next((v for v in valid if v.startswith(log_setting.lower())), None)
+        if not kind or len(item_name) < 2:
+            return
+        if kind == 'user':
+            kind = 'member'
+        if mode.lower() not in ['off', '0', 'on', '1']:
+            return
+        result = await getattr(self.helpers, f'choose_{kind}')(ctx, ctx.message.guild, item_name)
+        if not result:
+            asyncio.ensure_future(ctx.send(f'Error: No {kind} with name **{item_name}** found!'))
+            return
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        if not g['logs'].get('ignored'):
+            g['logs']['ignored']=[]
+        if result.id not in g['logs']['ignored'] and mode.lower() in ['on', '1']:
+            g['logs']['ignored'].append(result.id)
+            valid = f'Added {result} to ignored {kind}s.'
+        elif mode.lower() in ['off', '0']:
+            g['logs']['ignored'] = [x for x in g['logs']['ignored'] if x!=result.id]
+            valid = f'Removed {result} from ignored {kind}s.'
+        elif mode.lower() in ['on', '1'] and result.id in g['logs']['ignored']:
+            valid = f'{kind.title()} named {result} already in ignored {kind}s.'
         
-        if key.replace('role', '')=='admin':
-            # result = await self.helpers.choose_role(ctx, msg.guild, value)
-            key = key.replace('role', '')
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if not result:
-                asyncio.ensure_future(ctx.send('No roles found!'))
-                return
-            g['roles'][key]=result.id
-            await self.helpers.sql_update_record('server', g)
-            asyncio.ensure_future(self.helpers.try_mention(ctx, f'`{key}` role', result))
+        await self.helpers.sql_update_record('server', g)
+        asyncio.ensure_future(ctx.send(valid))
+        return
+
+    @set.command(name='channel', aliases=['chan'])
+    @is_admin_or_owner()
+    async def set_channel(self, ctx, channel_setting, channel_name, mode: str='on'):
+        valid = 'quotes updates welcome staff music reddit twitch youtube'.split()
+        channel = next((v for v in valid if v.startswith(channel_setting.lower())), None)
+        if not channel or len(channel_setting) < 2:
             return
-        elif key.replace('role','') in ['moderator', 'curator', 'grandmaster', 'updates', 'auto', 'dj', 'timed']:
-            key = key.replace('role', '')
-            result = await self.helpers.choose_role(ctx, msg.guild, value)
-            if not result:
-                asyncio.ensure_future(ctx.send('No roles found!'))
-                return
-
-            if key == 'timed' and not extra:
-                asyncio.ensure_future(ctx.send('When setting the `timed` roled, you must supply a time in hours, e.g. 24. Must be greater than 0 and less than 2400.'))
-                return
-            elif key == 'timed' and not extra.isnumeric():
-                asyncio.ensure_future(ctx.send('When setting the `timed` roled, you must supply a time in hours, e.g. 24. Must be greater than 0 and less than 2400.'))
-                return
-            elif key == 'timed' and not int(extra) > 0:
-                return
-            elif key == 'timed' and not int(extra) <= 2400:
-                return
-
-            g['roles'][key]=result.id
-            if key == 'timed':
-                g['extra']['timed_role_timer'] = int(extra)
-            await self.helpers.sql_update_record('server', g)
-            asyncio.ensure_future(self.helpers.try_mention(ctx, f'{key} role', result))
+        result = await self.helpers.choose_channel(ctx, ctx.message.guild, channel_name)
+        if not result:
+            asyncio.ensure_future(ctx.send(f'Error: No channel with name **{channel_name}** found!'))
             return
 
-        elif key.replace('text', '') in ['welcome']:
-            pfx = await self.bot.get_prefix(ctx.message)
-            mc = ctx.message.content
-            passed = 0
-            while not passed:
-                for p in pfx:
-                    if mc.startswith(p):
-                        mc = mc[len(p):].strip()
-                        passed = 1
-            mc = mc.replace('settings set '+key, '')
-            g['texts']['welcome'] = mc
-            USERNUMBER = await self.helpers.member_number(ctx.message.author, ctx.message.guild)
-            e = await self.helpers.build_embed(mc.format(
-                USERID=ctx.message.author.id, USERNAME=ctx.message.author.name,
-                USERDISCRIMINATOR=ctx.message.author.discriminator,
-                USERNUMBER=USERNUMBER, SERVERNAME=ctx.guild.name
-            ), 0xffffff)
-            await self.helpers.sql_update_record('server', g)
-            asyncio.ensure_future(ctx.send(
-                f'Set the {key.replace("text", "")} text to:',
-                embed=e))
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        g['channels'][channel]=result.id
+        await self.helpers.sql_update_record('server', g)
+        asyncio.ensure_future(ctx.send(f'Set the {channel} channel to {result.mention}'))
+        return
+
+    @set.command(name='curated', aliases=['curation'])
+    @is_admin_or_owner()
+    async def set_curated(self, ctx, channel_name, mode: str='on'):
+        if mode.lower() not in ['off', '0', 'on', '1']:
             return
+        result = await self.helpers.choose_channel(ctx, ctx.message.guild, channel_name)
+        if not result:
+            asyncio.ensure_future(ctx.send(f'Error: No channel with name **{channel_name}** found!'))
+            return
+        g = await self.helpers.get_record('server', ctx.message.guild.id)
+        if not g['channels'].get('curated'):
+            g['channels']['curated']=[]
+        if result.id not in g['channels']['curated'] and mode.lower() in ['on', '1']:
+            g['channels']['curated'].append(result.id)
+            valid = f'Added **#{result}** to curated channels.'
+        elif mode.lower() in ['off', '0'] and result.id not in g['channels']['curated']:
+            valid = f'Channel named **#{result}** not in curated channels.'
+        elif mode.lower() in ['off', '0'] and result.id in g['channels']['curated']:
+            g['channels']['curated'] = [x for x in g['channels']['curated'] if x!=result.id]
+            valid = f'Removed **#{result}** from curated channels.'
+        elif mode.lower() in ['on', '1'] and result.id in g['channels']['curated']:
+            valid = f'Channel named **#{result}** already in curated channels.'
+        
+        await self.helpers.sql_update_record('server', g)
+        asyncio.ensure_future(ctx.send(valid))
+        return
 
-        elif key.startswith('log') and key[3:] in 'leave,join,message,moderation':
-            result = await self.helpers.choose_channel(ctx, msg.guild, value)
-            if result or value=="0":
-                if value == "0":
-                    # g['logs'][key[3:]] = 0
-                    await self.helpers.sql_update_key('server', ctx.guild.id, 'logs', key[3:], 0)
-                    # await ctx.send(f'Unset the {key} setting.')
-                    msg = f'Unset the {key} setting.'
-                else:
-                    # g['logs'][key[3:]] = result.id
-                    await self.helpers.sql_update_key('server', ctx.guild.id, 'logs', key[3:], result.id)
-                # print(g['logs'])
-                    # await ctx.send(f'Set the {key} setting to {result.mention}')
-                    msg = f'Set the {key} setting to {result.mention}'
-
-
-        elif key.replace('channel', '') in ['quotes', 'updates', 'curated', 'welcome', 'staff']:
-            result = await self.helpers.choose_channel(ctx, msg.guild, value)
-            key = key.replace('channel', '')
-            if not g['channels'].get(key):
-                g['channels'][key] = []
-            if result and key == 'curated' and result not in g['channels'][key]:
-                g['channels'][key].append(result.id)
-                await self.helpers.sql_update_record('server', g)
-                # asyncio.ensure_future(ctx.send(
-                msg = f'Added {result.mention} to curated channels.'
-                # ))
-            elif result and key == 'curated' and result in g['channels'][key]:
-                await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key, [c for c in g['channels'][key] if c!=result.id])
-                #g['channels'][key] = [c for c in g['channels'][key] if c!=result.id]
-                # asyncio.ensure_future(ctx.send(
-                msg = f'Removed {result.mention} from curated channels.'
-                # ))
-            elif result:
-                # g['channels'][key] = result.id
-                await self.helpers.sql_update_key('server', ctx.guild.id, 'channels', key, result.id)
-                msg = f'Set the {key} setting to {result.mention}'
-                # asyncio.ensure_future(ctx.send(
-                #     f'Set the {key} setting to {result.mention}'
-                # ))
-        elif key.lower() == 'prefix':
-            if not 0< len(value) < 6:
-                asyncio.ensure_future(ctx.send('Please use a prefix between 1 and 6 characters long.'))
-                return
-            g['prefix'] = value
-            await self.helpers.sql_update_record('server', g)
-            self.bot.prefixes[str(ctx.guild.id)]=value
-            msg = f'Successfully set the server prefix to **{value}**'
-
-        if msg == ctx.message:
-            msg = 'Oops, something weird happened. Please report this!'
-        if msg:
-            asyncio.ensure_future(ctx.send(msg))
 
     async def timer_check(self):
         while self is self.bot.get_cog('SettingsCog'):
@@ -554,14 +598,15 @@ class SettingsCog():
     async def welcome_message(self, m):
         gid = m.guild.id
         g = await self.helpers.get_record('server', gid)
-        if g['texts'].get('welcome') and g['channels'].get('welcome') and not member.bot:
+        if g['texts'].get('welcome') and g['channels'].get('welcome') and not m.bot:
             USERNUMBER = await self.helpers.member_number(m, m.guild)
             asyncio.ensure_future(m.guild.get_channel(g['channels']['welcome']).send(
                 g['texts']['welcome'].format(
-                    **dict(USERNAME=m.name, USERID=m.id, SERVERID=gid,
-                           SERVERNAME=m.guild.name,
-                           USERDISCRIMINATOR=m.discriminator,
-                           USERNUMBER=USERNUMBER)
+                    **dict(
+                        USERID=m.id, USER=m,
+                        USERNAME=m.name, USERDISCRIMINATOR=m.discriminator,
+                        USERNUMBER=USERNUMBER, SERVER=m.guild.name, MENTION=m.mention
+                    )
                 )
             ))
 

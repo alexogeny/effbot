@@ -74,7 +74,7 @@ class ModerationCog():
         if reason is None:
             reason = 'not set'
         reason = reason.replace('|', '-')
-        await member.kick(reason=f'{ctx.author.id}|kick|{reason}')
+        await member.kick(reason=f'{ctx.author.id}|{reason}')
         
         if not g['channels'].get('staff'):
             deliver = ctx.send
@@ -109,7 +109,7 @@ class ModerationCog():
         if reason is None:
             reason = 'not set'
         reason = reason.replace('|', '-')
-        await ctx.guild.ban(member, reason=f'{ctx.author.id}|ban|{reason}', delete_message_days=0)
+        await ctx.guild.ban(member, reason=f'{ctx.author.id}|{reason}', delete_message_days=0)
         
         if not g['channels'].get('staff'):
             deliver = ctx.send
@@ -119,6 +119,16 @@ class ModerationCog():
         asyncio.ensure_future(deliver(
             f'✅ **{member}** was **banned** by **{ctx.author}**'
         ))
+
+    @commands.command(no_pm=True)
+    @has_any_role('roles.admin', 'roles.moderator')
+    async def userid(self, ctx, member):
+        user = await self.helpers.choose_member(ctx, ctx.guild, member)
+        if not user:
+            asyncio.ensure_future(ctx.send(f'Error: No user with name **{member}** found.'))
+        else:
+            asyncio.ensure_future(ctx.send(f'{user.id}'))
+        return
 
     @commands.command(no_pm=True)
     @has_any_role('roles.admin', 'roles.moderator')

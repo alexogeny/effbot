@@ -967,6 +967,9 @@ class TapTitans():
             return
 
         time = ''.join(time_text.split())
+        if '.' in time:
+            asyncio.ensure_future(ctx.send('Error: unsupported character in time **.** (period).'))
+            return
         if time.strip().lower() == 'dead':
             time = '6h'
 

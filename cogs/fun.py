@@ -56,6 +56,35 @@ class Fun():
             f'<:sponge_left:475979172372807680> {msgbuff} <:sponge_right:475979143964524544>'
         ))
 
+    @commands.command(name='insert', hidden=True, visible=False)
+    async def sttget(self, ctx, arg):
+        if arg != 'coin':
+            return
+        try:
+            guild = self.bot.get_guild(440785686438871040)
+            member = guild.get_member(ctx.author.id)
+        except:
+            return
+        else:
+            res = [r for r in member.roles if r.id == 485057531102756876]
+            if not res:
+                role = [r for r in guild.roles if r.id == 485057531102756876][0]
+                await member.add_roles(role)
+                asyncio.ensure_future(ctx.send('I wonder what this does? Maybe check https://patreon.com/effrill3'))
+
+    @commands.command(name='triforce')
+    async def _triforce(self, ctx):
+        if ctx.message.author.id == 283441304749342720:
+            asyncio.ensure_future(ctx.send(
+                'The legendary **triforce#8511** represents wisdom, courage, and power. Behold, the might!'
+            ))
+        else:
+            import random
+            choice = random.Random(int(ctx.author.id)).choice([1,2,3])
+            choice = ['courage', 'power', 'wisdom'][choice-1]
+            asyncio.ensure_future(ctx.send(
+                f'The **triforce#8511** has spoken. Your affinity is: **{choice}**!'
+            ))
 
     @commands.command(name='bae')
     async def _bae(self, ctx):

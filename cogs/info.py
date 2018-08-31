@@ -1,5 +1,6 @@
 import discord
 import random
+import psutil
 import time
 import asyncio
 from discord.ext import commands
@@ -12,6 +13,7 @@ class Information():
         
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
+        self.process = psutil.Process()
 
     @commands.group(pass_context=True, invoke_without_command=True)
     async def info(self, ctx):
@@ -31,6 +33,13 @@ class Information():
     async def prefix(self, ctx):
         p = self.bot.prefixes.get(str(ctx.guild.id), 'e@')
         asyncio.ensure_future(ctx.send(f'The current server prefix is **{p}**'))
+
+    @commands.command(name='invite')
+    async def invite(self, ctx):
+        asyncio.ensure_future(ctx.send(
+            'Normal link:\n<https://discordapp.com/api/oauth2/authorize?client_id=466854404965007360&permissions=2146954487&scope=bot>\n'
+            'Admin link:\n<https://discordapp.com/api/oauth2/authorize?client_id=466854404965007360&permissions=8&scope=bot>'
+        ))
 
     @commands.command()
     async def ping(self, ctx):
@@ -53,12 +62,36 @@ class Information():
         ping = (after - before) * 1000
         asyncio.ensure_future(ping_msg.edit(content=f"***{ping:.0f}ms***"))
 
-    @info.command(name='bot', aliases=['effbot', '<@466854404965007360>', '<@!466854404965007360>'], no_pm=True)
+    @info.command(name='bot', aliases=['effbot', '<@471207758985691162>', '<@!471207758985691162>'], no_pm=True)
     async def _bot(self, ctx):
-        embed = discord.Embed(title='Effbot', description='I am the mighty Effbot. Born a human, but raised by gods.')
+        embed = discord.Embed(title='Effbot', description='Insert coin to continue.')
         embed.add_field(name='Author', value='effrill3#0001')
-        embed.add_field(name='User Count', value=f'{len(self.bot.users)}')
-        embed.add_field(name='Server Count', value=f'{len(self.bot.guilds)}')
+        total_members = sum(1 for _ in self.bot.get_all_members())
+        total_online = len({m.id for m in self.bot.get_all_members() if m.status is not discord.Status.offline})
+        total_unique = len(self.bot.users)
+        embed.add_field(name='Members', value=f'{total_members} total - {total_unique} unique - {total_online} online')
+        embed.add_field(name='Guilds', value=f'{len(self.bot.guilds)}')
+
+
+        #embed.add_field(name='Server Count', value=f'')
+        text_channels = []
+        voice_channels = []
+        for guild in self.bot.guilds:
+            voice_channels.extend(guild.voice_channels)
+            text_channels.extend(guild.text_channels)
+
+        text = len(text_channels)
+        voice = len(voice_channels)
+        embed.add_field(name='Channels', value=f'{text + voice:,} total - {text:,} text - {voice:,} voice')
+        memory_usage = self.process.memory_full_info().uss / 1024**2
+        cpu_usage = self.process.cpu_percent() / psutil.cpu_count()
+        embed.add_field(name='Process', value=f'{memory_usage:.2f} MiB RAM - {cpu_usage:.2f}% CPU')
+        titanlords = await self.helpers.sql_query_db(
+            "SELECT * FROM titanlord"
+        )
+        active_tls = len([tl for tl  in titanlords if tl['next']]) or 0
+        # inactive_tls = len(titanlords)
+        embed.add_field(name='TT2 Timers', value=f'{active_tls}')
         embed.add_field(name='Invite', value='[Bot Invite Link](https://discordapp.com/api/oauth2/authorize?client_id=466854404965007360&permissions=2146954487&scope=bot)')
         asyncio.ensure_future(ctx.send(embed=embed))
 

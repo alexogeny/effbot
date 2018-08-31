@@ -312,44 +312,44 @@ class Owner:
         await self.bot.logout()
         await self.bot.login()
 
-    @commands.group(name="set", pass_context=True)
-    async def _set(self, ctx):
-        """Changes Red's core settings"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send('derp')
-            return
+    # @commands.group(name="set", pass_context=True)
+    # async def _set(self, ctx):
+    #     """Changes Red's core settings"""
+    #     if ctx.invoked_subcommand is None:
+    #         await ctx.send('derp')
+    #         return
 
-    @_set.command(pass_context=True, no_pm=True)
-    @is_owner()
-    async def nickname(self, ctx, *, nickname=""):
-        """Sets Red's nickname
-        Leaving this empty will remove it."""
-        nickname = nickname.strip()
-        if nickname == "":
-            nickname = None
-        try:
-            await self.bot.change_nickname(ctx.message.server.me, nickname)
-            await ctx.send("Done.")
-        except discord.Forbidden:
-            await ctx.send("I cannot do that, I lack the "
-                "\"Change Nickname\" permission.")
+    # @_set.command(pass_context=True, no_pm=True)
+    # @is_owner()
+    # async def nickname(self, ctx, *, nickname=""):
+    #     """Sets Red's nickname
+    #     Leaving this empty will remove it."""
+    #     nickname = nickname.strip()
+    #     if nickname == "":
+    #         nickname = None
+    #     try:
+    #         await self.bot.change_nickname(ctx.message.server.me, nickname)
+    #         await ctx.send("Done.")
+    #     except discord.Forbidden:
+    #         await ctx.send("I cannot do that, I lack the "
+    #             "\"Change Nickname\" permission.")
 
-    @_set.command(pass_context=True, no_pm=True)
-    @is_owner()
-    async def name(self, ctx, *, name):
-        """Sets Red's name"""
-        name = name.strip()
-        if name != "":
-            try:
-                await self.bot.edit_profile(username=name)
-            except:
-                await ctx.send("Failed to change name. Remember that you"
-                                   " can only do it up to 2 times an hour."
-                                   "Use nicknames if you need frequent "
-                                   "changes. {}set nickname"
-                                   "".format(ctx.prefix))
-            else:
-                await ctx.send("Done.")
+    # @_set.command(pass_context=True, no_pm=True)
+    # @is_owner()
+    # async def name(self, ctx, *, name):
+    #     """Sets Red's name"""
+    #     name = name.strip()
+    #     if name != "":
+    #         try:
+    #             await self.bot.edit_profile(username=name)
+    #         except:
+    #             await ctx.send("Failed to change name. Remember that you"
+    #                                " can only do it up to 2 times an hour."
+    #                                "Use nicknames if you need frequent "
+    #                                "changes. {}set nickname"
+    #                                "".format(ctx.prefix))
+    #         else:
+    #             await ctx.send("Done.")
 
     # @_set.command(name="token")
     # @is_owner()

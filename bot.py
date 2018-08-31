@@ -141,7 +141,7 @@ async def main():
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     pool = loop.run_until_complete(main())
-    bot = Effribot(command_prefix=get_prefix)
+    bot = Effribot(command_prefix=get_prefix, max_messages=20000, case_insensitive=True)
     setattr(bot, 'pool', pool)
     
     @bot.check
