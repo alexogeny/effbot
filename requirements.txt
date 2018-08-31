@@ -3,4 +3,5 @@ PyGithub==1.40
 requests==2.19.1
 pytest==3.6.3
 pytest-runner==4.2
+psutil==5.4.7
 https://github.com/Rapptz/discord.py/archive/rewrite.zip#egg=discord.py
