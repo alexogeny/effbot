@@ -265,13 +265,13 @@ class Math():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    @commands.command(name='math', aliases=['='])
-    async def math(self, ctx, *math):
+    # @commands.command(name='math', aliases=['='])
+    # async def math(self, ctx, *math):
         
-        exp=' '.join(math)
-        result = await run_math(exp)
-        # result = await do_math(' '.join(math))
-        asyncio.ensure_future(ctx.send(result[0:1999]))
+    #     exp=' '.join(math)
+    #     result = await run_math(exp)
+    #     # result = await do_math(' '.join(math))
+    #     asyncio.ensure_future(ctx.send(result[0:1999]))
 
 def setup(bot):
     cog = Math(bot)
