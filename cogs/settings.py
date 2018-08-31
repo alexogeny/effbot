@@ -432,6 +432,8 @@ class SettingsCog():
             return
 
         g = await self.helpers.get_record('server', ctx.message.guild.id)
+        if role == 'administrator':
+            role = 'admin'
         g['roles'][role]=result.id
         if role_setting.lower()[0:2] == 'ti':
             g['extra']['timed_role_timer'] = int(extra)
