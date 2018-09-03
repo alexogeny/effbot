@@ -1,12 +1,12 @@
 
 import pytest
-from bot import Effribot, get_prefix
+from cogs.math import run_math, exec_math
 from manage import run_as_test
 
-import os, signal, time, threading
+import os, signal, time, threading, asyncio
 
-def test_bot_exists():
-    assert Effribot(command_prefix=get_prefix)
+# def test_bot_exists():
+#     assert Effribot(command_prefix=get_prefix)
 
 # def test_bot_runs():
 #     class TestThread(threading.Thread):
@@ -23,3 +23,12 @@ def test_bot_exists():
 #     time.sleep(10)
 #     del t
 #     assert True
+
+# def test_math_exec_math():
+#     assert exec_math('2*2') == '4'
+#     assert exec_math('3+3') == '6'
+#     assert exec_math('3*2+3') == '9'
+
+# def test_math_run_math()
+#     loop = asyncio.new_event_loop()
+#     assert exec_math('333^333^333^333^333').startswith('Error')

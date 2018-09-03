@@ -5,6 +5,7 @@ import multiprocessing
 from discord.ext import commands
 from functools import partial
 from decimal import Decimal, getcontext
+from collections import Counter
 getcontext().prec = 282822
 getcontext().Emax = 50505050
 getcontext().Emin = -50505050
@@ -223,6 +224,8 @@ class Interpreter(NodeVisitor):
 
 
 def do_math(expression) -> str:
+    if Counter(expression).get('^') > 1:
+        return 'Error: Too many exponents in expression. Current limit: 1'
     try:
         lexer = Lexer(expression)
         parser = Parser(lexer)
@@ -248,8 +251,7 @@ def exec_math(exp):
         result = f()
     return result
 
-async def run_math(exp):
-    loop = asyncio.get_event_loop()
+async def run_math(exp, loop):
     future = loop.run_in_executor(None, exec_math, exp)
     try:
         result = await asyncio.wait_for(future, 2.2, loop=loop)
@@ -262,16 +264,17 @@ class Math():
     """Because who doesn't like to ~~have fun~~do math?"""
     def __init__(self, bot):
         
+        self.loop = asyncio.new_event_loop()
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    # @commands.command(name='math', aliases=['='])
-    # async def math(self, ctx, *math):
+    @commands.command(name='math', aliases=['='])
+    async def math(self, ctx, *math):
         
-    #     exp=' '.join(math)
-    #     result = await run_math(exp)
-    #     # result = await do_math(' '.join(math))
-    #     asyncio.ensure_future(ctx.send(result[0:1999]))
+        exp=' '.join(math)
+        result = await run_math(exp, self.loop)
+        # result = await do_math(' '.join(math))
+        asyncio.ensure_future(ctx.send(result[0:1999]))
 
 def setup(bot):
     cog = Math(bot)
