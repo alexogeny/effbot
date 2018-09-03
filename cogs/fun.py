@@ -22,6 +22,20 @@ class Fun():
     async def fun(self, ctx):
         pass
 
+    @commands.command(name='drjesus')
+    async def _drjesus(self, ctx):
+        choice = choice([
+            "I'll give you a hint, it's not hard coded :)",
+            'Praise the bear people!',
+            'May the Dark Lord perish and all rejoice.',
+            'We type with our eyes closed and then set the office on fire before we deploy.',
+            'I mean this is programming, anything is possible',
+            'I\'m flattered that there\'s a meme from me sir',
+            'You could literally die mid tournament and would not be able to get to 3500.',
+
+        ])
+        asyncio.ensure_future(ctx.send(choice))
+
     @commands.command(name='mock')
     async def _mock(self, ctx, *, message):
         
@@ -106,7 +120,9 @@ class Fun():
         if not user:
             return
         user = await self.helpers.choose_member(ctx, ctx.guild, user)
-        
+        if not user:
+            await ctx.send('Err, who are you trying to blame? I could not find the user you asked for.')
+            return
         if user.id == ctx.author.id and user.id != 259451392630980610:
             asyncio.ensure_future(ctx.send('I cannot let you blame yourself. Whatever it was, it wasn\'t your fault. :pensive:'))
             return

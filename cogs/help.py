@@ -122,7 +122,7 @@ class Help():
         related = [h for h in help_ if h.startswith(name) and h != name]
         if isinstance(text, dict):
             fields.update({
-                keys_[k]:ff(k, v).replace('`.', f'`{self.bot.prefixes[str(ctx.guild.id)]}') for k,v in text.items()
+                keys_[k]:ff(k, v).replace('`.', f'`{self.bot.prefixes.get(str(ctx.guild.id), "e.")}') for k,v in text.items()
                 if k in ['description', 'requires', 'usage', 'example']
                 and v
             })
