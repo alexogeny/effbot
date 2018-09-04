@@ -50,11 +50,15 @@ class Effribot(commands.Bot):
 
     def load_extensions(self):
         self.load_extension('cogs.helpers')
-        for extension in [
-            f.replace('.py', '') for f in listdir(self.config['COGS_DIR'])
-            if isfile(join(self.config['COGS_DIR'], f))]:
+        extensions = [
+            f.replace('.py', '')
+            for f
+            in listdir(self.config['COGS_DIR'])
+            if isfile(join(self.config['COGS_DIR'], f))
+        ]
+        for extension in extensions:
             try:
-                self.load_extension(f"{self.config['COGS_DIR']}.{extension}")
+                self.load_extension("{}.{}".format(self.config['COGS_DIR'], extension))
             except (discord.ClientException, ModuleNotFoundError) as e:
                 print(f'Failed to load extension {extension}.', file=sys.stderr)
                 traceback.print_exc()

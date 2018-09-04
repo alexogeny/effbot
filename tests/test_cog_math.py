@@ -1,6 +1,6 @@
 
 import pytest
-from cogs.math import run_math, exec_math
+from cogs.math import do_math
 from manage import run_as_test
 
 import os, signal, time, threading, asyncio
@@ -24,10 +24,11 @@ import os, signal, time, threading, asyncio
 #     del t
 #     assert True
 
-# def test_math_exec_math():
-#     assert exec_math('2*2') == '4'
-#     assert exec_math('3+3') == '6'
-#     assert exec_math('3*2+3') == '9'
+def test_do_math():
+    assert do_math('2*2') == '4'
+    assert do_math('3+3') == '6'
+    assert do_math('3*2+3') == '9'
+    
 
 # def test_math_run_math()
 #     loop = asyncio.new_event_loop()
