@@ -258,6 +258,7 @@ class Math():
                 result = result[0:50]+'...'
         except asyncio.TimeoutError:
             result = "Error: expression too complex. Would have taken too long."
+            future.cancel()
         finally:
             asyncio.ensure_future(ctx.send(result))
 
