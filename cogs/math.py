@@ -246,21 +246,21 @@ class Math():
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    @commands.command(name='math', aliases=['='])
-    async def math(self, ctx, *math):
+    # @commands.command(name='math', aliases=['='])
+    # async def math(self, ctx, *math):
         
-        exp=' '.join(math)
-        loop = asyncio.get_event_loop()
-        try:
-            future = loop.run_in_executor(P, do_math, exp)
-            result = await asyncio.wait_for(future, 3, loop=loop)
-            if len(result) > 50:
-                result = result[0:50]+'...'
-        except asyncio.TimeoutError:
-            result = "Error: expression too complex. Would have taken too long."
-            future.cancel()
-        finally:
-            asyncio.ensure_future(ctx.send(result))
+    #     exp=' '.join(math)
+    #     loop = asyncio.get_event_loop()
+    #     try:
+    #         future = loop.run_in_executor(P, do_math, exp)
+    #         result = await asyncio.wait_for(future, 3, loop=loop)
+    #         if len(result) > 50:
+    #             result = result[0:50]+'...'
+    #     except asyncio.TimeoutError:
+    #         result = "Error: expression too complex. Would have taken too long."
+    #         future.cancel()
+    #     finally:
+    #         asyncio.ensure_future(ctx.send(result))
 
 
 def setup(bot):
