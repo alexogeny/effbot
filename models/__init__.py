@@ -95,7 +95,8 @@ _titanlord = """CREATE TABLE IF NOT EXISTS Titanlord(
     hpcq_requirement numeric,
     top10_min numeric,
     round_number numeric,
-    export_data jsonb default '{}'::jsonb
+    export_data jsonb default '{}'::jsonb,
+    text_requirement text
 );"""
 
 _migrators = (
@@ -104,7 +105,8 @@ _migrators = (
     """ALTER TABLE Server ADD COLUMN IF NOT EXISTS prefix text;""",
     """ALTER TABLE Titanlord DROP COLUMN IF EXISTS active;""",
     """ALTER TABLE Server DROP COLUMN IF EXISTS active;""",
-    """ALTER TABLE "user" DROP COLUMN IF EXISTS active;"""
+    """ALTER TABLE "user" DROP COLUMN IF EXISTS active;""",
+    """ALTER TABLE Titanlord ADD COLUMN IF NOT EXISTS text_requirement text;"""
 )
 
 Server = defaultdict(lambda: dict(

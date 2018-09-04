@@ -224,8 +224,6 @@ class Interpreter(NodeVisitor):
 
 
 def do_math(expression) -> str:
-    if Counter(expression).get('^') > 1:
-        return 'Error: Too many exponents in expression. Current limit: 1'
     try:
         lexer = Lexer(expression)
         parser = Parser(lexer)
@@ -237,44 +235,32 @@ def do_math(expression) -> str:
     except MathError as e:
         return str(e)
 
-def exec_math(exp):
-    #print(exp)
-    f = partial(do_math, exp)
-    p = multiprocessing.Process(target=f)
-    p.start()
-    p.join(1)
-    if p.is_alive():
-        result = 'Error: expression too complex. Try something simpler.'
-        p.terminate()
-        p.join()
-    else:
-        result = f()
-    return result
 
-async def run_math(exp, loop):
-    future = loop.run_in_executor(None, exec_math, exp)
-    try:
-        result = await asyncio.wait_for(future, 2.2, loop=loop)
-    except asyncio.TimeoutError:
-        result = 'Error: expression too complex. That would have taken a while. Try something simpler.'
-    return result
-    
+from concurrent.futures import ProcessPoolExecutor
+P = ProcessPoolExecutor(5)
 
 class Math():
     """Because who doesn't like to ~~have fun~~do math?"""
     def __init__(self, bot):
         
-        self.loop = asyncio.new_event_loop()
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
 
-    # @commands.command(name='math', aliases=['='])
-    # async def math(self, ctx, *math):
+    @commands.command(name='math', aliases=['='])
+    async def math(self, ctx, *math):
         
-    #     exp=' '.join(math)
-    #     result = await run_math(exp, self.loop)
-    #     # result = await do_math(' '.join(math))
-    #     asyncio.ensure_future(ctx.send(result[0:1999]))
+        exp=' '.join(math)
+        loop = asyncio.get_event_loop()
+        try:
+            future = loop.run_in_executor(P, do_math, exp)
+            result = await asyncio.wait_for(future, 3, loop=loop)
+            if len(result) > 50:
+                result = result[0:50]+'...'
+        except asyncio.TimeoutError:
+            result = "Error: expression too complex. Would have taken too long."
+        finally:
+            asyncio.ensure_future(ctx.send(result))
+
 
 def setup(bot):
     cog = Math(bot)

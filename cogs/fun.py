@@ -24,17 +24,17 @@ class Fun():
 
     @commands.command(name='drjesus')
     async def _drjesus(self, ctx):
-        choice = choice([
+        choice_ = choice([
             "I'll give you a hint, it's not hard coded :)",
             'Praise the bear people!',
             'May the Dark Lord perish and all rejoice.',
             'We type with our eyes closed and then set the office on fire before we deploy.',
             'I mean this is programming, anything is possible',
             'I\'m flattered that there\'s a meme from me sir',
-            'You could literally die mid tournament and would not be able to get to 3500.',
+            'You could literally die mid tournament and would not be able to get to 3500.'
 
         ])
-        asyncio.ensure_future(ctx.send(choice))
+        asyncio.ensure_future(ctx.send(choice_))
 
     @commands.command(name='mock')
     async def _mock(self, ctx, *, message):

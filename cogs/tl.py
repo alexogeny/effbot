@@ -121,10 +121,11 @@ class TapTitans():
             asyncio.ensure_future(ctx.send('CQ level must be between **1** and **5000**'))
             return
         dmg_bns = await self.helpers.humanize_decimal(await clan_damage(level))
+        as_ = await advance_start(level)
         e = await self.helpers.full_embed(
             f'\nBoss HP - **{self.helpers.human_format(boss_hitpoints(level))}**'
             f'\nDamage Bonus - **{dmg_bns}**'
-            f'\nAdvanced Start - **{await advance_start(level)}%**'
+            f'\nAdvanced Start - **{as_}%**'
         )
         asyncio.ensure_future(ctx.send(
             f'Clan stats for a level **{level}** clan:', embed=e
@@ -300,9 +301,37 @@ class TapTitans():
                     inline=False)
                 await ctx.send('',embed=embed)
 
+    @tt.command(name='requirements', aliases=['reqs'])
+    async def tt_requirements(self, ctx, name='default'):
+        g = await self.helpers.sql_query_db(
+            'SELECT * FROM titanlord'
+        )
+        g = next((dict(r) for r in g if (r['name'] or '').lower()==name.lower() and r['guild']==ctx.guild.id), None)
+        if not g:
+            asyncio.ensure_future(ctx.send('Oops, could not find a group with that name.'))
+            return
+        short_code = g.get('shortcode') or 'Clan'
+        cname = g.get('clanname') or 'Clan'
+        if short_code == cname:
+            cname = short_code
+        else:
+            cname = f'{cname} ({short_code})'
+        rmap = dict(ms='Max Stage', tcq='Total Clan Quests',
+                    prestige='Prestige Count', tpcq='Taps Per Clan Quest',
+                    hpcq='Hits Per Clan Quest')
+        reqs = {rmap[r]: g[f'{r}_requirement'] or 0 for r in 'ms tcq prestige tpcq hpcq'.split()}
+        result = '\n'.join('{} - **{:,}**'.format(k, int(v)) for k, v in reqs.items())
+        if g.get('text_requirement'):
+            result = '{}\n\nNote: {}'.format(result, g.get('text_requirement').replace('%br%', '\n').replace('%BR%', '\n'))
+        asyncio.ensure_future(ctx.send(
+            "The requirements to join **{}** are as follows:\n{}".format(
+                cname, result
+            )
+        ))
+
     @tt_group.command(name='get')
     @has_any_role('roles.grandmaster', 'tt.master')
-    async def tt_group_get(self, ctx, name='default'):
+    async def tt_group_get(self, ctx, name='default', section='all'):
         g = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
         )
@@ -325,33 +354,41 @@ class TapTitans():
                         prestige='Prestige Count', tpcq='Taps Per Clan Quest',
                         hpcq='Hits Per Clan Quest')
             reqs = {rmap[r]: g[f'{r}_requirement'] or 0 for r in 'ms tcq prestige tpcq hpcq'.split()}
-            fields.update({'requirements':
-                '\n'.join('{}: {:,}'.format(k, int(v)) for k, v in reqs.items())
-            })
+            if section.lower() == 'all' or section.lower().startswith('req'):
+                fields.update({'requirements':
+                    '\n'.join('{}: {:,}'.format(k, int(v)) for k, v in reqs.items())
+                })
 
-            fields.update({'channels':
-                '\n'.join('{}: {}'.format(
-                    k.replace('_channel','').replace('channel', 'titanlord'), g[k] and f'<#{g[k]}>' or '`not set`'
-                ) for k in g if k.endswith('channel'))
-            })
-            fields.update({f'{short_code} CQ:': f'{cq_no or "`not set`"}'})
-            fields.update({f'{short_code} Ranks': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
-            fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at')) or '`not set`'})
-            fields.update({f'{short_code} {k.title()} text': (g.get(k) or "None").format(
-                TIME="**04:32:22**", CQ=cq_no, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP=clan_name
-            ) for k in ['timer', 'ping', 'now', 'round', 'after']})
-            fields.update({'Notes':
-                ('There are a few template tags available when setting text:'
-                 '\n`%time%` time until the boss spawns'
-                 '\n`%cq%` the cq number of the boss'
-                 '\n`%spawn%` the time when the boss spawns'
-                 '\n`%round%` the round number of the boss'
-                 '\n`%group%` the group the titanlord belongs to'
-                 '\n`%everyone%` set an everyone ping without pinging everyone setting it up'
-                 '\n`%br%` adds a line break to the text'
-                 #'\n`%user%` mentions the user who set up the timer'
-                 )
-            })
+
+            if section.lower() == 'all' or section.lower().startswith('chan'):
+                fields.update({'channels':
+                    '\n'.join('{}: {}'.format(
+                        k.replace('_channel','').replace('channel', 'titanlord'), g[k] and f'<#{g[k]}>' or '`not set`'
+                    ) for k in g if k.endswith('channel'))
+                })
+
+            if section.lower() == 'all' or section.lower().startswith('rank'):
+                fields.update({f'{short_code} Ranks': '\n'.join(f'{k}: {v}' for k,v in roles.items())})
+            if section.lower() == 'all':
+                fields.update({f'{short_code} CQ:': f'{cq_no or "`not set`"}'})
+                fields.update({f'{short_code} Ping intervals': ', '.join(f'`{x}`' for x in g.get('ping_at')) or '`not set`'})
+            if section.lower() == 'all' or section.lower().startswith('tex'):
+                fields.update({f'{short_code} {k.title()} text': (g.get(k) or "None").format(
+                    TIME="**04:32:22**", CQ=cq_no, ROUND=1, SPAWN="12:23:32 UTC+10", GROUP=clan_name
+                ) for k in ['timer', 'ping', 'now', 'round', 'after']})
+            if section.lower() == 'all' or section.lower().startswith('tex'):
+                fields.update({'Notes':
+                    ('There are a few template tags available when setting text:'
+                     '\n`%time%` time until the boss spawns'
+                     '\n`%cq%` the cq number of the boss'
+                     '\n`%spawn%` the time when the boss spawns'
+                     '\n`%round%` the round number of the boss'
+                     '\n`%group%` the group the titanlord belongs to'
+                     '\n`%everyone%` set an everyone ping without pinging everyone setting it up'
+                     '\n`%br%` adds a line break to the text'
+                     #'\n`%user%` mentions the user who set up the timer'
+                     )
+                })
             embed = await self.helpers.full_embed(
                 f'TL Group: {short_code} - {clan_name}',
                 fields=fields,
@@ -594,28 +631,47 @@ class TapTitans():
 
     @tt_set.command(name='requirement', aliases=['req'])
     @has_any_role('roles.grandmaster', 'tt.master')
-    async def tt_set_requirement(self, ctx, kind, value, group="-default"):
+    async def tt_set_requirement(self, ctx, kind, *value, group="-default"):
         if not group.startswith('-'):
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
         group = group[1:]
 
-        kinds = 'ms tcq prestige tpcq hpcq'.split()
+        kinds = 'ms tcq prestige tpcq hpcq text'.split()
 
         if kind not in kinds:
             asyncio.ensure_future(ctx.send('Text type must be one of: `{}`'.format(
                 '`, `'.join(k for k in kinds)
             )))
             return
-        if not value.isnumeric():
+        if kind != 'text' and not value[0].isnumeric():
             asyncio.ensure_future(ctx.send('You need to supply a whole number for `{kind} requirement`'))
+            return
+        else:
+            if not value[-1].startswith('-') and not group:
+                asyncio.ensure_future(ctx.send('You did not supply a group.'))
+                return
+            elif value[-1].startswith('-'):
+                group, value = value[-1][1:], ' '.join(value[0:-1])
+            else:
+                value = ' '.join(value)
+        print('hey')
 
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
-            exists.update({f'{kind}_requirement': int(value)})
+            msg = ''
+            if kind != 'text':
+                print(kind)
+                exists.update({f'{kind}_requirement': int(value[0])})
+                print('set kind value')
+                msg = f'Set the `{kind.lower()} requirement` for `{group}` to: `{int(value[0]):,}`'
+                print('hiiiiiiiiiiiiii')
+            else:
+                exists.update({f'{kind}_requirement': value})
+                msg = f'Set the `{kind.lower()} requirement` for `{group}` to: `{value}`'
             result = await self.helpers.sql_update_record('titanlord', exists)
             asyncio.ensure_future(ctx.send(
-                f'Set the `{kind.lower()} requirement` for `{group}` to: `{int(value):,}`'
+                msg
             ))
         else:
             asyncio.ensure_future(ctx.send(f'A TL group with name `{group}` does not exist. Please create one first using `.tt group add`'))
