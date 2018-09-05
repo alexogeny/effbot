@@ -536,6 +536,7 @@ class Helpers():
     async def update_tl(self, tl):
         max_rounds, unit_of_time = 24, 60
         channel, message = None, None
+        has_changed = False
         try:
             channel = self.bot.get_channel(tl['channel'])
         except:
@@ -578,6 +579,7 @@ class Helpers():
             will_send = await self.will_tl_ping(ping_intervals, seconds_until_tl, last_ping)
             if will_send:
                 action, tl['pinged_at'] = 'send', seconds_until_tl
+                has_changed = True
 
         if not tl.get(text_type):
             return
@@ -605,17 +607,21 @@ class Helpers():
                 if text_type == 'now':
                     await asyncio.sleep(seconds_until_tl-.01)
                     tl.update({'pinged_at': 0})
+                    has_changed = True
                 elif text_type == 'round':
                     tl.update({'round_number': tl['round_number']+1})
+                    has_changed = True
                 # params.update({'ROUND': tl['round_number']})
                 formatted_text = tl.get(text_type).format(**params)
                 mx = await channel.send(formatted_text)
                 tl.update({'message': mx.id})
+                has_changed = True
 
         except discord.errors.Forbidden:
             await self.bot.get_channel(466192124115681281).send(f'{channel} - {channel.guild}')
             tl.update({'channel': 0})
-        if text_type != 'timer':
+            has_changed = True
+        if has_changed == True:
             asyncio.ensure_future(self.sql_update_record('titanlord', tl))
 
     async def will_tl_ping(self, intervals, seconds_until_tl, last_ping):
