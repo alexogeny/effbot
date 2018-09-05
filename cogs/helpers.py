@@ -615,7 +615,7 @@ class Helpers():
         except discord.errors.Forbidden:
             await self.bot.get_channel(466192124115681281).send(f'{channel} - {channel.guild}')
             tl.update({'channel': 0})
-        finally:
+        if text_type != 'timer':
             asyncio.ensure_future(self.sql_update_record('titanlord', tl))
 
     async def will_tl_ping(self, intervals, seconds_until_tl, last_ping):
