@@ -55,7 +55,7 @@ async def get_next_prize(days=0):
 async def tournament_forecast():
     result = []
     for i in range(18):
-        item = get_next_prize(days=i)
+        item = await get_next_prize(days=i)
         if item not in result and item[2] in ['Sunday','Wednesday']:
             result.append(item)
     return [
