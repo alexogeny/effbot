@@ -25,41 +25,47 @@ MAP = dict(w='weeks', d='days', h='hours', m='minutes', s='seconds')
 PRIZE_ROTATOR = ['Weapons', 'SP & Perks', 'Shards & Eggs']
 
 BONUS_ROTATOR = [
-    '🧝‍♀️ 5x all hero dmg',
-    '⚔ 8x melee dmg',
-    '🏹 8x ranged dmg',
-    '🧙‍♀️ 8x spell dmg',
-    '👆 5x tap dmg',
-    '🔮 +4 mana regen',
-    '⚗ +200 mana pool',
-    '🧚‍♀️ +100% x2 fairy chance',
-    '💫 +40% crit chance',
-    '🙅 None'
+    'x3 Warlord Boost',
+    '+5 Mana Regen',
+    '1.2x All Probabilities',
+    'x3 Sorcerer Boost',
+    'x10 Chesterson Gold',
+    '+100% x2 Fairy Chance',
+    'x3 Knight Boost',
+    '20% Mana Refund',
+    '1.5x Prestige Relics',
+    '10x Boss Gold'
 ]
 
-async def get_next_prize(days=1):
-    now = datetime.utcnow()+timedelta(days=days+1)
+async def rotate(table, mod):
+    return table[mod:] + table [:mod]
+
+async def is_plural(number):
+    floor(number) > 1 or floor(number) == 0 or floor(number) < -1
+
+async def get_next_prize(days=0):
+    now = datetime.utcnow()+timedelta(days=days)
     origin_date = datetime.utcfromtimestamp(1532242116.705826)
     weeks, remainder = divmod((now-origin_date).days, 3.5)
     tourneys = floor(weeks)+1
-    prize = await rotate(PRIZE_ROTATOR, tourneys%3)
-    bonus = await rotate(BONUS_ROTATOR, tourneys%10)
-    return bonus[0], prize[0], now.strftime('%A'), now.strftime('%d %b, %Y')
+    prize = rotate(PRIZE_ROTATOR, tourneys%3)[0]
+    bonus = rotate(BONUS_ROTATOR, tourneys%10)[0]
+    return bonus, prize, now.strftime('%A'), now.strftime('%d %b, %Y')
 
 async def tournament_forecast():
     result = []
-    for i in range(14):
-        item = await get_next_prize(days=i)
+    for i in range(18):
+        item = get_next_prize(days=i)
         if item not in result and item[2] in ['Sunday','Wednesday']:
             result.append(item)
     return [
-        f'{r[2][0:3]}, **{r[3]}** | {r[1]}\n{r[0]}'
+        '{}, **{}** - **{}**\n*{}*'.format(r[2], r[3], r[1], r[0])
         for r
         in result[0:10]
     ]
 
-async def rotate(table, mod):
-    return table[mod:] + table [:mod]
+#async def rotate(table, mod):
+#    return table[mod:] + table [:mod]
 
 
 
@@ -610,8 +616,7 @@ class Helpers():
             await self.bot.get_channel(466192124115681281).send(f'{channel} - {channel.guild}')
             tl.update({'channel': 0})
         finally:
-            if action != 'edit':
-                asyncio.ensure_future(self.sql_update_record('titanlord', tl))
+            asyncio.ensure_future(self.sql_update_record('titanlord', tl))
 
     async def will_tl_ping(self, intervals, seconds_until_tl, last_ping):
         filtered = next((p for p in intervals[::-1] if last_ping > p > seconds_until_tl), False)
