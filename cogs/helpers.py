@@ -30,44 +30,36 @@ BONUS_ROTATOR = [
     '1.2x All Probabilities',
     'x3 Sorcerer Boost',
     'x10 Chesterson Gold',
-    '+100% x2 Fairy Chance',
+    '+100% Multiple Fairy Chance',
     'x3 Knight Boost',
     '20% Mana Refund',
     '1.5x Prestige Relics',
     '10x Boss Gold'
 ]
 
-async def rotate(table, mod):
+def rotate(table, mod):
     return table[mod:] + table [:mod]
 
 async def is_plural(number):
     floor(number) > 1 or floor(number) == 0 or floor(number) < -1
 
-async def get_next_prize(days=0):
-    now = datetime.utcnow()+timedelta(days=days)
+
+async def tournament_forecast(last=5):
+    result, i = [], 0
+    now = datetime.utcnow()
     origin_date = datetime.utcfromtimestamp(1532242116.705826)
     weeks, remainder = divmod((now-origin_date).days, 3.5)
-    tourneys = floor(weeks)+1
-    prize = (await rotate(PRIZE_ROTATOR, tourneys%3))[0]
-    bonus = (await rotate(BONUS_ROTATOR, tourneys%10))[0]
-    return bonus, prize, now.strftime('%A'), now.strftime('%d %b, %Y')
-
-async def tournament_forecast():
-    result = []
-    for i in range(18):
-        item = await get_next_prize(days=i)
-        if item not in result and item[2] in ['Sunday','Wednesday']:
-            result.append(item)
-    return [
-        '{}, **{}** - **{}**\n*{}*'.format(r[2], r[3], r[1], r[0])
-        for r
-        in result[0:10]
+    tourneys = floor(weeks)
+    prizes = rotate(PRIZE_ROTATOR, tourneys%3)
+    bonuses = rotate(BONUS_ROTATOR, tourneys%10)
+    days = rotate(['Sunday', 'Wednesday'], tourneys%2)
+    for i in range(last):
+        result.append((bonuses[i], prizes[i%3], days[i%2]))
+    res = [
+        '**{}**\n{} - {}'.format(r[2], r[0], r[1])
+        for r in result
     ]
-
-#async def rotate(table, mod):
-#    return table[mod:] + table [:mod]
-
-
+    return res
 
 
 async def role_in_list(role, role_list):

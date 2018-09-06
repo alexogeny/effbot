@@ -133,12 +133,10 @@ class TapTitans():
 
     @commands.command(name='tournament', aliases=['tournaments', 'tourney', 'tourneys'], no_pm=True)
     async def _tourney(self, ctx):
-        upcoming = await tournament_forecast()
+        upcoming = await tournament_forecast(last=3)
         #asyncio.ensure_future(ctx.send(await self.helpers.tournament_time_remains()))
-        e = await self.helpers.full_embed(
-            '\n\n'.join(upcoming)
-        )
-        asyncio.ensure_future(ctx.send('Upcoming TT2 tournaments:', embed=e))
+        e = '\n\n'.join(upcoming)
+        asyncio.ensure_future(ctx.send('Upcoming TT2 tournaments:\n\n{}'.format(e)))
 
     @commands.group(pass_context=True, invoke_without_command=False, name="tt")
     async def tt(self, ctx):
