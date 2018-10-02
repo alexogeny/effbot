@@ -68,7 +68,7 @@ class LogCog():
             embed.add_field(name="Content after", value=f'```\n{m2.content[0:800]}\n```')
             embed.add_field(name='Jumplink', value=f'{m2.jump_url}', inline=False)
             asyncio.ensure_future(self.bot.get_channel(guild['logs']['message']).send(embed=embed))
-        elif m1.pinned != m2.pinned:
+        elif m1.pinned != m2.pinned and guild['logs'].get('message'):
             embed = await self.helpers.build_embed(f'Message {not m2.pinned and "un" or ""}pinned in {c.mention}', 0x36ce31)
             embed.set_thumbnail(url=a.avatar_url_as(format='jpeg'))
             embed.set_author(name=f'{a} ({a.id})', icon_url='https://i.imgur.com/yNlWCen.png')
