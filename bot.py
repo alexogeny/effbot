@@ -25,11 +25,11 @@ if Path('./config.json').exists():
     with Path('./config.json').open('r') as fh:
         CONFIG = json.load(fh)
 else:
-    CONFIG = dict(PREFIXES=['e.', 'e!', 'effbot ', '<@466854404965007360> ', '<@!466854404965007360> '],
+    CONFIG = dict(PREFIXES=['e.', 'e!', 'effbot '],
                   COGS_DIR="cogs",
                   TOKEN=os.getenv("TOKEN"),
                   MS=32000)
-
+#, '<@466854404965007360> ', '<@!466854404965007360> '
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
     prefixes.append(bot.prefixes.get(str(message.guild.id), '.'))
