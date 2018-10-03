@@ -32,7 +32,9 @@ else:
 #, '<@466854404965007360> ', '<@!466854404965007360> '
 def get_prefix(bot, message):
     prefixes = CONFIG['PREFIXES']
-    prefixes.append(bot.prefixes.get(str(message.guild.id), '.'))
+    custom_prefix = bot.prefixes.get(str(message.guild.id), None)
+    if custom_prefix:
+        prefixes.append(custom_prefix)
     #local_prefixes = prefixes+[bot.prefixes.get(str(message.guild.id),'.')]
     #return commands.when_mentioned_or(*local_prefixes)(bot, message)
     return list(prefixes)
