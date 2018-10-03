@@ -449,8 +449,8 @@ class SettingsCog():
         g = await self.helpers.get_record('server', ctx.message.guild.id)
         g['prefix'] = prefix
         await self.helpers.sql_update_record('server', g)
-        old = self.bot.prefixes.get(str(ctx.guild.id), '')
-        self.bot.prefixes[str(ctx.guild.id)]=prefix
+        old = self.bot.prefixes.pop(str(ctx.guild.id), '')
+        self.bot.prefixes.update({str(ctx.guild.id):prefix})
         asyncio.ensure_future(ctx.send('Successfully set the custom prefix from {} to **{}**'.format(
             old and f'**{old}**' or 'nothing', prefix 
         )))
