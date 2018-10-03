@@ -69,7 +69,8 @@ class Effribot(commands.Bot):
 
     async def add_custom_prefix(self, guild):
         g = await self.get_cog('Helpers').get_record('server', guild.id)
-        self.prefixes[str(guild.id)]=g.get('prefix') or '.'
+        if g.get('prefix'):
+            self.prefixes[str(guild.id)]=g.get('prefix')
         return
 
     async def on_ready(self):
