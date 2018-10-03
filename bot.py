@@ -11,15 +11,10 @@ import traceback
 import subprocess
 from os import listdir
 from models import get_db, Server, User, Titanlord
-# from models import Server, User, db
 from os.path import isfile, join
 from pathlib import Path
 from discord.ext import commands
-# from playhouse.shortcuts import dict_to_model
 
-# class Struct(object):
-#     def __init__(self, **entries):
-#         self.__dict__.update(entries)
 
 if Path('./config.json').exists():
     with Path('./config.json').open('r') as fh:
@@ -31,13 +26,14 @@ else:
                   MS=32000)
 #, '<@466854404965007360> ', '<@!466854404965007360> '
 def get_prefix(bot, message):
-    prefixes = CONFIG['PREFIXES']
+    prefixes = list(CONFIG['PREFIXES'])
     custom_prefix = bot.prefixes.get(str(message.guild.id), None)
     if custom_prefix:
         prefixes.append(custom_prefix)
     #local_prefixes = prefixes+[bot.prefixes.get(str(message.guild.id),'.')]
     #return commands.when_mentioned_or(*local_prefixes)(bot, message)
-    return list(prefixes)
+    print(list(set(prefixes)))
+    return list(set(prefixes))
     
 class Effribot(commands.Bot):
     """docstring for Effribot"""
@@ -69,7 +65,7 @@ class Effribot(commands.Bot):
 
     async def add_custom_prefix(self, guild):
         g = await self.get_cog('Helpers').get_record('server', guild.id)
-        if g.get('prefix'):
+        if g.get('prefix', None) != None:
             self.prefixes[str(guild.id)]=g.get('prefix')
         return
 
