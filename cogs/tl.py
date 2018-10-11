@@ -44,7 +44,7 @@ async def base_relics_amount(stage: int) -> int:
         )))
 )
 
-async def artifact_boost(level: int, per_level: int, cost_exponent: float, 
+async def artifact_boost(level: int, per_level: int, cost_exponent: float,
                          growth_rate, growth_max, growth_exponent) -> int:
     return round(1 + per_level * pow(level, pow(
         (1 + (cost_exponent - 1) * min(growth_rate * level, growth_max)),
@@ -106,8 +106,8 @@ class TapTitans():
             'ping': 'No ping text set. `.tt set text ping <text...>`',
             'timer': 'No timer text set. `.tt set text timer <text...>`'
         }
-        
-        
+
+
 
     async def timer_check(self):
         while self is self.bot.get_cog('TapTitans'):
@@ -116,10 +116,20 @@ class TapTitans():
             await asyncio.sleep(9.999999)
 
     @commands.command(name='clanstats', aliases=['tt2clan'])
-    async def _clanstats(self, ctx, level: int):
-        if not 0 < level < 5000:
+    async def _clanstats(self, ctx, level=None):
+        if not level:
+            await ctx.send('Derp, don\'t forget the CQ level!')
+            return
+        try:
+            int(level)
+        except:
+            await ctx.send('You need to supply a whole number between **1** and **5000**')
+            return
+
+        if not 0 < int(level) <= 5000:
             asyncio.ensure_future(ctx.send('CQ level must be between **1** and **5000**'))
             return
+        level = int(level)
         dmg_bns = await self.helpers.humanize_decimal(await clan_damage(level))
         as_ = await advance_start(level)
         e = await self.helpers.full_embed(
@@ -153,7 +163,7 @@ class TapTitans():
             'SELECT * FROM titanlord'
         )
         exists = [dict(r) for r in exists if r['guild']==ctx.guild.id]
-        
+
         if not exists:
             asyncio.ensure_future(ctx.send('Could not find any groups. :<'))
             return
@@ -182,7 +192,7 @@ class TapTitans():
             'SELECT * FROM titanlord'
         )
         exists = [dict(r)['name'] for r in exists if r['guild']==ctx.guild.id]
-        
+
         if not exists:
             asyncio.ensure_future(ctx.send('Could not find any groups on this server. :<'))
             return
@@ -509,7 +519,7 @@ class TapTitans():
         clanname, group = await self.munge_group(cname, group)
         if not clanname:
             return
-        
+
         if len(clanname) > 20:
             asyncio.ensure_future(ctx.send(
                 'Clan names must be less than 20 characters in length.'
@@ -565,7 +575,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send(
                 'You must supply a valid numerical value for the cq number.'))
             return
-        
+
         if not group.startswith('-'):
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
@@ -597,7 +607,7 @@ class TapTitans():
                 '`, `'.join(k for k in kinds)
             )))
             return
-        
+
         if kind in ['timer', 'ping'] and '%time%' not in msg_text.lower() and '{time}' not in msg_text.lower():
             asyncio.ensure_future(ctx.send(
                 'Oops, did you drop this: `%time%`? This needs to be in the text, otherwise you won\'t know when the boss spawns!'
@@ -687,7 +697,7 @@ class TapTitans():
             asyncio.ensure_future(ctx.send('You must supply space-sparated whole numbers. e.g. `15 5 1`'))
             return
         pings = [int(p) for p in pings.split()]
-        
+
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
             exists.update({'ping_at': pings})
@@ -804,7 +814,7 @@ class TapTitans():
                 except:
                     asyncio.ensure_future(ctx.send('Only sci notation atm'))
                     return
-        if args['ms'] > 30000:
+        if args['ms'] > 32000:
             asyncio.ensure_future(ctx.send('The MS cap atm is 30k. Silly!'))
             return
         elif args['sets'] > 5:
@@ -841,7 +851,7 @@ class TapTitans():
     # @commands.command(name='artifact', aliases=['arts','artifacts'])
     # async def _artifacts(self, ctx, name, level, level_to):
     #     # pull list of artifacts
-    #     # search on name 
+    #     # search on name
     #     # get boost(s) at level
     #     # show embed + prestige number if specified
 
@@ -872,7 +882,7 @@ class TapTitans():
                 fields=fields
             )
             asyncio.ensure_future(ctx.send(embed=embed))
-    
+
     @tl.command(name='list', aliases=['timelord'])
     @has_any_role('roles.grandmaster', 'tt.master')
     async def tl_timelord(self, ctx):
@@ -932,27 +942,27 @@ class TapTitans():
         mx = await self.bot.get_channel(exists['when_channel']).send(timer)
         exists.update({'when_message': mx.id})
         result = await self.helpers.sql_update_record('titanlord', exists)
-    
+
     async def is_valid_groupname(self, group, ctx):
         valid_group = group.startswith('-')
         if not valid_group:
             asyncio.ensure_future(ctx.send('Supply a group with a dash. e.g. `-FMT`'))
         group = valid_group and group[1:] or None
         return group
-    
+
     async def tl_error_message(self, record, ctx):
         if not record:
             exists = await self.helpers.sql_query_db(
             'SELECT * FROM titanlord'
             )
             exists = [dict(r) for r in exists if r['guild']==ctx.guild.id]
-            
+
             if not exists:
                 asyncio.ensure_future(ctx.send('Could not find any groups. Do `.tt group add` to create one.'))
                 return
             exists = ', '.join([f'`{r["name"]}`' for r in exists])
             asyncio.ensure_future(ctx.send(f'No default group set, or group not found. The following TL groups exist in this server: {exists}'))
-    
+
     async def tl_embed_builder(self, record, ttk):
         cq_no = int(record.get('cq_number') or 1)
         icon = 'https://i.imgur.com/{}.png'.format(choice(self.tl_icons))
@@ -968,7 +978,7 @@ class TapTitans():
             author=dict(name=f'Boss #{cq_no}', image=icon)
         )
         return e
-    
+
     async def get_tl_from_db(self, ctx, name):
         exists = await self.helpers.sql_query_db('SELECT * FROM titanlord')
         exists = next((dict(r) for r in exists
@@ -1027,7 +1037,7 @@ class TapTitans():
         if time.strip().lower() == 'dead':
             time = '6h'
 
-        _next, _units = await self.helpers.process_time(time)
+        _next, _units = await self.helpers.process_time(time.strip().lower())
         now = datetime.utcnow()
         next_spawn = now+_next
 
@@ -1055,7 +1065,7 @@ class TapTitans():
         full_delay = datetime.utcnow()-delay
         exists.update({'next': next_spawn-full_delay, 'message': mx.id, 'pinged_at': 3660, 'round_number': 2})
         result = await self.helpers.sql_update_record('titanlord', exists)
-    
+
     @tl.command(name='ttk')
     @has_any_role('roles.grandmaster', 'tt.master', 'tt.timer')
     async def tl_ttk(self, ctx, *time, group="-default"):
@@ -1064,7 +1074,7 @@ class TapTitans():
         if not group:
             asyncio.ensure_future(ctx.send('You should supply a group with a dash. e.g. `-AC`'))
             return
-        
+
         exists = await self.get_tl_from_db(ctx, group)
         msg = await self.tl_error_message(exists, ctx)
         if msg:
@@ -1072,8 +1082,8 @@ class TapTitans():
             return
 
         time = ''.join(time_text.split())
-        _ttk, _units = await self.helpers.process_time(time)
-        
+        _ttk, _units = await self.helpers.process_time(time.strip().lower())
+
         try:
             if exists.get('next')+_ttk > delay:
                 asyncio.ensure_future(ctx.send(
@@ -1087,7 +1097,7 @@ class TapTitans():
 
         modded_ = await self.helpers.mod_timedelta(_ttk)
         mapped_ = await self.helpers.map_timedelta(modded_)
-        
+
         if not exists.get('next') or exists.get('next') > delay:
             asyncio.ensure_future(ctx.send('You cannot set boss by TTK until a previous boss has spawned.'))
             return
@@ -1106,20 +1116,20 @@ class TapTitans():
         next_at = exists.get('next')+timedelta(hours=6, seconds=1.5)+_ttk-full_delay
         exists.update({'next': next_at, 'message': mx.id, 'pinged_at': 3660, 'round_number': 2})
         result = await self.helpers.sql_update_record('titanlord', exists)
-    
+
     async def map_hits_to_damage(self, ms, taps, hits):
         return sum(b*ms*taps for b in [1,1.1,1.25,1.5,1.75,2,2.5,3][0:hits])
-    
+
     async def map_hits_to_diamonds(self, hits):
         return sum(d*5 for d in [0,1,5,10,15,20,25,50][0:hits])
-    
+
     @tt.command(name='report')
     @has_any_role('roles.grandmaster', 'tt.master')
     async def _report(self, ctx, start, end, group="-default"):
         group = await self.is_valid_groupname(group, ctx)
         if not group:
             return
-        
+
         exists = await self.get_tl_from_db(ctx, group)
         msg = None
         if not exists:
@@ -1152,7 +1162,7 @@ class TapTitans():
         ] + [
             s['tt'].get(k, 0) for k in ['probation', 'master', 'captain', 'knight', 'recruit']
         ]
-        
+
         missed = total - len(cqs)
         hitter = defaultdict(lambda: dict(id='', name='', hit=0, dmg=0, atd=0, rank='-'))
         min_hits = int(exists.get('hpcq_requirement') or 1)
@@ -1205,7 +1215,7 @@ class TapTitans():
                 result = []
                 for i, r in enumerate(chunk):
                     name = '`{} #{:02}`: `{:02}` (`{:<7}`)'.format(
-                        r['rank'], started_at*21+i+1, floor((r["hit"]/total)*100), self.helpers.human_format(r["dmg"]) 
+                        r['rank'], started_at*21+i+1, floor((r["hit"]/total)*100), self.helpers.human_format(r["dmg"])
                     )
                     result.append(f'{name} - {r["name"]}')
                 e = await self.helpers.build_embed(
