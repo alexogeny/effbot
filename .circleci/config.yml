@@ -52,11 +52,6 @@ jobs:
       - store_artifacts:
           path: test-reports
           destination: test-reports
-  deployment:
-    staging:
-      branch: master
-      heroku:
-        appname: effbot-discord
   deploy:
     machine: true
     steps:
@@ -71,7 +66,7 @@ workflows:
   build-and-deploy:
     jobs:
       - build
-      - deployment:
+      - deploy:
           requires:
             - build
         # filters:
