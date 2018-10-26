@@ -76,7 +76,7 @@ class SettingsCog():
         else:
             asyncio.ensure_future(ctx.send(
                 f'Sorry, but `{lc}` is not an available locale.\nAvailable locales: {available_locales}'))
-    
+
     @my.command(name='ms', aliases=['maxstage', 'MS'])
     async def _ms(self, ctx, ms="1"):
         k = ms.endswith('k') and 1000 or 1
@@ -174,7 +174,7 @@ class SettingsCog():
         v, a = craftpower, ctx.author
         if not v.isnumeric():
             return
-        if not 0<=int(v)<100:
+        if not 0<=int(v)<150:
             return
         await self.helpers.sql_update_key('user', a.id, 'tt', 'cp', int(v))
         asyncio.ensure_future(ctx.send(
@@ -186,9 +186,9 @@ class SettingsCog():
         v, a = mythicsets, ctx.author
         if not v.isnumeric():
             return
-        if not 0<=int(v)<=6:
+        if not 0<=int(v)<=10:
             asyncio.ensure_future(ctx.send(
-                '🚫 Oops, there are currently only 5 mythic sets in the game.'
+                '🚫 Oops, there are currently only 6 mythic sets in the game.'
             ))
             return
         await self.helpers.sql_update_key('user', a.id, 'tt', 'sets', int(v))
@@ -201,7 +201,7 @@ class SettingsCog():
         v, a = skillpoints, ctx.author
         if not v.isnumeric():
             return
-        if not 0<=int(v)<=10000:
+        if not 0<=int(v)<=100000:
             return
         await self.helpers.sql_update_key('user', a.id, 'tt', 'sp', int(v))
         asyncio.ensure_future(ctx.send(
@@ -262,7 +262,7 @@ class SettingsCog():
             bos = bos+'.'+dec+ 'e' + str(len(x))
         return bos
     async def tt2_card(self, a, u):
-        
+
         avatar = await self.helpers.get_avatar(a)
         ms = u['tt'].get('ms') or 1
         tcq = u['tt'].get('tcq') or 1
@@ -320,7 +320,7 @@ class SettingsCog():
                 )
                 if not clan:
                     return
-                
+
                 if clan and clan.get('clanname'):
                     asyncio.ensure_future(ctx.send(
                         f'{a.name}#{a.discriminator} is a memeber of {clan["clanname"]}!'
@@ -340,7 +340,7 @@ class SettingsCog():
             user_ = guild_.get_member(a.id)
             if not user_:
                 return
-            roles = [r.id for r in user_.roles]    
+            roles = [r.id for r in user_.roles]
             is_in_clan = False
             for role in ['roles.grandmaster', 'tt.master', 'tt.captain', 'tt.knight', 'tt.recruit']:
                 if not is_in_clan:
@@ -356,7 +356,7 @@ class SettingsCog():
             a = ctx.author
             await self.helpers.sql_update_key('user', a.id, 'tt', 'shortcode', clan.upper())
             asyncio.ensure_future(ctx.send(f'Set the shortcode for {a.name}#{a.discriminator} to: `{clan.upper()}`'))
-            
+
         elif clan_ and not clan_.get('clanname'):
             asyncio.ensure_future(ctx.send('That clan exists but has no name set. :<'))
         elif not clan_:
@@ -452,7 +452,7 @@ class SettingsCog():
         old = self.bot.prefixes.pop(str(ctx.guild.id), '')
         self.bot.prefixes.update({str(ctx.guild.id):prefix})
         asyncio.ensure_future(ctx.send('Successfully set the custom prefix from {} to **{}**'.format(
-            old and f'**{old}**' or 'nothing', prefix 
+            old and f'**{old}**' or 'nothing', prefix
         )))
         return
 
@@ -532,7 +532,7 @@ class SettingsCog():
             valid = f'Removed {result} from ignored {kind}s.'
         elif mode.lower() in ['on', '1'] and result.id in g['logs']['ignored']:
             valid = f'{kind.title()} named {result} already in ignored {kind}s.'
-        
+
         await self.helpers.sql_update_record('server', g)
         asyncio.ensure_future(ctx.send(valid))
         return
@@ -577,7 +577,7 @@ class SettingsCog():
             valid = f'Removed **#{result}** from curated channels.'
         elif mode.lower() in ['on', '1'] and result.id in g['channels']['curated']:
             valid = f'Channel named **#{result}** already in curated channels.'
-        
+
         await self.helpers.sql_update_record('server', g)
         asyncio.ensure_future(ctx.send(valid))
         return

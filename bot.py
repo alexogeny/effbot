@@ -23,7 +23,7 @@ else:
     CONFIG = dict(PREFIXES=['e.', 'e!', 'effbot '],
                   COGS_DIR="cogs",
                   TOKEN=os.getenv("TOKEN"),
-                  MS=32000)
+                  MS=35000)
 #, '<@466854404965007360> ', '<@!466854404965007360> '
 def get_prefix(bot, message):
     prefixes = list(CONFIG['PREFIXES'])
@@ -34,7 +34,7 @@ def get_prefix(bot, message):
     #return commands.when_mentioned_or(*local_prefixes)(bot, message)
     print(list(set(prefixes)))
     return list(set(prefixes))
-    
+
 class Effribot(commands.Bot):
     """docstring for Effribot"""
     def __init__(self, *args, **kwargs):
@@ -93,7 +93,7 @@ class Effribot(commands.Bot):
             e.set_author(name=f'{g.name}', icon_url=g.icon_url_as(format='jpeg'))
             e.add_field(name="Command", value=f'{ctx.command.qualified_name}')
             e.add_field(name="User", value=f'{a.mention}', inline=False)
-            
+
             tb = traceback.format_exception(type(error), error, error.__traceback__, limit=3)
 
             tb = "\n\n".join([re.sub(r'(C:(\\[^\\]+){1,4})', '', t).strip().replace(
@@ -105,9 +105,9 @@ class Effribot(commands.Bot):
                 'Traceback (most recent call last):',
                 ''
             ) for t in tb if t.strip()])
-            
+
             e.add_field(name=f'Stack:', value=f'```python\n{tb[0:900]}\n```')
-            
+
             await self.get_channel(466192124115681281).send(embed=e)
         return self
 
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     pool = loop.run_until_complete(main())
     bot = Effribot(command_prefix=get_prefix, max_messages=20000, case_insensitive=True)
     setattr(bot, 'pool', pool)
-    
+
     @bot.check
     async def globally_block_bots(ctx):
         return not ctx.author.bot
