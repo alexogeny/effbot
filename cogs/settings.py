@@ -445,16 +445,13 @@ class SettingsCog():
                 value = await self.bot.get_user_info(int(value))
             except:
                 pass
-        await ctx.send('Debug: value is {}'.format(value))
-        await ctx.send('Search term was {}: {}'.format(type(value)==str and 'code' or 'id', type(value)==str and value or value.id))
+        #await ctx.send('Debug: value is {}'.format(value))
+        #await ctx.send('Search term was {}: {}'.format(type(value)==str and 'code' or 'id', type(value)==str and value or value.id))
         if type(value) == str:
-            used = await self.helpers.sql_filter_key('user', 'tt', key, value)
-            if not used:
-                await ctx.send('Could not find user with code: **{}**'.format(value))
-            else:
-                owner = await self.bot.get_user_info(used['id'])
-                if owner:
-                    await ctx.send('Support code **{}** belongs to **{}** (**{}**)!'.format(value, owner.name, owner.id))
+            await ctx.send('Could not find user with code: **{}**'.format(value))
+        elif type(value) == dict:
+            owner = await self.bot.get_user_info(int(value['id']))
+            await ctx.send('Support code **{}** belongs to **{}** (**{}**)!'.format(value['tt']['code'], owner.name, owner.id))
         elif not type(value) == str:
             db = await self.helpers.get_record('user', value.id)
             await ctx.send('Support code for ID **{}** (**@\{}**) is: **{}**'.format(value.id, value.name, db['tt'].get('code')))
