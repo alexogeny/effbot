@@ -431,7 +431,10 @@ class SettingsCog():
         key = key.lower()
         if not getattr(value, 'roles', None) and not value.isnumeric():
             try:
-                value = await self.helpers.choose_member(ctx, ctx.guild, value)
+                v = await self.helpers.choose_member(ctx, ctx.guild, value)
+                if not v:
+                    v = await self.helpers.sql_filter_key('user', 'tt', key, value)
+                value = v
             except:
                 value = await self.bot.get_user_info(int(value[2:-1]))
         elif value.isnumeric():
