@@ -404,7 +404,7 @@ class SettingsCog():
     @is_trusted()
     @my.command(name='set', hidden=True, visible=False)
     async def _setcode(self, ctx, key, value, user):
-        elif not getattr(user, 'roles', None) and not user.isnumeric():
+        if not getattr(user, 'roles', None) and not user.isnumeric():
             try:
                 user = await self.helpers.choose_member(ctx, ctx.guild, user)
             except:
