@@ -449,7 +449,7 @@ class SettingsCog():
                     await ctx.send('Support code **{}** belongs to **{}** (**{}**)!'.format(value, owner.name, owner.id))
         elif not type(value) == str:
             db = await self.helpers.get_record('user', value.id)
-            await ctx.send('Support code for ID **{}** (**@\{}**) is: **{}**'.format(value.id, value.name, db['tt'].get.('code')))
+            await ctx.send('Support code for ID **{}** (**@\{}**) is: **{}**'.format(value.id, value.name, db['tt'].get('code')))
 
     @commands.group(name="settings")
     async def settings(self, ctx):
