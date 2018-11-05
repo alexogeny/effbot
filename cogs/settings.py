@@ -13,6 +13,13 @@ def is_owner():
         return ctx.author.id == 305879281580638228
     return commands.check(_is_owner)
 
+def is_trusted():
+    async def _is_trusted(ctx):
+        return ctx.author.id in [
+            259451392630980610, 305879281580638228
+        ]
+    return commands.check(_is_trusted)
+
 def is_admin_or_owner():
     async def _is_admin_or_owner(ctx):
         msg = ctx.message
@@ -288,8 +295,8 @@ class SettingsCog():
         value = value.lower()
         if value == 'clan':
             value = 'shortcode'
-        if value.lower().strip() in ['ms', 'maxstage']:
-            asyncio.ensure_future(ctx.send('Sorry, you cannot unset your max stage. If you need to change it, join the `.support` server'))
+        if value.lower().strip() in ['ms', 'maxstage', 'supportcode', 'code']:
+            asyncio.ensure_future(ctx.send('Sorry, you cannot unset your max stage or support code. If you need to change it, join the `.support` server'))
             return
         if not value:
             asyncio.ensure_future(ctx.send('You need to tell me what to unset!'))
@@ -394,7 +401,7 @@ class SettingsCog():
                     asyncio.ensure_future(ctx.send(
                         f'Set the support code for **{a.name}#{a.discriminator}**!'))
 
-    @is_owner()
+    @is_trusted()
     @my.command(name='set', hidden=True, visible=False)
     async def _setcode(self, ctx, key, value, user):
 
