@@ -424,6 +424,32 @@ class SettingsCog():
         # m['tt'][key]=value
         await self.helpers.sql_update_key('user', u.id, 'tt', key, value)
         asyncio.ensure_future(ctx.send('Success!'))
+    
+    @is_trusted()
+    @my.command(name='get', hidden=True, visible=False)
+    async def _getcode(self, ctx, key, value):
+        key = key.lower()
+        if not getattr(value, 'roles', None) and not value.isnumeric():
+            try:
+                value = await self.helpers.choose_member(ctx, ctx.guild, value)
+            except:
+                value = await self.bot.get_user_info(int(value[2:-1]))
+        elif value.isnumeric():
+            try:
+                value = await self.bot.get_user_info(int(value))
+            except:
+                pass
+        if type(value) == str:
+            used = await self.helpers.sql_filter_key('user', 'tt', key, value)
+            if not used:
+                await ctx.send('Could not find user with code: **{}**'.format(value))
+            else:
+                owner = await self.bot.get_user_info(used['id'])
+                if owner:
+                    await ctx.send('Support code **{}** belongs to **{}** (**{}**)!'.format(value, owner.name, owner.id))
+        elif not type(value) == str:
+            db = await self.helpers.get_record('user', value.id)
+            await ctx.send('Support code for ID **{}** (**@\{}**) is: **{}**'.format(value.id, value.name, db['tt']get.('code')))
 
     @commands.group(name="settings")
     async def settings(self, ctx):
