@@ -433,7 +433,10 @@ class SettingsCog():
             try:
                 v = await self.helpers.choose_member(ctx, ctx.guild, value)
                 if not v:
-                    v = await self.helpers.sql_filter('user', 'tt', key, value)
+                    collection = await self.helpers.sql_query_db(f'SELECT * FROM "user"')
+                    collection = [dict(c) for c in collection]
+                    v = next((c for c in collection if c['tt'].get(key)==value), None)
+                    #v = await self.helpers.sql_filter('user', 'tt', key, value)
                 value = v
             except:
                 value = await self.bot.get_user_info(int(value[2:-1]))
