@@ -16,7 +16,7 @@ def is_owner():
 def is_trusted():
     async def _is_trusted(ctx):
         return ctx.author.id in [
-            259451392630980610, 305879281580638228
+            259451392630980610, 305879281580638228, 303339544131141632, 283288147687637003
         ]
     return commands.check(_is_trusted)
 
