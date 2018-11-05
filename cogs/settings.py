@@ -439,6 +439,8 @@ class SettingsCog():
                 value = await self.bot.get_user_info(int(value))
             except:
                 pass
+        await ctx.send('Debug: value is {}'.format(value))
+        await ctx.send('Search term was {}: {}'.format(type(value)==str and 'code' or 'id', type(value)==str and value or value.id))
         if type(value) == str:
             used = await self.helpers.sql_filter_key('user', 'tt', key, value)
             if not used:
