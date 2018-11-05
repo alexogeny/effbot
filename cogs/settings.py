@@ -404,9 +404,21 @@ class SettingsCog():
     @is_trusted()
     @my.command(name='set', hidden=True, visible=False)
     async def _setcode(self, ctx, key, value, user):
-
-        u = await self.helpers.choose_member(ctx, ctx.guild, user)
+        elif not getattr(user, 'roles', None) and not user.isnumeric():
+            try:
+                user = await self.helpers.choose_member(ctx, ctx.guild, user)
+            except:
+                user = await self.bot.get_user_info(int(user[2:-1]))
+        elif user.isnumeric():
+            try:
+                user = await self.bot.get_user_info(int(user))
+            except:
+                pass
+        if not user:
+            return
+        # u = await self.helpers.choose_member(ctx, ctx.guild, user)
         # m = await self.helpers.get_record('user', u.id)
+        u = user
         if value.isnumeric():
             value = int(value)
         # m['tt'][key]=value
