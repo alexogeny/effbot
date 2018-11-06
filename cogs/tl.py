@@ -652,7 +652,7 @@ class TapTitans():
                 '`, `'.join(k for k in kinds)
             )))
             return
-        if kind != 'text' and not value[0].isnumeric():
+        if kind not in ['text', 'ttkfree'] and not value[0].isnumeric():
             asyncio.ensure_future(ctx.send('You need to supply a whole number for `{kind} requirement`'))
             return
         else:
@@ -1170,7 +1170,7 @@ class TapTitans():
         min_hits = int(exists.get('hpcq_requirement') or 1)
         min_taps = int(exists.get('tpcq_requirement') or 100)
         top10 = int(exists.get('top10_min') or 4000)
-        ttkfree = tuple(map(int, (exists.get('ttkfree') or '0:1:45').split(':')))
+        ttkfree = tuple(map(int, (exists.get('ttkfree') or '0:1:30').split(':')))
         ms = int(exists.get('ms_requirement') or 4000)
         min_helper_dmg = await self.map_hits_to_damage(top10, 90, min_hits)
         players = await self.helpers.sql_query_db('SELECT * FROM "user"')
@@ -1200,7 +1200,7 @@ class TapTitans():
             if int(damage) >= min_tap_dmg+min_helper_dmg+min_helper_dmg and httk < ttkfree:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
-            elif int(damage)*0.666667 >= (min_tap_dmg+min_helper_dmg+min_helper_dmg)*.666667 and httk > ttkfree:
+            elif int(damage)*0.6 >= (min_tap_dmg+min_helper_dmg+min_helper_dmg)*.5 and httk > ttkfree:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
