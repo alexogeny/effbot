@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 class Information():
     """Get information about a user, the server, the bot, etc."""
     def __init__(self, bot):
-        
+
         self.bot = bot
         self.helpers = self.bot.get_cog('Helpers')
         self.process = psutil.Process()
@@ -61,6 +61,43 @@ class Information():
         after = time.monotonic()
         ping = (after - before) * 1000
         asyncio.ensure_future(ping_msg.edit(content=f"***{ping:.0f}ms***"))
+
+    @commands.command(name='rolecount')
+    async def _rolecount(self, ctx, *role_search):
+        role = ' '.join(role_search).lower().strip()
+        role = await self.helpers.choose_role(ctx, ctx.guild, role)
+        if not role:
+            await ctx.send('Could not find the role **{}**'.format(
+                ' '.join(role_search)
+            ))
+            return
+        member_count = len(role.members)
+        plural = member_count != 1
+        await ctx.send('**{}** member{} {} the role **{}**!'.format(
+            member_count, plural and 's' or '',
+            plural and 'have' or 'has',
+            role.name
+        ))
+
+    @commands.command(name='rolelist')
+    async def _rolelist(self, ctx, *role_search):
+        role = ' '.join(role_search).lower().strip()
+        role = await self.helpers.choose_role(ctx, ctx.guild, role)
+        if not role:
+            await ctx.send('Could not find the role **{}**'.format(
+                ' '.join(role_search)
+            ))
+            return
+        member_count = len(role.members)
+        plural = member_count != 1
+        await ctx.send('**{}** member{} {} the role **{}**!'.format(
+            member_count, plural and 's' or '',
+            plural and 'have' or 'has',
+            role.name
+        ))
+        await ctx.send('Here they are:\n{}'.format('\n'.join(
+            '**{}** ({})'.format(m, m.id) for m in role.members[0:50]
+        )))
 
     @info.command(name='bot', aliases=['effbot', '<@471207758985691162>', '<@!471207758985691162>'], no_pm=True)
     async def _bot(self, ctx):
@@ -118,7 +155,7 @@ class Information():
         e = await self.helpers.build_embed(
             'Available modules of effbot', 0xffffff
         )
-        
+
         for cog in cogs:
             c = self.bot.get_cog(cog)
             cxs = ', '.join(
@@ -130,7 +167,7 @@ class Information():
                 value=f'```\n{cxs}\n```',
                 inline=False
             )
-        
+
         await ctx.send(embed=e)
 
     @info.command(name='user', no_pm=True)
