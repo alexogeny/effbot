@@ -645,7 +645,7 @@ class TapTitans():
             return
         group = group[1:]
 
-        kinds = 'ms tcq prestige tpcq hpcq text'.split()
+        kinds = 'ms tcq prestige tpcq hpcq text ttkfree'.split()
 
         if kind not in kinds:
             asyncio.ensure_future(ctx.send('Text type must be one of: `{}`'.format(
@@ -663,17 +663,13 @@ class TapTitans():
                 group, value = value[-1][1:], ' '.join(value[0:-1])
             else:
                 value = ' '.join(value)
-        print('hey')
 
         exists = await self.get_tl_from_db(ctx, group)
         if exists:
             msg = ''
             if kind != 'text':
-                print(kind)
-                exists.update({f'{kind}_requirement': int(value[0])})
-                print('set kind value')
-                msg = f'Set the `{kind.lower()} requirement` for `{group}` to: `{int(value[0]):,}`'
-                print('hiiiiiiiiiiiiii')
+                exists.update({f'{kind}_requirement': int(value)})
+                msg = f'Set the `{kind.lower()} requirement` for `{group}` to: `{int(value):,}`'
             else:
                 exists.update({f'{kind}_requirement': value})
                 msg = f'Set the `{kind.lower()} requirement` for `{group}` to: `{value}`'
@@ -1152,8 +1148,14 @@ class TapTitans():
         for r in result:
             cq_header, cq_data = (x for x in r.content.replace('```\n','```').replace('\n```','```').split('```') if x.strip())
             cq_number = int(re.match(r'[^\d]+(\d+)', cq_header).group(1))
+            try:
+                hours, mins, secs = re.match(r'[\d:]+$', cq_header).group(1).split(':')
+            except:
+                hours, mins, secs = 0,0,0
+            finally:
+                ttk = (int(hours), int(mins), int(secs))
             if start <= cq_number <= end+1:
-                cq_rows = [dict(row) for row in DictReader(cq_data.splitlines(), delimiter=",", quotechar='"')]
+                cq_rows = [{**dict(row), **{'ttk': ttk}} for row in DictReader(cq_data.splitlines(), delimiter=",", quotechar='"')]
                 cqs[cq_number] = cq_rows
 
         s = await self.helpers.get_record('server', ctx.guild.id)
@@ -1168,13 +1170,14 @@ class TapTitans():
         min_hits = int(exists.get('hpcq_requirement') or 1)
         min_taps = int(exists.get('tpcq_requirement') or 100)
         top10 = int(exists.get('top10_min') or 4000)
+        ttkfree = list(map(int, (exists.get('ttkfree') or '0:1:45').split(':')))
         ms = int(exists.get('ms_requirement') or 4000)
         min_helper_dmg = await self.map_hits_to_damage(top10, 90, min_hits)
         players = await self.helpers.sql_query_db('SELECT * FROM "user"')
         players = [p for p in players if ctx.guild.get_member(p['id'])]
         hit_tuples = [[x for x in v] for k, v in cqs.items()]
         for hit in list(chain.from_iterable(hit_tuples)):
-            rank, name, id, damage = hit.values()
+            rank, name, id, damage, httk = hit.values()
             if not hitter[id]:
                 hitter[id]['id'] = id
                 hitter[id]['hit'] = 0
@@ -1194,7 +1197,10 @@ class TapTitans():
                     # print(rl)
                     hitter[id]['rank']=rl
             min_tap_dmg = await self.map_hits_to_damage(ms, min_taps, min_hits)
-            if int(damage) >= min_tap_dmg+min_helper_dmg+min_helper_dmg:
+            if int(damage) >= min_tap_dmg+min_helper_dmg+min_helper_dmg and httk < ttkfree:
+                hitter[id]['dmg'] += int(damage)
+                hitter[id]['hit'] = hitter[id]['hit'] + 1
+            elif int(damage)*0.666667 >= (min_tap_dmg+min_helper_dmg+min_helper_dmg)*.666667 and httk > ttkfree:
                 hitter[id]['dmg'] += int(damage)
                 hitter[id]['hit'] = hitter[id]['hit'] + 1
             if not hitter[id]['name']:
