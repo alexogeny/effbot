@@ -1170,7 +1170,7 @@ class TapTitans():
         min_hits = int(exists.get('hpcq_requirement') or 1)
         min_taps = int(exists.get('tpcq_requirement') or 100)
         top10 = int(exists.get('top10_min') or 4000)
-        ttkfree = list(map(int, (exists.get('ttkfree') or '0:1:45').split(':')))
+        ttkfree = tuple(map(int, (exists.get('ttkfree') or '0:1:45').split(':')))
         ms = int(exists.get('ms_requirement') or 4000)
         min_helper_dmg = await self.map_hits_to_damage(top10, 90, min_hits)
         players = await self.helpers.sql_query_db('SELECT * FROM "user"')
