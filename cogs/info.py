@@ -55,7 +55,7 @@ class Information():
                               "You'll understand when you're older...", "\"why\", you might ask? I do not know...",
                               "I'm a little tea pot, short and stout", "I'm not crying, my eyeballs "
                                                                        "are sweating!",
-                              "When will the pain end?", "Partnership when?", "Hey Robino, rewrite when?"])
+                              "When will the pain end?", "Partnership when?", "Hey Robino, rewrite when?","Hey Effy, translation sheet when? ( ͡° ͜ʖ ͡°)"])
         before = time.monotonic()
         ping_msg = await ctx.send(joke)
         after = time.monotonic()
