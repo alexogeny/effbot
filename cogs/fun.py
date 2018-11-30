@@ -102,7 +102,7 @@ class Fun():
 
     @commands.command(name='bae')
     async def _bae(self, ctx):
-        if ctx.message.author.id != 321257293557792769:
+        if ctx.message.author.id != 514905469094068253:
             await ctx.send('Oh, you are not bae ...')
         else:
             await ctx.send('OMG, HI BAE!!')
