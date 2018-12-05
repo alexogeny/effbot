@@ -23,7 +23,7 @@ else:
     CONFIG = dict(PREFIXES=['e.', 'e!', 'effbot '],
                   COGS_DIR="cogs",
                   TOKEN=os.getenv("TOKEN"),
-                  MS=35000)
+                  MS=42000)
 #, '<@466854404965007360> ', '<@!466854404965007360> '
 def get_prefix(bot, message):
     prefixes = list(CONFIG['PREFIXES'])
