@@ -810,8 +810,8 @@ class TapTitans():
                 except:
                     asyncio.ensure_future(ctx.send('Only sci notation atm'))
                     return
-        if args['ms'] > 50000:
-            asyncio.ensure_future(ctx.send('The MS cap atm is 42k. Silly!'))
+        if args['ms'] > 55000:
+            asyncio.ensure_future(ctx.send('The MS cap atm is 55k. Silly!'))
             return
         elif args['sets'] > 10:
             asyncio.ensure_future(ctx.send('There are only 7 mythic sets available rn'))
